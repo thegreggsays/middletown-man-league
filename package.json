@@ -1,0 +1,20 @@
+{
+  "name": "middletown-man-league",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Middletown Man League website and Yahoo transaction logger",
+  "main": "yahoo-proxy.js",
+  "scripts": {
+    "start": "node yahoo-proxy.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0"
+  }
+}

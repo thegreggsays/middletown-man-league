@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Middletown Man League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080A;
+    --bg-2: #0E1013;
+    --glass: rgba(255,255,255,0.035);
+    --glass-hover: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.09);
+    --gold-1: #FFE29B;
+    --gold-2: #E3A83C;
+    --gold-3: #9C6B1F;
+    --glow: rgba(227,168,60,0.35);
+    --text: #F6F2EA;
+    --text-dim: #8D8A83;
+    --win: #4CFFB0;
+    --loss: #FF5C4D;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* stadium spotlight + grain */
+  body::before {
+    content: "";
+    position: fixed;
+    top: -20%; left: 50%;
+    transform: translateX(-50%);
+    width: 1400px; height: 900px;
+    background: radial-gradient(circle at 50% 0%, var(--glow) 0%, rgba(227,168,60,0.06) 35%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 0 24px 100px; }
+
+  /* HERO */
+  header.hero {
+    padding: 80px 0 44px;
+    text-align: left;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 22px;
+    padding: 6px 14px 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--glass);
+  }
+
+  .eyebrow .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--win);
+    box-shadow: 0 0 8px var(--win);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  h1.title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: clamp(52px, 9vw, 100px);
+    letter-spacing: -0.01em;
+    line-height: 0.88;
+    text-transform: uppercase;
+    background: linear-gradient(100deg, var(--gold-1) 10%, var(--gold-2) 45%, var(--gold-1) 60%, var(--gold-3) 90%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 7s linear infinite;
+    transform: skewX(-2deg);
+    display: inline-block;
+  }
+
+  h1.title .plain { color: var(--text); -webkit-text-fill-color: var(--text); background: none; }
+
+  @keyframes shimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 220% center; }
+  }
+
+  .hero-sub {
+    margin-top: 18px;
+    color: var(--text-dim);
+    font-size: 18px;
+    font-weight: 500;
+    max-width: 560px;
+  }
+
+  /* SCOREBOARD TICKER */
+
+
+  /* TRASH TALK BANNER */
+  .trash-talk {
+    margin-top: 14px;
+    padding: 13px 22px;
+    background: linear-gradient(90deg, rgba(255,92,77,0.1), transparent);
+    border-left: 3px solid var(--loss);
+    border-radius: 0 8px 8px 0;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    font-style: italic;
+    color: #F3B6AE;
+  }
+  .trash-talk::before { content: "🔥 "; font-style: normal; }
+
+  /* NAV TABS — glass pill */
+  nav.tabs {
+    display: inline-flex;
+    gap: 4px;
+    margin: 44px 0 32px;
+    padding: 5px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+  }
+
+  nav.tabs button {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    padding: 11px 22px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  nav.tabs button:hover { color: var(--text); }
+
+  nav.tabs button.active {
+    color: #1A1204;
+    background: linear-gradient(100deg, var(--gold-1), var(--gold-2));
+    box-shadow: 0 6px 20px -6px var(--glow);
+  }
+
+  nav.tabs button:focus-visible,
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--gold-1);
+    outline-offset: 3px;
+  }
+
+  section.panel { display: none; }
+  section.panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2.panel-title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 30px;
+    text-transform: uppercase;
+    letter-spacing: -0.005em;
+    margin-bottom: 6px;
+  }
+
+  .panel-sub { color: var(--text-dim); font-size: 14px; margin-bottom: 30px; font-weight: 500; }
+
+  /* STANDINGS — glass cards */
+
+
+  .team-name { font-weight: 700; font-family: 'Oswald', sans-serif; text-transform: uppercase; font-size: 15px; letter-spacing: 0.01em; }
+  .team-owner { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
+
+
+  /* KEEPERS */
+  .sheet-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 26px;
+  }
+  .sheet-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold-1); box-shadow: 0 0 8px var(--glow); }
+
+  .keeper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+
+  .keeper-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    transition: all 0.2s ease;
+  }
+  .keeper-card:hover { background: var(--glass-hover); border-color: rgba(227,168,60,0.3); }
+
+  .keeper-card .kc-team { font-family: 'Roboto Mono', monospace; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .keeper-card .kc-player { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 19px; text-transform: uppercase; margin-bottom: 10px; }
+  .keeper-card .kc-meta { display: flex; gap: 8px; align-items: center; }
+
+  .pos-badge {
+    display: inline-block;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(227,168,60,0.1);
+    border: 1px solid rgba(227,168,60,0.25);
+    color: var(--gold-1);
+  }
+  .kc-cost { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); }
+
+  /* HALL OF FAME */
+  .hof-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .hof-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  .hof-card:hover { background: var(--glass-hover); transform: translateY(-2px); }
+
+  .hof-card::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--gold-1), var(--gold-2));
+  }
+
+  .hof-year {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold-1);
+    letter-spacing: 0.08em;
+  }
+
+  .hof-champ {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 23px;
+    text-transform: uppercase;
+    margin-top: 9px;
+    color: var(--text);
+  }
+
+  .hof-record { color: var(--text-dim); font-size: 13px; margin-top: 5px; font-weight: 500; }
+
+  .curse-box {
+    margin-top: 30px;
+    padding: 20px 22px;
+    border: 1px solid rgba(255,92,77,0.3);
+    border-radius: 12px;
+    background: rgba(255,92,77,0.06);
+  }
+
+  .curse-box .curse-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--loss);
+    margin-bottom: 8px;
+  }
+
+  /* RULES */
+  .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .rules-grid { grid-template-columns: 1fr; } }
+
+  .rule-block {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+
+  .rule-block h3 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rule-block ul { list-style: none; }
+  .rule-block li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .rule-block li:last-child { border-bottom: none; }
+  .rule-block li span:last-child { color: var(--text-dim); font-family: 'Roboto Mono', monospace; font-size: 13px; }
+
+
+  footer {
+    margin-top: 64px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: 'Roboto Mono', monospace;
+  }
+
+  @media (max-width: 640px) {
+  }
+
+
+  .kc-owner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .kc-owner-block {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+
+  .kc-owner-name {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 20px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .kc-owner-list { display: flex; flex-direction: column; gap: 2px; }
+
+  .kc-row {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .kc-row:last-child { border-bottom: none; }
+
+  .kc-pos {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .kc-name { font-weight: 500; }
+
+  .kc-cost-val {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--gold-1);
+    text-align: right;
+  }
+
+
+  .kc-reason {
+    display: block;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--loss);
+    opacity: 0.85;
+    margin-top: 2px;
+    text-decoration: none;
+  }
+  .kc-row.not-keepable .kc-name { text-decoration: none; }
+  .kc-row.not-keepable .kc-name { color: var(--text-dim); }
+
+  .kc-legend {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 22px;
+  }
+  .kc-legend strong { color: var(--loss); font-weight: 700; }
+
+  .kc-row.not-keepable .kc-name { color: var(--text-dim); text-decoration: line-through; text-decoration-color: rgba(255,92,77,0.5); }
+  .kc-cost-val.none {
+    color: var(--loss);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+
+  .db-scroll {
+    overflow: auto;
+    max-height: 72vh;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-2);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .db-table {
+    border-collapse: separate;
+    border-spacing: 4px;
+    min-width: 1480px;
+    table-layout: fixed;
+  }
+
+  .db-table th, .db-table td { padding: 0; }
+
+  /* frozen top row */
+  .db-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    width: 118px;
+    background: #16130C;
+    border: 1px solid rgba(227,168,60,0.28);
+    border-radius: 7px;
+    padding: 9px 6px !important;
+    text-align: center;
+    vertical-align: middle;
+    box-shadow: 0 7px 9px -6px rgba(0,0,0,0.9);
+  }
+
+  /* frozen left column */
+  .db-rownum {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    width: 44px;
+    background: var(--bg-2);
+    border-radius: 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-align: center;
+    vertical-align: middle;
+    box-shadow: 7px 0 9px -6px rgba(0,0,0,0.9);
+  }
+
+  /* corner sits above both */
+  .db-corner {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    width: 44px;
+    background: #16130C;
+    border-radius: 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--gold-1);
+    text-align: center;
+    vertical-align: middle;
+    box-shadow: 7px 7px 9px -6px rgba(0,0,0,0.9);
+  }
+
+  .db-slot { display: block; font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  .db-head-owner {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    line-height: 1.1;
+    margin-top: 3px;
+  }
+
+  .db-cell {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 10px !important;
+    height: 66px;
+    vertical-align: top;
+  }
+  .db-cell.traded { background: rgba(227,168,60,0.09); border-color: rgba(227,168,60,0.32); }
+  .db-cell .db-pick, .db-cell .db-player, .db-cell .db-owner { display: block; }
+
+  .db-legend {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    font-family: 'Roboto Mono', monospace;
+  }
+  .db-key { display: inline-flex; align-items: center; gap: 8px; }
+  .db-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .db-swatch.traded { background: rgba(227,168,60,0.18); border: 1px solid var(--gold-2); }
+
+
+  /* corner sits above both frozen edges */
+
+  .db-slot { font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  .db-head-owner {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    text-align: center;
+    line-height: 1.1;
+  }
+
+
+  .db-pick { font-family: 'Roboto Mono', monospace; font-size: 9px; color: var(--text-dim); }
+  .db-player {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 12.5px;
+    line-height: 1.15;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .db-owner {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    color: var(--text-dim);
+    margin-top: auto;
+  }
+  .db-cell.traded .db-owner { color: var(--gold-2); }
+
+
+  .kk-key {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding: 12px 18px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .kk-key-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding-right: 16px;
+    border-right: 1px solid var(--border);
+  }
+  .kk-key-item { display: inline-flex; align-items: center; gap: 8px; color: var(--text-dim); }
+
+  .kk-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .kk-dot.y1 { background: var(--win); box-shadow: 0 0 8px rgba(76,255,176,0.5); }
+  .kk-dot.y2 { background: var(--loss); box-shadow: 0 0 8px rgba(255,92,77,0.5); }
+
+  .kk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .kk-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .kk-card.empty { opacity: 0.5; }
+
+  .kk-owner {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 12px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .kk-none {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 6px 0;
+  }
+
+  .kk-player {
+    display: grid;
+    grid-template-columns: 9px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .kk-player:last-child { border-bottom: none; }
+
+  .kk-name { font-weight: 600; font-size: 14px; }
+  .kk-round {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold-1);
+  }
+  .kk-year {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 999px;
+  }
+  .kk-year.y1 { background: rgba(76,255,176,0.12); color: var(--win); }
+  .kk-year.y2 { background: rgba(255,92,77,0.12); color: var(--loss); }
+
+
+  /* POWER RANKINGS */
+
+
+  /* NEWS */
+
+
+  .hist-setup {
+    background: rgba(227,168,60,0.07);
+    border: 1px solid rgba(227,168,60,0.25);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .hist-setup-title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 10px;
+  }
+  .hist-setup p { font-size: 13.5px; color: var(--text-dim); line-height: 1.65; margin-bottom: 10px; }
+  .hist-setup p:last-child { margin-bottom: 0; }
+  .hist-setup-sub { font-size: 12.5px !important; opacity: 0.85; }
+  .hist-setup code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--gold-1);
+  }
+
+  .hist-section-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hist-owner-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .hist-owner {
+    display: grid;
+    grid-template-columns: 52px 1fr repeat(4, minmax(64px, auto));
+    align-items: center;
+    gap: 16px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 15px 20px;
+    transition: all 0.2s ease;
+  }
+  .hist-owner:hover { background: var(--glass-hover); transform: translateX(2px); }
+  .hist-owner.champ { border-color: rgba(227,168,60,0.45); background: linear-gradient(90deg, rgba(227,168,60,0.08), var(--glass) 45%); }
+
+  .hist-rings { font-size: 15px; text-align: center; letter-spacing: -2px; }
+  .hist-rings.none { color: var(--text-dim); opacity: 0.35; font-size: 12px; letter-spacing: 0; }
+
+  .hist-name { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 16px; text-transform: uppercase; }
+  .hist-years { font-family: 'Roboto Mono', monospace; font-size: 10.5px; color: var(--gold-2); margin-top: 3px; }
+
+  .hist-stat { text-align: right; font-family: 'Roboto Mono', monospace; font-size: 13px; }
+  .hist-stat span {
+    display: block;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    opacity: 0.75;
+    margin-bottom: 3px;
+  }
+
+  @media (max-width: 780px) {
+    .hist-owner { grid-template-columns: 44px 1fr auto auto; }
+    .hist-owner .hist-stat:nth-last-child(-n+2) { display: none; }
+  }
+
+  .news-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .news-refresh {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    color: var(--gold-1);
+    padding: 9px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .news-refresh:hover { background: var(--glass-hover); }
+  #news-error-detail { font-size: 12.5px; }
+
+  .news-sources { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+  .news-src {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 9px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .news-src:hover { color: var(--text); }
+  .news-src.active {
+    color: #1A1204;
+    background: linear-gradient(100deg, var(--gold-1), var(--gold-2));
+    border-color: transparent;
+  }
+
+  .news-status {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 10px 0 18px;
+  }
+
+  .news-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .news-item {
+    display: block;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+  }
+  .news-item:hover { background: var(--glass-hover); border-color: rgba(227,168,60,0.3); transform: translateX(2px); }
+
+  .news-item-title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.25;
+    color: var(--text);
+    margin-bottom: 7px;
+  }
+  .news-item-desc { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; }
+  .news-item-meta {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    color: var(--gold-2);
+    margin-top: 9px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .news-fallback {
+    background: rgba(255,92,77,0.06);
+    border: 1px solid rgba(255,92,77,0.28);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+  .news-fallback-title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    color: var(--loss);
+    margin-bottom: 8px;
+  }
+  .news-fallback p { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 14px; }
+  .news-links { display: flex; flex-wrap: wrap; gap: 9px; }
+  .news-links a {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    color: var(--gold-1);
+    padding: 8px 14px;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .news-links a:hover { background: var(--glass-hover); }
+
+
+  /* ---- COMPACT STANDINGS STRIP ---- */
+  .standings-strip {
+    margin: 30px 0 0;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+
+
+  .ss-head { margin-bottom: 10px; }
+
+  .ss-switch {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+  .ss-sw {
+    flex: 1;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 11.5px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    padding: 7px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 34px;
+  }
+  .ss-sw:hover { color: var(--text); }
+  .ss-sw.active {
+    color: #1A1204;
+    background: linear-gradient(100deg, var(--gold-1), var(--gold-2));
+  }
+
+  .ss-tag {
+    display: block;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    opacity: 0.65;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .ss-view { display: none; }
+  .ss-view.active { display: block; }
+
+  .ss-list { display: flex; flex-direction: column; gap: 1px; }
+
+  .ss-row {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.035);
+  }
+  .ss-row:last-of-type { border-bottom: none; }
+  .ss-row.lead { background: rgba(227,168,60,0.09); border-bottom-color: transparent; }
+  .ss-row.extra { display: none; }
+  .standings-strip.open .ss-row.extra { display: grid; }
+
+  .ss-rank {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .ss-row.lead .ss-rank { color: var(--gold-1); }
+
+  .ss-owner {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+  .ss-row.lead .ss-owner { color: var(--gold-1); }
+
+  .ss-rec {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dim);
+  }
+  .ss-row.lead .ss-rec { color: var(--gold-2); }
+
+  .ss-toggle {
+    width: 100%;
+    margin-top: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--gold-1);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .ss-toggle:hover { background: rgba(255,255,255,0.06); }
+
+  /* ---- SUMMARY ---- */
+  .sum-block {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+  }
+  .sum-block:last-child { margin-bottom: 0; }
+
+  .sum-head {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 19px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 16px;
+    padding-bottom: 11px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sum-rules { list-style: none; counter-reset: sr; display: flex; flex-direction: column; gap: 15px; }
+  .sum-rules li {
+    counter-increment: sr;
+    position: relative;
+    padding-left: 38px;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .sum-rules li::before {
+    content: counter(sr);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(227,168,60,0.13);
+    border: 1px solid rgba(227,168,60,0.3);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold-1);
+  }
+  .sum-rule-t { display: block; color: var(--text); font-weight: 600; font-size: 14.5px; margin-bottom: 3px; }
+  .sum-rules em { color: var(--gold-1); font-style: normal; font-weight: 600; }
+
+  .sum-example {
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.025);
+    border-left: 3px solid var(--gold-2);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .sum-ex-label {
+    display: block;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold-2);
+    margin-bottom: 5px;
+  }
+
+  .sum-tabs { display: flex; flex-direction: column; gap: 11px; }
+  .sum-tab {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    padding-bottom: 11px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .sum-tab:last-child { border-bottom: none; padding-bottom: 0; }
+  .sum-tab-n {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 13.5px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .sum-note { background: rgba(227,168,60,0.06); border-color: rgba(227,168,60,0.24); }
+  .sum-note p { font-size: 13px; color: var(--text-dim); line-height: 1.65; }
+
+  /* ---- ACTIVITY ---- */
+  .act-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .act-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .act-f {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 15px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .act-f:hover { color: var(--text); }
+  .act-f.active {
+    color: #1A1204;
+    background: linear-gradient(100deg, var(--gold-1), var(--gold-2));
+    border-color: transparent;
+  }
+  .act-sync { font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-dim); opacity: 0.7; }
+
+  .act-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .act-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+  }
+  .act-card.trade { border-color: rgba(227,168,60,0.32); background: rgba(227,168,60,0.06); }
+
+  .act-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .act-type {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .act-type.add   { background: rgba(76,255,176,0.13); color: var(--win); }
+  .act-type.drop  { background: rgba(255,92,77,0.13); color: var(--loss); }
+  .act-type.trade { background: rgba(227,168,60,0.15); color: var(--gold-1); }
+  .act-type.other { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+
+  .act-date { font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-dim); margin-left: auto; }
+
+  .act-moves { display: flex; flex-direction: column; gap: 6px; }
+  .act-move {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .act-move:last-child { border-bottom: none; }
+
+  .act-arrow { font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: 700; text-align: center; }
+  .act-arrow.add { color: var(--win); }
+  .act-arrow.drop { color: var(--loss); }
+
+  .act-player { font-weight: 600; }
+  .act-pos { font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-dim); margin-left: 7px; }
+  .act-owner { font-family: 'Roboto Mono', monospace; font-size: 11px; color: var(--gold-1); text-align: right; }
+
+  .act-empty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); opacity: 0.7; padding: 16px 0; }
+
+  /* ---- PICK TRADES ---- */
+  .tr-section { margin-bottom: 34px; }
+  .tr-section:last-child { margin-bottom: 0; }
+
+  .tr-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tr-season {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+  }
+  .tr-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .tr-count {
+    margin-left: auto;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold-2);
+    background: rgba(227,168,60,0.12);
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+
+  .tr-empty {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 14px 0;
+    opacity: 0.7;
+  }
+
+  .tr-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+
+  .tr-num {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    opacity: 0.7;
+    margin-bottom: 12px;
+  }
+
+  .tr-sides { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: start; }
+
+  .tr-owner {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 9px;
+  }
+
+  .tr-assets { display: flex; flex-direction: column; gap: 6px; }
+
+  .tr-asset {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 11px;
+  }
+  .tr-yr {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--gold-2);
+    flex-shrink: 0;
+  }
+
+  .tr-swap {
+    align-self: center;
+    font-size: 20px;
+    color: var(--text-dim);
+    opacity: 0.5;
+  }
+
+  /* ================= MOBILE ================= */
+  @media (max-width: 760px) {
+    .wrap { padding: 0 16px 70px; }
+
+    header.hero { padding: 40px 0 22px; }
+    .standings-strip { margin-top: 22px; padding: 10px 12px; border-radius: 10px; }
+    .ss-row { padding: 6px 6px; gap: 8px; }
+    .ss-owner { font-size: 12px; }
+    .ss-rec { font-size: 11px; }
+    .hero-sub { font-size: 15px; margin-top: 12px; }
+    .eyebrow { font-size: 10px; letter-spacing: 0.16em; margin-bottom: 16px; }
+
+
+    .trash-talk { font-size: 13px; padding: 11px 16px; }
+
+    /* tabs: swipeable strip instead of wrapping pill */
+    nav.tabs {
+      display: flex;
+      width: 100%;
+      margin: 28px 0 24px;
+      padding: 5px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 14px;
+    }
+    nav.tabs::-webkit-scrollbar { display: none; }
+    nav.tabs button {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      font-size: 13px;
+      padding: 11px 16px;
+      min-height: 44px;
+    }
+
+    h2.panel-title { font-size: 24px; }
+    .panel-sub { font-size: 13px; margin-bottom: 22px; }
+
+    /* every card grid collapses to one column */
+    .kc-owner-grid, .kk-grid, .hof-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .kc-owner-block, .kk-card, .hof-card, .tr-card, .rule-block { padding: 16px 18px; }
+
+    .kc-row { grid-template-columns: 40px 1fr auto; font-size: 13px; padding: 8px 0; }
+    .kk-player { grid-template-columns: 9px 1fr auto; row-gap: 4px; }
+    .kk-year { grid-column: 2 / -1; justify-self: start; }
+
+    .kk-key { flex-direction: column; align-items: flex-start; gap: 9px; padding: 14px 16px; }
+    .kk-key-title { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 8px; width: 100%; }
+
+
+    /* league history */
+    .hist-owner { grid-template-columns: 44px 1fr auto auto; gap: 12px; padding: 13px 14px; }
+    .hist-owner .hist-stat:nth-last-child(-n+2) { display: none; }
+
+    /* trades stack vertically with the arrow rotated */
+    .tr-sides { grid-template-columns: 1fr; gap: 10px; }
+    .tr-swap { transform: rotate(90deg); justify-self: center; font-size: 18px; }
+    .tr-owner { font-size: 15px; }
+    .tr-asset { font-size: 12.5px; padding: 8px 11px; }
+
+    /* draft board stays scrollable but tighter */
+
+    .db-scroll { max-height: 66vh; border-radius: 12px; }
+    .db-table { min-width: 1230px; border-spacing: 3px; }
+    .db-head { width: 96px; padding: 7px 4px !important; }
+    .db-head-owner { font-size: 11px; }
+    .db-corner, .db-rownum { width: 32px; font-size: 10px; }
+    .db-cell { padding: 7px 8px !important; height: 62px; }
+    .db-player { font-size: 11.5px; }
+    .db-owner { font-size: 9px; }
+
+    .sum-block { padding: 17px 18px; }
+    .sum-head { font-size: 17px; }
+    .sum-rules li { padding-left: 33px; font-size: 13px; }
+    .sum-rules li::before { width: 22px; height: 22px; font-size: 10px; }
+    .sum-rule-t { font-size: 14px; }
+
+    .act-filters { overflow-x: auto; scrollbar-width: none; }
+    .act-filters::-webkit-scrollbar { display: none; }
+    .act-f { flex: 0 0 auto; white-space: nowrap; min-height: 40px; }
+    .act-card { padding: 13px 15px; }
+    .act-move { grid-template-columns: 40px 1fr; row-gap: 3px; font-size: 12.5px; }
+    .act-owner { grid-column: 2 / -1; text-align: left; font-size: 10px; }
+
+    /* news */
+    .news-bar { gap: 10px; }
+    .news-sources { overflow-x: auto; scrollbar-width: none; }
+    .news-sources::-webkit-scrollbar { display: none; }
+    .news-src { flex: 0 0 auto; white-space: nowrap; min-height: 44px; }
+    .news-refresh { min-height: 44px; }
+    .news-item { padding: 14px 16px; }
+    .news-item-title { font-size: 15px; }
+    .news-links a { min-height: 40px; display: inline-flex; align-items: center; }
+  }
+
+  @media (max-width: 400px) {
+    h1.title { font-size: 40px; }
+    .kc-row { grid-template-columns: 34px 1fr auto; font-size: 12.5px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow"><span class="pulse"></span> Live &middot; Week 11 &middot; 12 Teams</div>
+    <h1 class="title">Middletown <span class="plain">Man League</span></h1>
+    <p class="hero-sub">Everything the league complains about, in one place.</p>
+
+  </header>
+
+  <div class="standings-strip" aria-label="League standings">
+    <div class="ss-head">
+      <div class="ss-switch">
+        <button class="ss-sw active" data-view="standings">Standings</button>
+        <button class="ss-sw" data-view="power">Power Rankings</button>
+      </div>
+    </div>
+
+    <div class="ss-view active" id="ss-view-standings">
+      <div class="ss-tag" id="ss-tag-standings">placeholder &mdash; syncs from Yahoo once connected</div>
+      <div class="ss-list">
+        <div class="ss-row lead"><span class="ss-rank">1</span><span class="ss-owner">Gregg</span><span class="ss-rec">9-2</span></div>
+        <div class="ss-row"><span class="ss-rank">2</span><span class="ss-owner">Derek</span><span class="ss-rec">8-3</span></div>
+        <div class="ss-row"><span class="ss-rank">3</span><span class="ss-owner">Rebel</span><span class="ss-rec">8-3</span></div>
+        <div class="ss-row"><span class="ss-rank">4</span><span class="ss-owner">Post</span><span class="ss-rec">7-4</span></div>
+        <div class="ss-row"><span class="ss-rank">5</span><span class="ss-owner">Garett</span><span class="ss-rec">7-4</span></div>
+        <div class="ss-row extra"><span class="ss-rank">6</span><span class="ss-owner">Rogan</span><span class="ss-rec">6-5</span></div>
+        <div class="ss-row extra"><span class="ss-rank">7</span><span class="ss-owner">Hexx</span><span class="ss-rec">6-5</span></div>
+        <div class="ss-row extra"><span class="ss-rank">8</span><span class="ss-owner">Marc</span><span class="ss-rec">5-6</span></div>
+        <div class="ss-row extra"><span class="ss-rank">9</span><span class="ss-owner">Jared</span><span class="ss-rec">4-7</span></div>
+        <div class="ss-row extra"><span class="ss-rank">10</span><span class="ss-owner">Fito</span><span class="ss-rec">4-7</span></div>
+        <div class="ss-row extra"><span class="ss-rank">11</span><span class="ss-owner">Palumberi</span><span class="ss-rec">3-8</span></div>
+        <div class="ss-row extra"><span class="ss-rank">12</span><span class="ss-owner">Opie</span><span class="ss-rec">2-9</span></div>
+      </div>
+    </div>
+
+    <div class="ss-view" id="ss-view-power">
+      <div class="ss-tag" id="ss-tag-power">interim: draft capital &mdash; switches to averaged ESPN + Sleeper projections once connected</div>
+      <div class="ss-list" id="ss-list-power">
+        <div class="ss-row lead"><span class="ss-rank">1</span><span class="ss-owner">Gregg</span><span class="ss-rec">484.9</span></div>
+        <div class="ss-row"><span class="ss-rank">2</span><span class="ss-owner">Derek</span><span class="ss-rec">484.9</span></div>
+        <div class="ss-row"><span class="ss-rank">3</span><span class="ss-owner">Rebel</span><span class="ss-rec">453.2</span></div>
+        <div class="ss-row"><span class="ss-rank">4</span><span class="ss-owner">Post</span><span class="ss-rec">425.9</span></div>
+        <div class="ss-row"><span class="ss-rank">5</span><span class="ss-owner">Garett</span><span class="ss-rec">413.8</span></div>
+        <div class="ss-row extra"><span class="ss-rank">6</span><span class="ss-owner">Rogan</span><span class="ss-rec">398.1</span></div>
+        <div class="ss-row extra"><span class="ss-rank">7</span><span class="ss-owner">Hexx</span><span class="ss-rec">397.8</span></div>
+        <div class="ss-row extra"><span class="ss-rank">8</span><span class="ss-owner">Marc</span><span class="ss-rec">390.2</span></div>
+        <div class="ss-row extra"><span class="ss-rank">9</span><span class="ss-owner">Jared</span><span class="ss-rec">365.0</span></div>
+        <div class="ss-row extra"><span class="ss-rank">10</span><span class="ss-owner">Fito</span><span class="ss-rec">357.9</span></div>
+        <div class="ss-row extra"><span class="ss-rank">11</span><span class="ss-owner">Palumberi</span><span class="ss-rec">343.5</span></div>
+        <div class="ss-row extra"><span class="ss-rank">12</span><span class="ss-owner">Opie</span><span class="ss-rec">322.1</span></div>
+      </div>
+    </div>
+
+    <button class="ss-toggle" id="ss-toggle" aria-expanded="false">Show all 12</button>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="active" role="tab" aria-selected="true" data-tab="summary">Summary</button>
+    <button role="tab" aria-selected="false" data-tab="news">News</button>
+    <button role="tab" aria-selected="false" data-tab="activity">Activity</button>
+    <button role="tab" aria-selected="false" data-tab="keepers">Keepers</button>
+    <button role="tab" aria-selected="false" data-tab="keepercosts">Keeper Costs</button>
+    <button role="tab" aria-selected="false" data-tab="draftboard">Draft Results</button>
+    <button role="tab" aria-selected="false" data-tab="picktrades">Pick Trades</button>
+    <button role="tab" aria-selected="false" data-tab="history">League History</button>
+  </nav>
+
+  <section class="panel active" id="summary">
+    <h2 class="panel-title">Summary</h2>
+    <p class="panel-sub">What's on this site and how the keeper rules work</p>
+
+    <div class="sum-block">
+      <div class="sum-head">Keeper Rules</div>
+      <ol class="sum-rules">
+        <li>
+          <span class="sum-rule-t">Base cost is one round earlier than where he was drafted.</span>
+          Drafted in the 3rd? Keeping him costs your 2nd. Drafted in the 8th? Costs your 7th.
+        </li>
+        <li>
+          <span class="sum-rule-t">1st-round picks can't be kept.</span>
+          Anyone taken in round 1 goes back into the draft pool. No exceptions, and this beats every other rule below.
+        </li>
+        <li>
+          <span class="sum-rule-t">Two years is the limit.</span>
+          Once you've kept a guy two seasons running, he's done. Back in the pool.
+        </li>
+        <li>
+          <span class="sum-rule-t">Traded players keep their original cost.</span>
+          If you traded for him, you pay one round earlier than wherever he was originally drafted &mdash; not a discount, not a penalty.
+        </li>
+        <li>
+          <span class="sum-rule-t">Waiver pickups cost a 5th.</span>
+          Grabbed him off waivers or free agency? Flat 5th-round price &mdash; <em>unless</em> he was originally drafted in the top 4 rounds, in which case the normal one-round-earlier rule applies instead.
+        </li>
+      </ol>
+      <div class="sum-example">
+        <span class="sum-ex-label">For example</span>
+        Jacory Croskey-Merritt was drafted by Post in the 4th, then ended up on Fito's roster. Because round 4 is inside the top 4, Fito pays a 3rd &mdash; not the flat 5th.
+      </div>
+    </div>
+
+    <div class="sum-block">
+      <div class="sum-head">Using the Site</div>
+      <div class="sum-tabs">
+        <div class="sum-tab"><span class="sum-tab-n">Standings box (top of page)</span>Toggle between live standings and Power Rankings. Power Rankings averages free public projection sources (ESPN and Sleeper) and totals them per roster &mdash; until Yahoo is connected it falls back to draft capital, which is labelled as such.</div>
+        <div class="sum-tab"><span class="sum-tab-n">News</span>Fantasy-relevant NFL headlines, refreshed on demand.</div>
+        <div class="sum-tab"><span class="sum-tab-n">Activity</span>A running log of adds, drops and trades. Goes live once Yahoo is connected.</div>
+        <div class="sum-tab"><span class="sum-tab-n">Keepers</span>Who each owner has declared for next season. Green dot means first year kept, red means second &mdash; and red means it's his last.</div>
+        <div class="sum-tab"><span class="sum-tab-n">Keeper Costs</span>Every player on every roster with his price. "Back to pool" means he can't be kept, with the reason underneath.</div>
+        <div class="sum-tab"><span class="sum-tab-n">Draft Results</span>The full draft board. Owner names stay pinned up top and round numbers stay pinned left, so you can scroll around without losing your place. Gold cells were traded picks.</div>
+        <div class="sum-tab"><span class="sum-tab-n">Pick Trades</span>Every pick and player swap on record, by season. This lives in the Google Sheet, not Yahoo.</div>
+        <div class="sum-tab"><span class="sum-tab-n">League History</span>Champions and lifetime records. Also waiting on Yahoo.</div>
+      </div>
+    </div>
+
+    <div class="sum-block sum-note">
+      <div class="sum-head">Heads up</div>
+      <p>Standings records and League History are placeholders until the Yahoo connection is live. Everything keeper-related &mdash; costs, declarations, the draft board, trades &mdash; is real, pulled straight from the league sheet.</p>
+    </div>
+  </section>
+
+  <section class="panel" id="news">
+    <h2 class="panel-title">News</h2>
+    <p class="panel-sub">Latest fantasy-relevant NFL headlines</p>
+
+    <div class="news-bar">
+      <div class="news-sources">
+        <button class="news-src active" data-src="ffl" data-label="Fantasy Player News">Fantasy Player News</button>
+        <button class="news-src" data-src="nfl" data-label="NFL Wire">NFL Wire</button>
+      </div>
+      <button id="news-refresh" class="news-refresh">Refresh</button>
+    </div>
+
+    <div id="news-status" class="news-status">Loading the wire&hellip;</div>
+    <div id="news-list" class="news-list"></div>
+
+    <div class="news-fallback" id="news-fallback" hidden>
+      <div class="news-fallback-title">Couldn't reach a news source</div>
+      <p id="news-error-detail"></p>
+      <div class="news-links">
+        <a href="https://www.nbcsports.com/fantasy/football" target="_blank" rel="noopener">Rotoworld</a>
+        <a href="https://www.rotowire.com/football/" target="_blank" rel="noopener">RotoWire</a>
+        <a href="https://www.espn.com/fantasy/football/" target="_blank" rel="noopener">ESPN Fantasy</a>
+        <a href="https://profootballtalk.nbcsports.com/" target="_blank" rel="noopener">ProFootballTalk</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="activity">
+    <h2 class="panel-title">Activity</h2>
+    <p class="panel-sub">Every add, drop and trade &mdash; logged automatically</p>
+
+    <div class="act-bar">
+      <div class="act-filters">
+        <button class="act-f active" data-type="">All</button>
+        <button class="act-f" data-type="add">Adds</button>
+        <button class="act-f" data-type="drop">Drops</button>
+        <button class="act-f" data-type="trade">Trades</button>
+      </div>
+      <span id="act-sync" class="act-sync"></span>
+    </div>
+
+    <div id="act-status" class="news-status">Loading activity&hellip;</div>
+
+    <div id="act-setup" class="hist-setup" hidden>
+      <div class="hist-setup-title">Logger not connected yet</div>
+      <p>This feed reads from your own server, which polls Yahoo on a timer and archives every transaction to a local database. Set <code>API_BASE</code> at the top of this file once <code>yahoo-proxy.js</code> is running.</p>
+      <p class="hist-setup-sub">Worth starting early: Yahoo only exposes a rolling window of recent transactions, so the archive only contains what the logger was running to catch.</p>
+    </div>
+
+    <div id="act-list" class="act-list"></div>
+  </section>
+
+  <section class="panel" id="keepers">
+    <h2 class="panel-title">Keepers</h2>
+    <p class="panel-sub">Declared keepers for the 2026-2027 season</p>
+
+    <div class="sheet-badge"><span class="dot"></span> Synced from the league Google Sheet &middot; 2026-2027 tab</div>
+    <div class="kk-key">
+      <span class="kk-key-title">Keeper Key</span>
+      <span class="kk-key-item"><span class="kk-dot y1"></span> 1st year kept</span>
+      <span class="kk-key-item"><span class="kk-dot y2"></span> 2nd year kept</span>
+    </div>
+    <div class="kk-grid">
+      <div class="kk-card empty">
+        <div class="kk-owner">Rogan</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Marc</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Malik Nabers</span><span class="kk-round">2nd</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Palumberi</div>
+        <div class="kk-player y2"><span class="kk-dot y2"></span><span class="kk-name">Jaxon Smith-Njigba</span><span class="kk-round">7th</span><span class="kk-year y2">2nd yr</span></div>
+        <div class="kk-player y2"><span class="kk-dot y2"></span><span class="kk-name">Ladd McConkey</span><span class="kk-round">4th</span><span class="kk-year y2">2nd yr</span></div>
+      </div>
+      <div class="kk-card empty">
+        <div class="kk-owner">Jared</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Fito</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Quinshon Judkins</span><span class="kk-round">8th</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Post</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">George Pickens</span><span class="kk-round">5th</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card empty">
+        <div class="kk-owner">Hexx</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Opie</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Colston Loveland</span><span class="kk-round">5th</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card empty">
+        <div class="kk-owner">Derek</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Rebel</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Cam Skattebo</span><span class="kk-round">7th</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Gregg</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Drake Maye</span><span class="kk-round">7th (now 6th)</span><span class="kk-year y1">1st yr</span></div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Chris Olave</span><span class="kk-round">8th (now 7th)</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card empty">
+        <div class="kk-owner">Garett</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="keepercosts">
+    <h2 class="panel-title">Keeper Costs</h2>
+    <p class="panel-sub">Every rostered player's assigned keeper round for 2026 &middot; sourced from the 2025-2026 draft, trades, and ending rosters</p>
+
+    <div class="sheet-badge"><span class="dot"></span> Synced from the league Google Sheet &middot; 2025-2026 draft + rosters</div>
+    <div class="kc-legend">Cost = round required to keep. <strong>Back to pool</strong> = not keepable &mdash; either a 1st-round pick, or already kept two years.</div>
+    <div class="kc-owner-grid">
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Derek</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Kyren Williams</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Mike Evans</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Travis Kelce</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Chris Godwin Jr.</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Courtland Sutton</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Wan&#x27;Dale Robinson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jacoby Brissett</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Jason Myers</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Rams- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Stefon Diggs</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jayden Daniels</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Kirk Cousins</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Derrick Henry<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">BN</span><span class="kc-name">Amon-Ra St. Brown<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Fito</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Marvin Harrison Jr.</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">TreVeyon Henderson</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jacory Croskey-Merritt</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">RJ Harvey</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Bo Nix</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Michael Wilson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Tyrone Tracy Jr.</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Oronde Gadsden</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Woody Marks</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Ka&#x27;imi Fairbairn</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Seahawks- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Xavier Worthy</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Patrick Mahomes</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Quinshon Judkins</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Michael Pittman Jr.</span><span class="kc-cost-val">9th</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Garett</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Joe Burrow</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Trey McBride</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Tee Higgins</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Tony Pollard</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Bucky Irving</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Darius Slayton</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tre Tucker</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Devaughn Vele</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Brian Robinson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Saints- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Khalil Shakir</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Chase McLaughlin</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Rico Dowdle</span><span class="kc-cost-val">13th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Christian McCaffrey<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Gregg</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Ashton Jeanty</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Aaron Jones Sr.</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Darren Waller</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Emeka Egbuka</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Isaiah Likely</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Ricky Pearsall</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Andy Borregales</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">49ers- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Javonte Williams</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Brian Thomas Jr.</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Drake Maye</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Chris Olave</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Ja&#x27;Marr Chase<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">W/R/T</span><span class="kc-name">Jonathan Taylor<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Hexx</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Josh Allen</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Kenneth Walker III</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">DeVonta Smith</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Isiah Pacheco</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jameson Williams</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">DJ Moore</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Kenny Gainwell</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jake Bates</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Jaguars- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Browns- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Deebo Samuel Sr.</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Dallas Goedert</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Jake Elliott</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Kyle Pitts Sr.</span><span class="kc-cost-val">13th</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Jared</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Alvin Kamara</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Zay Flowers</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Breece Hall</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Jordan Love</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Jaylen Warren</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Quentin Johnston</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tez Johnson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Michael Carter</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Colby Parkinson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Colts- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Tucker Kraft</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Justin Herbert</span><span class="kc-cost-val">9th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Dalton Kincaid</span><span class="kc-cost-val">11th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Cameron Dicker</span><span class="kc-cost-val">12th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Justin Jefferson<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Marc</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Omarion Hampton</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Malik Nabers</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Baker Mayfield</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Rashid Shaheed</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Taysom Hill</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jaxson Dart</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Romeo Doubs</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Kareem Hunt</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Broncos- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Eagles- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Cooper Kupp</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Travis Etienne Jr.</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Chris Boswell</span><span class="kc-cost-val">13th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Puka Nacua<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Saquon Barkley<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Opie</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">James Cook III</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Chuba Hubbard</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">C.J. Stroud</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Audric Estime</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Jake Ferguson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Jauan Jennings</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Kyle Monangai</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Colston Loveland</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jayden Reed</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Evan McPherson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Dolphins- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jayden Higgins</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Nico Collins<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">CeeDee Lamb<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Palumberi</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">DK Metcalf</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">George Kittle</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Ladd McConkey</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Trevor Lawrence</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Christian Watson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Harold Fannin Jr.</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tyler Allgeier</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Trey Benson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Chris Rodriguez Jr.</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Cam Little</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Giants- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Zach Charbonnet</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jaxon Smith-Njigba</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Bijan Robinson<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Post</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Tetairoa McMillan</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Garrett Wilson</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">George Pickens</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Blake Corum</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Rhamondre Stevenson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Devin Neal</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tyjae Spears</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Texans- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jordan Mason</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Tyler Warren</span><span class="kc-cost-val">9th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Dak Prescott</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Brock Bowers</span><span class="kc-cost-val">11th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Brandon Aubrey</span><span class="kc-cost-val">13th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">W/R/T</span><span class="kc-name">Drake London<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">BN</span><span class="kc-name">Lamar Jackson<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Rebel</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jalen Hurts</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Terry McLaurin</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">D&#x27;Andre Swift</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Davante Adams</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Matthew Stafford</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jakobi Meyers</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Alec Pierce</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Devin Singletary</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Brenton Strange</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Rome Odunze</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Riley Patterson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Bills- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Cam Skattebo</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">De&#x27;Von Achane<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">BN</span><span class="kc-name">Jahmyr Gibbs<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Rogan</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Josh Jacobs</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">David Montgomery</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Rashee Rice</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jaylen Waddle</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Hunter Henry</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jared Goff</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Juwan Johnson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Tyler Loop</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Steelers- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Chase Brown</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Brock Purdy</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Jordan Addison</span><span class="kc-cost-val">9th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Keon Coleman</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">A.J. Brown<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="draftboard">
+    <h2 class="panel-title">Draft Results</h2>
+    <p class="panel-sub">Full draft board &middot; scroll sideways to see all 12 teams</p>
+
+    <div class="db-legend"><span class="db-key"><span class="db-swatch traded"></span> Pick acquired via trade</span> <span class="db-note">Snake order &middot; 14 rounds &middot; 168 picks &middot; headers stay locked while you scroll</span></div>
+    <div class="db-scroll">
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th class="db-corner" scope="col">RD</th>
+            <th class="db-head" scope="col"><span class="db-slot">1</span><span class="db-head-owner">Fito</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">2</span><span class="db-head-owner">Palumberi</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">3</span><span class="db-head-owner">Jared</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">4</span><span class="db-head-owner">Marc</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">5</span><span class="db-head-owner">Rebel</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">6</span><span class="db-head-owner">Opie</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">7</span><span class="db-head-owner">Derek</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">8</span><span class="db-head-owner">Garett</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">9</span><span class="db-head-owner">Rogan</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">10</span><span class="db-head-owner">Post</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">11</span><span class="db-head-owner">Hexx</span></th>
+            <th class="db-head" scope="col"><span class="db-slot">12</span><span class="db-head-owner">Gregg</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th class="db-rownum" scope="row">1</th>
+            <td class="db-cell traded"><span class="db-pick">1</span><span class="db-player">J Chase</span><span class="db-owner">Hexx &larr; Fito</span></td>
+            <td class="db-cell"><span class="db-pick">2</span><span class="db-player">Bijan</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">3</span><span class="db-player">Justin Jefferson</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">4</span><span class="db-player">Sawuon barkley</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">5</span><span class="db-player">Jahmyr Gibbs</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">6</span><span class="db-player">CeeDee Lamb</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">7</span><span class="db-player">Amon Ra</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">8</span><span class="db-player">CMC</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">9</span><span class="db-player">AJ Brown</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">10</span><span class="db-player">Lamar</span><span class="db-owner">Post</span></td>
+            <td class="db-cell traded"><span class="db-pick">11</span><span class="db-player">Derick Henry</span><span class="db-owner">Derek &larr; Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">12</span><span class="db-player">Jonathan Taylor</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">2</th>
+            <td class="db-cell"><span class="db-pick">24</span><span class="db-player">Marvn Harrison</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">23</span><span class="db-player">DK Metcalf</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">22</span><span class="db-player">Alvin Kamara</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">21</span><span class="db-player">Omarion Hampton</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">20</span><span class="db-player">Jalen Hurts</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">19</span><span class="db-player">James Cook</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">18</span><span class="db-player">Kyren Williams</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">17</span><span class="db-player">Joe Burrow</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">16</span><span class="db-player">Josh Jacobs</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">15</span><span class="db-player">Drake London</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">14</span><span class="db-player">Josh Allen</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">13</span><span class="db-player">Ashton Jeanty</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">3</th>
+            <td class="db-cell"><span class="db-pick">25</span><span class="db-player">Treyveon Henderson</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">26</span><span class="db-player">James Conner</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">27</span><span class="db-player">Tyreek Hill</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">28</span><span class="db-player">Malik Nabers</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">29</span><span class="db-player">Terry McLaurin</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">30</span><span class="db-player">Chubba Hubbard</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">31</span><span class="db-player">Mike Evans</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">32</span><span class="db-player">Trey McBride</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">33</span><span class="db-player">David Montgomery</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">34</span><span class="db-player">Tetaitora McMillan</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">35</span><span class="db-player">Kenneth Walker III</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell traded"><span class="db-pick">36</span><span class="db-player">Garett Wilson</span><span class="db-owner">Rebel &larr; Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">4</th>
+            <td class="db-cell traded"><span class="db-pick">48</span><span class="db-player">Devonta Smith</span><span class="db-owner">Hexx &larr; Fito</span></td>
+            <td class="db-cell"><span class="db-pick">47</span><span class="db-player">George Kittle</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">46</span><span class="db-player">Zay Flowers</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">45</span><span class="db-player">Puka Nacua</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">44</span><span class="db-player">Devonte Adams</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">43</span><span class="db-player">Tony Pollard</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">42</span><span class="db-player">D&#x27;Andre Swift</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">41</span><span class="db-player">Higgins</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">40</span><span class="db-player">Rashee Rice</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">39</span><span class="db-player">Jacory Croskey-Merrit</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">38</span><span class="db-player">Isiah Pacheco</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell traded"><span class="db-pick">37</span><span class="db-player">Breece Hall</span><span class="db-owner">Jared &larr; Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">5</th>
+            <td class="db-cell"><span class="db-pick">49</span><span class="db-player">RJ Harvey</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">50</span><span class="db-player">Ladd Mcconkey</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">51</span><span class="db-player">DJ Moore</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">52</span><span class="db-player">Baker Mayfield</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">53</span><span class="db-player">Sam LaPorta</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">54</span><span class="db-player">Calvin Ridley</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">55</span><span class="db-player">Travis Kelce</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">56</span><span class="db-player">Bucky Irving</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">57</span><span class="db-player">Jaylen Waddle</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">58</span><span class="db-player">Ricky Pearsall</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">59</span><span class="db-player">Jameson Williams</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">60</span><span class="db-player">Aaron Jones Sr.</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">6</th>
+            <td class="db-cell"><span class="db-pick">72</span><span class="db-player">Travis Hunter</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">71</span><span class="db-player">Austin Ekeler</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">70</span><span class="db-player">Jaylen Warren</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">69</span><span class="db-player">Jakoby Meyes</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">68</span><span class="db-player">Rome Odunze</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">67</span><span class="db-player">Evan Engram</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">66</span><span class="db-player">Tyrone Tracy Jr.</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">65</span><span class="db-player">Jerry Jeudy</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">64</span><span class="db-player">Mark Andrews</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">63</span><span class="db-player">George Pickens</span><span class="db-owner">Post</span></td>
+            <td class="db-cell traded"><span class="db-pick">62</span><span class="db-player">Courtland Sutton</span><span class="db-owner">Derek &larr; Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">61</span><span class="db-player">Emeka Egbuka</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">7</th>
+            <td class="db-cell"><span class="db-pick">73</span><span class="db-player">Kaleb Johnson</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">74</span><span class="db-player">Zach Charbonnet</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell traded"><span class="db-pick">75</span><span class="db-player">Javonte Williams</span><span class="db-owner">Gregg &larr; Jared</span></td>
+            <td class="db-cell"><span class="db-pick">76</span><span class="db-player">Cooper Kupp</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">77</span><span class="db-player">Rhamondrew Stevenson</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">78</span><span class="db-player">Matthew Golden</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">79</span><span class="db-player">Stefon Diggs</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">80</span><span class="db-player">Tank Bigsby</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">81</span><span class="db-player">rachaad white</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">82</span><span class="db-player">Jordan Mason</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">83</span><span class="db-player">Deebo Samuel</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">84</span><span class="db-player">Brian Thomas Jr.</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">8</th>
+            <td class="db-cell"><span class="db-pick">96</span><span class="db-player">Xavier Worthy</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">95</span><span class="db-player">Jaxon Smith-Njigba</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">94</span><span class="db-player">Tucker Kraft</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">93</span><span class="db-player">Travis Etienne</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">92</span><span class="db-player">Cam Skattebo</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">91</span><span class="db-player">Jayen Higgens</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">90</span><span class="db-player">Jake Bates</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">89</span><span class="db-player">Khalil Shakir</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">88</span><span class="db-player">Chase Brown</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">87</span><span class="db-player">Bhayshul Tuten</span><span class="db-owner">Post</span></td>
+            <td class="db-cell traded"><span class="db-pick">86</span><span class="db-player">Patrick Mahomes</span><span class="db-owner">Fito &larr; Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">85</span><span class="db-player">Drake Maye</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">9</th>
+            <td class="db-cell"><span class="db-pick">97</span><span class="db-player">Quinshon Judkins</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">98</span><span class="db-player">Bo Nix</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">99</span><span class="db-player">JK Dobbins</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">100</span><span class="db-player">J.J. McCarthy</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">101</span><span class="db-player">Keenan Allen</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">102</span><span class="db-player">Nico Collins</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">103</span><span class="db-player">Jayden Daniels</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">104</span><span class="db-player">Jerome Ford</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">105</span><span class="db-player">Brock Purdy</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">106</span><span class="db-player">Ollie Gordon</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">107</span><span class="db-player">Dallas Goebert</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">108</span><span class="db-player">Chris Olave</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">10</th>
+            <td class="db-cell"><span class="db-pick">120</span><span class="db-player">Michael Pittman Jr.</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">119</span><span class="db-player">Jauan Jennings</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">118</span><span class="db-player">Justin Herbert</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">117</span><span class="db-player">Joe Mixon</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">116</span><span class="db-player">Achane</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">115</span><span class="db-player">Kyler Murray</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">114</span><span class="db-player">TEXANS Defense</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">113</span><span class="db-player">Trey Benson</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">112</span><span class="db-player">Jordan Addison</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">111</span><span class="db-player">Tyler Warren</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">110</span><span class="db-player">Chris Godwin</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">109</span><span class="db-player">David Njoku</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">11</th>
+            <td class="db-cell"><span class="db-pick">121</span><span class="db-player">Colston Loveland</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">122</span><span class="db-player">Jayden Reed</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">123</span><span class="db-player">Tyler Allgeier</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">124</span><span class="db-player">Xavier Lagette</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">125</span><span class="db-player">Chubb</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">126</span><span class="db-player">Elic Ayomanor</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">127</span><span class="db-player">Kirk Cousins</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">128</span><span class="db-player">Chase McLaughlin</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">129</span><span class="db-player">Keon Coleman</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">130</span><span class="db-player">Dak Prescott</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">131</span><span class="db-player">Jake Elliot</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">132</span><span class="db-player">Josh Downs</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">12</th>
+            <td class="db-cell"><span class="db-pick">144</span><span class="db-player">Caleb Williams</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">143</span><span class="db-player">Baraelon Allen</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">142</span><span class="db-player">Dalton Kincaid</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">141</span><span class="db-player">VIKINGS Def</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">140</span><span class="db-player">Najee Harris</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">139</span><span class="db-player">Jaydon Blue</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell"><span class="db-pick">138</span><span class="db-player">Matt Gay</span><span class="db-owner">Derek</span></td>
+            <td class="db-cell"><span class="db-pick">137</span><span class="db-player">LIONS def</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">136</span><span class="db-player">Darnell Mooney</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">135</span><span class="db-player">Brock Bowers</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">134</span><span class="db-player">Steelers</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">133</span><span class="db-player">BRONCOS Def</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">13</th>
+            <td class="db-cell"><span class="db-pick">145</span><span class="db-player">Hockenson</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">146</span><span class="db-player">Rashid Shaheed</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">147</span><span class="db-player">Cameron Dicker</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">148</span><span class="db-player">Brenton Strange</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell"><span class="db-pick">149</span><span class="db-player">Jodan Love</span><span class="db-owner">Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">150</span><span class="db-player">Ravens def</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell traded"><span class="db-pick">151</span><span class="db-player">Miles Sanders</span><span class="db-owner">Hexx &larr; Derek</span></td>
+            <td class="db-cell"><span class="db-pick">152</span><span class="db-player">Dylan Sampson</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">153</span><span class="db-player">SEAHAWKS def</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">154</span><span class="db-player">Eagles Defense</span><span class="db-owner">Post</span></td>
+            <td class="db-cell"><span class="db-pick">155</span><span class="db-player">Micahel Penix</span><span class="db-owner">Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">156</span><span class="db-player">Will Shipley</span><span class="db-owner">Gregg</span></td>
+          </tr>
+          <tr>
+            <th class="db-rownum" scope="row">14</th>
+            <td class="db-cell"><span class="db-pick">168</span><span class="db-player">Ray Davis</span><span class="db-owner">Fito</span></td>
+            <td class="db-cell"><span class="db-pick">167</span><span class="db-player">Justin Fields</span><span class="db-owner">Palumberi</span></td>
+            <td class="db-cell"><span class="db-pick">166</span><span class="db-player">NE Def</span><span class="db-owner">Jared</span></td>
+            <td class="db-cell"><span class="db-pick">165</span><span class="db-player">Chris Boswell</span><span class="db-owner">Marc</span></td>
+            <td class="db-cell traded"><span class="db-pick">164</span><span class="db-player">damario douglas</span><span class="db-owner">Gregg &larr; Rebel</span></td>
+            <td class="db-cell"><span class="db-pick">163</span><span class="db-player">Butker</span><span class="db-owner">Opie</span></td>
+            <td class="db-cell traded"><span class="db-pick">162</span><span class="db-player">Kyle Pitts</span><span class="db-owner">Hexx &larr; Derek</span></td>
+            <td class="db-cell"><span class="db-pick">161</span><span class="db-player">Rico Dowdle</span><span class="db-owner">Garett</span></td>
+            <td class="db-cell"><span class="db-pick">160</span><span class="db-player">Tyler Bass</span><span class="db-owner">Rogan</span></td>
+            <td class="db-cell"><span class="db-pick">159</span><span class="db-player">Brandon Aubrey</span><span class="db-owner">Post</span></td>
+            <td class="db-cell traded"><span class="db-pick">158</span><span class="db-player">CARDINALS def</span><span class="db-owner">Fito &larr; Hexx</span></td>
+            <td class="db-cell"><span class="db-pick">157</span><span class="db-player">Kyle Monangai</span><span class="db-owner">Gregg</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="picktrades">
+    <h2 class="panel-title">Pick Trades</h2>
+    <p class="panel-sub">Every pick and player swap on record</p>
+
+    <div class="sheet-badge"><span class="dot"></span> Tracked in the league Google Sheet &middot; not in Yahoo</div>
+    <div class="tr-section">
+      <div class="tr-section-head"><span class="tr-season">2026-2027</span><span class="tr-label">Preseason Trades</span><span class="tr-count">3</span></div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 1</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>10th</span><span class="tr-asset"><span class="tr-yr">2027</span>10th</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Fito</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>2nd</span><span class="tr-asset"><span class="tr-yr">2027</span>1st</span></div></div>
+        </div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 2</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>14th</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Fito</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>1st</span></div></div>
+        </div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 3</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>Rd 2</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 8</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Gregg</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>Rd 10</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 11</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tr-section">
+      <div class="tr-section-head"><span class="tr-season">2026-2027</span><span class="tr-label">2027 In-Season Trades</span><span class="tr-count">0</span></div>
+      <div class="tr-empty">No trades logged yet</div>
+    </div>
+    <div class="tr-section">
+      <div class="tr-section-head"><span class="tr-season">2025-2026</span><span class="tr-label">Preseason Trades</span><span class="tr-count">6</span></div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 1</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>1st</span><span class="tr-asset"><span class="tr-yr">2026</span>10th</span><span class="tr-asset"><span class="tr-yr">2027</span>10th</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Fito</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>8th</span><span class="tr-asset"><span class="tr-yr">2026</span>2nd</span><span class="tr-asset"><span class="tr-yr">2027</span>1st</span></div></div>
+        </div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 2</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>4th</span><span class="tr-asset"><span class="tr-yr">2026</span>14th</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Fito</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>14th</span><span class="tr-asset"><span class="tr-yr">2026</span>1st</span></div></div>
+        </div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 3</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>13th</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Derek</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>1st</span></div></div>
+        </div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 4</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>14th</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Derek</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>6th</span></div></div>
+        </div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 5</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Gregg</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>14th</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Rebel</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>3rd</span></div></div>
+        </div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 6</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Gregg</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>7th</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Jared</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>4th</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tr-section">
+      <div class="tr-section-head"><span class="tr-season">2025-2026</span><span class="tr-label">2026 In-Season Trades</span><span class="tr-count">1</span></div>
+      <div class="tr-card">
+        <div class="tr-num">Trade 1</div>
+        <div class="tr-sides">
+          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>DJ Moore</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 2</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 8</span></div></div>
+          <div class="tr-swap">&#8646;</div>
+          <div class="tr-side"><div class="tr-owner">Gregg</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>Ja&#x27;Marr Chase</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 10</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 11</span></div></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="panel" id="history">
+    <h2 class="panel-title">League History</h2>
+    <p class="panel-sub">Titles, lifetime records, and every champion since the league started</p>
+
+    <div id="hist-status" class="news-status">Loading league history&hellip;</div>
+
+    <div id="hist-setup" class="hist-setup" hidden>
+      <div class="hist-setup-title">Not connected to Yahoo yet</div>
+      <p>This tab is wired and waiting. Once your Yahoo developer app is approved and your proxy is running, set <code>API_BASE</code> at the top of this file's script to your server URL and this fills in automatically &mdash; champions, titles, and lifetime records for all 12 owners.</p>
+      <p class="hist-setup-sub">Yahoo requires OAuth2 and doesn't allow browser requests, so the page reads from your server, not Yahoo directly. The proxy file has the endpoint it expects.</p>
+    </div>
+
+    <div id="hist-content" hidden>
+      <div class="hist-section-label">Champions</div>
+      <div class="hof-grid" id="hist-champs"></div>
+
+      <div class="hist-section-label" style="margin-top:34px;">All-Time by Owner</div>
+      <div class="hist-owner-list" id="hist-owners"></div>
+    </div>
+  </section>
+
+
+  <footer>All data on this page is placeholder — Standings will sync live from Yahoo Fantasy once the API key is approved. Keepers pulls from the league Google Sheet.</footer>
+
+</div>
+
+<script>
+  const buttons = document.querySelectorAll('nav.tabs button');
+  const panels = document.querySelectorAll('section.panel');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+      panels.forEach(p => p.classList.remove('active'));
+
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+
+  // =====================================================================
+  //  YAHOO CONNECTION
+  //  Yahoo's Fantasy API needs OAuth2 and blocks browser requests, so this
+  //  page reads from your own small server, which talks to Yahoo for it.
+  //  See yahoo-proxy.js for a ready-to-run version.
+  //
+  //  Everything runs on one server, so once Yahoo is connected you only
+  //  change null to two quote marks:  const API_BASE = '';
+  //  Leave it as null and the page shows setup instructions instead.
+  // =====================================================================
+  const API_BASE = null;
+
+  // ---- League History ----
+  const histStatus  = document.getElementById('hist-status');
+  const histSetup   = document.getElementById('hist-setup');
+  const histContent = document.getElementById('hist-content');
+  let histLoaded = false;
+
+  function ord(n) {
+    const s = ['th','st','nd','rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
+  function renderHistory(data) {
+    const champs = data.champions || [];
+    const owners = (data.owners || []).slice().sort((a, b) =>
+      (b.titles || 0) - (a.titles || 0) || (b.wins || 0) - (a.wins || 0));
+
+    document.getElementById('hist-champs').innerHTML = champs
+      .slice().sort((a, b) => b.season - a.season)
+      .map(c => '<div class="hof-card">'
+        + '<div class="hof-year">' + esc(c.season) + '</div>'
+        + '<div class="hof-champ">' + esc(c.owner) + '</div>'
+        + '<div class="hof-record">' + esc(c.record || '') + (c.points ? ' \u00b7 ' + esc(c.points) + ' PF' : '') + '</div>'
+        + '</div>').join('');
+
+    document.getElementById('hist-owners').innerHTML = owners.map(o => {
+      const t = o.titles || 0;
+      const w = o.wins || 0, l = o.losses || 0, ti = o.ties || 0;
+      const rec = w + '-' + l + (ti ? '-' + ti : '');
+      const pct = (w + l) ? ((w + (ti || 0) / 2) / (w + l + (ti || 0))).toFixed(3).replace(/^0/, '') : '\u2014';
+      return '<div class="hist-owner' + (t ? ' champ' : '') + '">'
+        + '<div class="hist-rings' + (t ? '' : ' none') + '">' + (t ? '\uD83C\uDFC6'.repeat(Math.min(t, 4)) + (t > 4 ? '+' : '') : '\u2014') + '</div>'
+        + '<div><div class="hist-name">' + esc(o.owner) + '</div>'
+        + (o.titleYears && o.titleYears.length ? '<div class="hist-years">' + esc(o.titleYears.join(', ')) + '</div>' : '')
+        + '</div>'
+        + '<div class="hist-stat"><span>Titles</span>' + t + '</div>'
+        + '<div class="hist-stat"><span>Record</span>' + rec + '</div>'
+        + '<div class="hist-stat"><span>Win%</span>' + pct + '</div>'
+        + '<div class="hist-stat"><span>Playoffs</span>' + (o.playoffs != null ? o.playoffs : '\u2014') + '</div>'
+        + '</div>';
+    }).join('');
+
+    histStatus.hidden = true;
+    histSetup.hidden = true;
+    histContent.hidden = false;
+  }
+
+  async function loadHistory() {
+    if (API_BASE === null) {
+      histStatus.hidden = true;
+      histContent.hidden = true;
+      histSetup.hidden = false;
+      return;
+    }
+    histStatus.hidden = false;
+    histStatus.textContent = 'Loading league history\u2026';
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/history');
+      if (!res.ok) throw new Error('server returned ' + res.status);
+      renderHistory(await res.json());
+    } catch (e) {
+      histStatus.hidden = true;
+      histContent.hidden = true;
+      histSetup.hidden = false;
+      histSetup.querySelector('.hist-setup-title').textContent = 'Could not reach the league API';
+      histSetup.querySelector('p').textContent =
+        'Tried ' + API_BASE + '/history and got: ' + (e.message || 'no response') +
+        '. Check that the proxy is running and reachable from this page.';
+    }
+  }
+
+  document.querySelector('nav.tabs button[data-tab="history"]').addEventListener('click', () => {
+    if (!histLoaded) { histLoaded = true; loadHistory(); }
+  });
+
+
+
+  // ---- Live data from the league Google Sheet ----
+  // The page ships with a snapshot baked in so it works standalone. When the
+  // server is reachable, this replaces those sections with whatever the sheet
+  // says right now. If the fetch fails, the snapshot simply stays.
+  const ordN = n => {
+    if (n <= 0) return 'N/A';
+    const v = n % 100;
+    const suf = (v >= 11 && v <= 13) ? 'th' : ({1:'st',2:'nd',3:'rd'})[n % 10] || 'th';
+    return n + suf;
+  };
+
+  function renderKeepers(rows) {
+    const grid = document.querySelector('#keepers .kk-grid');
+    if (!grid) return;
+    grid.innerHTML = rows.map(r => {
+      const inner = r.keepers.length
+        ? r.keepers.map(k => {
+            const c = k.year === 2 ? 'y2' : 'y1';
+            const lbl = k.year === 2 ? '2nd yr' : '1st yr';
+            return '<div class="kk-player ' + c + '">'
+              + '<span class="kk-dot ' + c + '"></span>'
+              + '<span class="kk-name">' + esc(k.player) + '</span>'
+              + '<span class="kk-round">' + esc(k.round) + '</span>'
+              + '<span class="kk-year ' + c + '">' + lbl + '</span></div>';
+          }).join('')
+        : '<div class="kk-none">No keepers declared</div>';
+      return '<div class="kk-card' + (r.keepers.length ? '' : ' empty') + '">'
+        + '<div class="kk-owner">' + esc(r.owner) + '</div>' + inner + '</div>';
+    }).join('');
+  }
+
+  function renderKeeperCosts(rows) {
+    const grid = document.querySelector('#keepercosts .kc-owner-grid');
+    if (!grid) return;
+    const byOwner = {};
+    for (const r of rows) (byOwner[r.owner] ||= []).push(r);
+
+    grid.innerHTML = Object.keys(byOwner).sort().map(owner => {
+      const list = byOwner[owner].slice().sort((a, b) =>
+        (a.costRound === 0) - (b.costRound === 0) || a.costRound - b.costRound);
+      const inner = list.map(p => {
+        if (p.costRound === 0) {
+          return '<div class="kc-row not-keepable">'
+            + '<span class="kc-pos">' + esc(p.pos) + '</span>'
+            + '<span class="kc-name">' + esc(p.player)
+            + '<span class="kc-reason">' + esc(p.reason || '') + '</span></span>'
+            + '<span class="kc-cost-val none">Back to pool</span></div>';
+        }
+        return '<div class="kc-row">'
+          + '<span class="kc-pos">' + esc(p.pos) + '</span>'
+          + '<span class="kc-name">' + esc(p.player) + '</span>'
+          + '<span class="kc-cost-val">' + esc(p.costLabel) + '</span></div>';
+      }).join('');
+      return '<div class="kc-owner-block"><div class="kc-owner-name">'
+        + esc(owner) + '</div><div class="kc-owner-list">' + inner + '</div></div>';
+    }).join('');
+  }
+
+  function renderDraft(picks) {
+    const table = document.querySelector('#draftboard .db-table');
+    if (!table || !picks.length) return;
+
+    const NCOL = 12;
+    const rounds = Math.max(...picks.map(p => p.round));
+
+    // slot owners come from round 1: a traded pick still belongs to its slot
+    const slotOwner = {};
+    for (const p of picks.filter(x => x.round === 1)) {
+      slotOwner[p.pick] = p.tradedFrom || p.owner;
+    }
+
+    const grid = {};
+    for (const p of picks) {
+      const inRound = p.pick - (p.round - 1) * NCOL;
+      const slot = p.round % 2 === 1 ? inRound : (NCOL + 1 - inRound);
+      grid[p.round + ':' + slot] = p;
+    }
+
+    let head = '<thead><tr><th class="db-corner" scope="col">RD</th>';
+    for (let s = 1; s <= NCOL; s++) {
+      head += '<th class="db-head" scope="col"><span class="db-slot">' + s
+        + '</span><span class="db-head-owner">' + esc(slotOwner[s] || '') + '</span></th>';
+    }
+    head += '</tr></thead>';
+
+    let body = '<tbody>';
+    for (let r = 1; r <= rounds; r++) {
+      body += '<tr><th class="db-rownum" scope="row">' + r + '</th>';
+      for (let s = 1; s <= NCOL; s++) {
+        const p = grid[r + ':' + s];
+        if (!p) { body += '<td class="db-cell"></td>'; continue; }
+        const owner = esc(p.owner) + (p.tradedFrom ? ' \u2190 ' + esc(p.tradedFrom) : '');
+        body += '<td class="db-cell' + (p.tradedFrom ? ' traded' : '') + '">'
+          + '<span class="db-pick">' + p.pick + '</span>'
+          + '<span class="db-player">' + esc(p.player) + '</span>'
+          + '<span class="db-owner">' + owner + '</span></td>';
+      }
+      body += '</tr>';
+    }
+    body += '</tbody>';
+    table.innerHTML = head + body;
+  }
+
+  function renderTrades(sections) {
+    const panel = document.getElementById('picktrades');
+    if (!panel) return;
+    const old = panel.querySelectorAll('.tr-section');
+    if (!old.length) return;
+    const anchor = old[0].parentNode;
+    old.forEach(n => n.remove());
+
+    const html = sections.map(sec => {
+      const body = sec.trades.length
+        ? sec.trades.map((t, i) => {
+            const side = s => s
+              ? '<div class="tr-side"><div class="tr-owner">' + esc(s.owner) + '</div>'
+                + '<div class="tr-assets">' + s.assets.map(a =>
+                    '<span class="tr-asset"><span class="tr-yr">' + esc(a.year) + '</span>'
+                    + esc(a.item) + '</span>').join('') + '</div></div>'
+              : '<div class="tr-side"><div class="tr-owner">&mdash;</div></div>';
+            return '<div class="tr-card"><div class="tr-num">Trade ' + (i + 1) + '</div>'
+              + '<div class="tr-sides">' + side(t.a)
+              + '<div class="tr-swap">&#8646;</div>' + side(t.b) + '</div></div>';
+          }).join('')
+        : '<div class="tr-empty">No trades logged yet</div>';
+
+      return '<div class="tr-section"><div class="tr-section-head">'
+        + '<span class="tr-season">' + esc(sec.season) + '</span>'
+        + '<span class="tr-label">' + esc(sec.label) + '</span>'
+        + '<span class="tr-count">' + sec.trades.length + '</span></div>' + body + '</div>';
+    }).join('');
+
+    anchor.insertAdjacentHTML('beforeend', html);
+  }
+
+  function markLive(when) {
+    const stamp = when
+      ? new Date(when).toLocaleString(undefined,
+          { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      : '';
+    document.querySelectorAll('.sheet-badge').forEach(b => {
+      b.innerHTML = '<span class="dot"></span> Live from the league Google Sheet'
+        + (stamp ? ' \u00b7 updated ' + stamp : '');
+    });
+  }
+
+  async function loadLeagueData() {
+    if (API_BASE === null) return;
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/league-data');
+      if (!res.ok) return;
+      const d = await res.json();
+      if (d.error) return;
+      if (d.keepers) renderKeepers(d.keepers);
+      if (d.keeperCosts) renderKeeperCosts(d.keeperCosts);
+      if (d.draft) renderDraft(d.draft);
+      if (d.tradeSections) renderTrades(d.tradeSections);
+      markLive(d.fetchedAt);
+    } catch (e) {
+      // keep the built-in snapshot
+    }
+  }
+
+  loadLeagueData();
+
+  // ---- Standings strip: expand + Standings/Power switch ----
+  const ssStrip = document.querySelector('.standings-strip');
+  const ssToggle = document.getElementById('ss-toggle');
+  ssToggle.addEventListener('click', () => {
+    const open = ssStrip.classList.toggle('open');
+    ssToggle.textContent = open ? 'Show less' : 'Show all 12';
+    ssToggle.setAttribute('aria-expanded', String(open));
+  });
+
+  let powerFetched = false;
+
+  document.querySelectorAll('.ss-sw').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.ss-sw').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      document.querySelectorAll('.ss-view').forEach(v => v.classList.remove('active'));
+      document.getElementById('ss-view-' + b.dataset.view).classList.add('active');
+
+      if (b.dataset.view === 'power' && API_BASE !== null && !powerFetched) {
+        powerFetched = true;
+        loadPower();
+      }
+    });
+  });
+
+  // Live power rankings: the proxy pulls several public projection sources,
+  // averages each player's rank, and totals it per roster.
+  async function loadPower() {
+    const list = document.getElementById('ss-list-power');
+    const tag  = document.getElementById('ss-tag-power');
+    tag.textContent = 'loading projections\u2026';
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/power');
+      if (!res.ok) throw new Error('server returned ' + res.status);
+      const data = await res.json();
+      const teams = data.teams || [];
+      if (!teams.length) throw new Error('no projection data');
+
+      list.innerHTML = teams.map((t, i) => {
+        const n = i + 1;
+        return '<div class="ss-row' + (n === 1 ? ' lead' : '') + (n > 5 ? ' extra' : '') + '">'
+          + '<span class="ss-rank">' + n + '</span>'
+          + '<span class="ss-owner">' + esc(t.owner) + '</span>'
+          + '<span class="ss-rec">' + (Math.round(t.projected * 10) / 10) + '</span>'
+          + '</div>';
+      }).join('');
+
+      tag.textContent = 'projected points \u00b7 averaged across ' +
+        (data.sources || []).join(', ');
+    } catch (e) {
+      tag.textContent = 'live projections unavailable (' + (e.message || 'error') + ') \u2014 showing draft capital';
+    }
+  }
+
+  // ---- Activity feed (reads the logged archive from your proxy) ----
+  const actStatus = document.getElementById('act-status');
+  const actSetup  = document.getElementById('act-setup');
+  const actList   = document.getElementById('act-list');
+  const actSync   = document.getElementById('act-sync');
+  const actFilters = document.querySelectorAll('.act-f');
+  let actLoaded = false;
+
+  function actLabel(t) {
+    if (t === 'trade') return 'trade';
+    if (t === 'add') return 'add';
+    if (t === 'drop') return 'drop';
+    if (t === 'add/drop' || t === 'add-drop') return 'add / drop';
+    return t || 'move';
+  }
+
+  function actClass(t) {
+    if (t === 'trade') return 'trade';
+    if (t === 'add') return 'add';
+    if (t === 'drop') return 'drop';
+    return 'other';
+  }
+
+  function renderActivity(data) {
+    const txs = data.transactions || [];
+    actSync.textContent = data.lastSync
+      ? 'last synced ' + new Date(data.lastSync).toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })
+      : '';
+
+    if (!txs.length) {
+      actList.innerHTML = '<div class="act-empty">Nothing logged yet.</div>';
+      actStatus.hidden = true;
+      return;
+    }
+
+    actList.innerHTML = txs.map(t => {
+      const d = new Date(t.timestamp * 1000);
+      const when = d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+      const moves = (t.moves || []).map(m => {
+        const isAdd = m.action === 'add';
+        const arrow = isAdd ? 'IN' : 'OUT';
+        const other = isAdd ? (m.source || '') : (m.destination || '');
+        return '<div class="act-move">'
+          + '<span class="act-arrow ' + (isAdd ? 'add' : 'drop') + '">' + arrow + '</span>'
+          + '<span><span class="act-player">' + esc(m.player) + '</span>'
+          + (m.position ? '<span class="act-pos">' + esc(m.position) + (m.nflTeam ? ' \u00b7 ' + esc(m.nflTeam) : '') + '</span>' : '')
+          + '</span>'
+          + '<span class="act-owner">' + esc(m.owner || other) + '</span>'
+          + '</div>';
+      }).join('');
+
+      return '<div class="act-card ' + actClass(t.type) + '">'
+        + '<div class="act-head">'
+        + '<span class="act-type ' + actClass(t.type) + '">' + esc(actLabel(t.type)) + '</span>'
+        + (t.season ? '<span class="act-date">' + esc(t.season) + '</span>' : '')
+        + '<span class="act-date">' + when + '</span>'
+        + '</div>'
+        + '<div class="act-moves">' + moves + '</div>'
+        + '</div>';
+    }).join('');
+
+    actStatus.hidden = true;
+    actSetup.hidden = true;
+  }
+
+  async function loadActivity(type) {
+    if (API_BASE === null) {
+      actStatus.hidden = true;
+      actList.innerHTML = '';
+      actSetup.hidden = false;
+      return;
+    }
+    actSetup.hidden = true;
+    actStatus.hidden = false;
+    actStatus.textContent = 'Loading activity\u2026';
+    try {
+      const url = API_BASE.replace(/\/$/, '') + '/activity?limit=100' + (type ? '&type=' + encodeURIComponent(type) : '');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('server returned ' + res.status);
+      renderActivity(await res.json());
+    } catch (e) {
+      actStatus.hidden = true;
+      actList.innerHTML = '';
+      actSetup.hidden = false;
+      actSetup.querySelector('.hist-setup-title').textContent = 'Could not reach the logger';
+      actSetup.querySelector('p').textContent =
+        'Tried ' + API_BASE + '/activity and got: ' + (e.message || 'no response') + '.';
+    }
+  }
+
+  actFilters.forEach(b => {
+    b.addEventListener('click', () => {
+      actFilters.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      loadActivity(b.dataset.type);
+    });
+  });
+
+  document.querySelector('nav.tabs button[data-tab="activity"]').addEventListener('click', () => {
+    if (!actLoaded) { actLoaded = true; loadActivity(''); }
+  });
+
+  // ---- News feed ----
+  // Two paths: (1) ESPN's public JSON straight from the browser - works when this
+  // file is hosted on a real domain. (2) If that's blocked (e.g. inside a sandboxed
+  // preview), fall back to a live web search via the Anthropic API.
+  const newsList = document.getElementById('news-list');
+  const newsStatus = document.getElementById('news-status');
+  const newsFallback = document.getElementById('news-fallback');
+  const newsErrDetail = document.getElementById('news-error-detail');
+  const newsRefresh = document.getElementById('news-refresh');
+  const srcButtons = document.querySelectorAll('.news-src');
+  let newsLoaded = false;
+
+  const ENDPOINTS = {
+    ffl: [
+      'https://site.api.espn.com/apis/fantasy/v2/games/ffl/news?limit=50',
+      'https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=50'
+    ],
+    nfl: [
+      'https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=50',
+      'https://now.core.api.espn.com/v1/sports/news?limit=50&sport=football'
+    ]
+  };
+
+  const SEARCH_PROMPT = {
+    ffl: 'Search the web for the latest fantasy football player news from the last 3 days - injuries, injury designations, depth chart changes, snap counts, target share, waiver wire adds, and roster moves that affect fantasy lineups.',
+    nfl: 'Search the web for the latest NFL news from the last 3 days that is relevant to fantasy football - signings, trades, injuries, suspensions, and starter changes.'
+  };
+
+  const FF_WORDS = /\b(fantasy|injur|questionable|doubtful|out for|ruled out|return|targets?|carries|snap|touches|start(ing|er)?|bench|waiver|add|drop|trade|sign(s|ed|ing)?|activat|placed on|IR\b|PUP\b|suspend|depth chart|backup|starter|workload|red zone|touchdown|yards|reps|practice|limited|DNP|hamstring|ankle|knee|concussion|rookie|breakout|usage)\b/i;
+
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function stripTags(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.innerHTML = s;
+    return (d.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function normalize(data) {
+    const raw = data.articles || data.feed || data.items || data.news || data.headlines || [];
+    return raw.map(a => {
+      let link = '';
+      if (a.links) {
+        if (a.links.web && a.links.web.href) link = a.links.web.href;
+        else if (Array.isArray(a.links) && a.links[0]) link = a.links[0].href || '';
+      }
+      if (!link && a.link) link = typeof a.link === 'string' ? a.link : (a.link.href || '');
+      return {
+        title: a.headline || a.title || a.shortHeadline || '',
+        desc: stripTags(a.description || a.story || a.summary || ''),
+        date: a.published || a.lastModified || a.pubDate || a.date || '',
+        link: link
+      };
+    }).filter(x => x.title);
+  }
+
+  function render(items, label) {
+    newsStatus.hidden = true;
+    newsFallback.hidden = true;
+    newsList.innerHTML = items.slice(0, 30).map(i => {
+      const d = i.date ? new Date(i.date) : null;
+      const when = (d && !isNaN(d))
+        ? d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+        : (i.date ? String(i.date) : '');
+      const open = i.link ? '<a class="news-item" href="' + esc(i.link) + '" target="_blank" rel="noopener">' : '<div class="news-item">';
+      const close = i.link ? '</a>' : '</div>';
+      return open
+        + '<div class="news-item-title">' + esc(i.title) + '</div>'
+        + (i.desc ? '<div class="news-item-desc">' + esc(i.desc.slice(0, 280)) + '</div>' : '')
+        + '<div class="news-item-meta">' + esc(label) + (when ? ' \u00b7 ' + when : '') + '</div>'
+        + close;
+    }).join('');
+  }
+
+  // --- Path 1: ESPN direct ---
+  async function tryEspn(srcKey) {
+    for (const url of ENDPOINTS[srcKey]) {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) continue;
+      const data = await res.json();
+      let items = normalize(data);
+      if (!items.length) continue;
+      const filtered = items.filter(i => FF_WORDS.test(i.title + ' ' + i.desc));
+      if (filtered.length >= 5) items = filtered;
+      return items;
+    }
+    return null;
+  }
+
+  // --- Path 2: live web search via Anthropic API ---
+  async function trySearch(srcKey) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: SEARCH_PROMPT[srcKey] +
+            '\n\nReturn ONLY a JSON array (no prose, no markdown fences) of up to 20 objects with keys: ' +
+            '"title" (the headline), "desc" (one sentence, your own words - do NOT copy sentences from the sources), ' +
+            '"date" (e.g. "Aug 19"), "link" (the source URL). Newest first.'
+        }],
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+      })
+    });
+    if (!res.ok) throw new Error('search request failed (' + res.status + ')');
+    const data = await res.json();
+    const text = (data.content || []).map(b => (b.type === 'text' ? b.text : '')).join('\n');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const match = clean.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('no results parsed');
+    const items = JSON.parse(match[0]);
+    return Array.isArray(items) && items.length ? items : null;
+  }
+
+  async function loadFeed(srcKey, label) {
+    newsList.innerHTML = '';
+    newsFallback.hidden = true;
+    newsStatus.hidden = false;
+    newsStatus.textContent = 'Loading ' + label + '\u2026';
+
+    let espnErr = '';
+    try {
+      const items = await tryEspn(srcKey);
+      if (items) { render(items, label); return; }
+      espnErr = 'no items returned';
+    } catch (e) {
+      espnErr = e.message || 'blocked';
+    }
+
+    newsStatus.textContent = 'Direct feed blocked \u2014 pulling headlines via live search\u2026';
+    try {
+      const items = await trySearch(srcKey);
+      if (items) { render(items, label + ' (live search)'); return; }
+    } catch (e) {
+      newsErrDetail.textContent =
+        'Direct feed: ' + espnErr + '. Live search: ' + (e.message || 'failed') +
+        '. If you are viewing this inside a preview pane, outside requests are sandboxed \u2014 host the file on your own domain and the direct feed will work.';
+      newsStatus.hidden = true;
+      newsFallback.hidden = false;
+      return;
+    }
+
+    newsErrDetail.textContent = 'Direct feed: ' + espnErr + '. No headlines came back.';
+    newsStatus.hidden = true;
+    newsFallback.hidden = false;
+  }
+
+  function currentSrc() {
+    const b = document.querySelector('.news-src.active');
+    return [b.dataset.src, b.dataset.label];
+  }
+
+  srcButtons.forEach(b => {
+    b.addEventListener('click', () => {
+      srcButtons.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      loadFeed(b.dataset.src, b.dataset.label);
+    });
+  });
+
+  newsRefresh.addEventListener('click', () => loadFeed(...currentSrc()));
+
+  document.querySelector('nav.tabs button[data-tab="news"]').addEventListener('click', () => {
+    if (!newsLoaded) { newsLoaded = true; loadFeed(...currentSrc()); }
+  });
+</script>
+
+</body>
+</html>
