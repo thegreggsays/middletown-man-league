@@ -33,6 +33,7 @@
  *   GET  /activity?limit=&type=&owner=&season=   normalized transaction feed
  *   GET  /activity/stats                         per-owner counts
  *   POST /activity/sync                          force a poll right now
+ *   GET  /news?src=ffl|nfl                       fantasy news, fetched server-side
  *   GET  /announcement                           the pinned announcement
  *   POST /announcement                           overwrite it (needs the code)
  *   GET  /votes                                  rule-change proposals + tallies
@@ -790,6 +791,84 @@ setInterval(purgeOldPosts, 60 * 60 * 1000);
 
 const ANNOUNCE_CODE = process.env.ANNOUNCE_CODE || '6699';
 
+
+/* ----------------------------------------------------------------
+   NEWS
+   Fetched here rather than in the browser. News sites don't send the
+   headers that let another website's JavaScript call them directly,
+   but a server has no such restriction. Cached briefly so a room full
+   of owners refreshing doesn't hammer the source.
+   ---------------------------------------------------------------- */
+
+const NEWS_CACHE_MINUTES = Number(process.env.NEWS_CACHE_MINUTES || 10);
+const newsCache = new Map();   // key -> { at, items }
+
+const FF_WORDS = /\b(fantasy|injur|questionable|doubtful|out for|ruled out|return|targets?|carries|snap|touches|start(ing|er)?|bench|waiver|add|drop|trade|sign(s|ed|ing)?|activat|placed on|IR\b|PUP\b|suspend|depth chart|backup|starter|workload|red zone|touchdown|yards|reps|practice|limited|DNP|hamstring|ankle|knee|concussion|rookie|breakout|usage)\b/i;
+
+const NEWS_SOURCES = {
+  ffl: [
+    'https://site.api.espn.com/apis/fantasy/v2/games/ffl/news?limit=50',
+    'https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=50'
+  ],
+  nfl: [
+    'https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=50',
+    'https://now.core.api.espn.com/v1/sports/news?limit=50&sport=football'
+  ]
+};
+
+function stripTags(s) {
+  return String(s || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeNews(data) {
+  const raw = data.articles || data.feed || data.items || data.news || data.headlines || [];
+  return raw.map(a => {
+    let link = '';
+    if (a.links) {
+      if (a.links.web && a.links.web.href) link = a.links.web.href;
+      else if (Array.isArray(a.links) && a.links[0]) link = a.links[0].href || '';
+    }
+    if (!link && a.link) link = typeof a.link === 'string' ? a.link : (a.link.href || '');
+    return {
+      title: a.headline || a.title || a.shortHeadline || '',
+      desc: stripTags(a.description || a.story || a.summary || '').slice(0, 280),
+      date: a.published || a.lastModified || a.pubDate || a.date || '',
+      link
+    };
+  }).filter(x => x.title);
+}
+
+app.get('/news', async (req, res) => {
+  const key = NEWS_SOURCES[req.query.src] ? req.query.src : 'ffl';
+
+  const hit = newsCache.get(key);
+  if (hit && Date.now() - hit.at < NEWS_CACHE_MINUTES * 60 * 1000) {
+    return res.json({ source: 'ESPN', cached: true, items: hit.items });
+  }
+
+  const problems = [];
+  for (const url of NEWS_SOURCES[key]) {
+    try {
+      const r = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!r.ok) { problems.push(`${r.status} from ${new URL(url).host}`); continue; }
+
+      let items = normalizeNews(await r.json());
+      if (!items.length) { problems.push('no items'); continue; }
+
+      const filtered = items.filter(i => FF_WORDS.test(i.title + ' ' + i.desc));
+      if (filtered.length >= 5) items = filtered;
+
+      items = items.slice(0, 30);
+      newsCache.set(key, { at: Date.now(), items });
+      return res.json({ source: 'ESPN', cached: false, items });
+    } catch (e) {
+      problems.push(e.message);
+    }
+  }
+
+  res.status(502).json({ error: 'No news source responded.', detail: problems });
+});
+
 app.get('/announcement', (_req, res) => {
   const row = db.prepare('SELECT body, author, updated_at FROM announcement WHERE id = 1').get();
   res.json(row
@@ -1008,7 +1087,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/auth') || req.path.startsWith('/activity') ||
       req.path.startsWith('/history') || req.path.startsWith('/power') ||
       req.path.startsWith('/standings') || req.path.startsWith('/health') ||
-      req.path.startsWith('/league-data') || req.path.startsWith('/board') || req.path.startsWith('/announcement') || req.path.startsWith('/votes')) {
+      req.path.startsWith('/league-data') || req.path.startsWith('/board') || req.path.startsWith('/announcement') || req.path.startsWith('/votes') || req.path.startsWith('/news')) {
     return next();
   }
   res.sendFile(path.join(__dirname, 'index.html'));

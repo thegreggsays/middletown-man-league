@@ -3676,9 +3676,8 @@
   });
 
   // ---- News feed ----
-  // Two paths: (1) ESPN's public JSON straight from the browser - works when this
-  // file is hosted on a real domain. (2) If that's blocked (e.g. inside a sandboxed
-  // preview), fall back to a live web search via the Anthropic API.
+  // Fetched through our own server. News sites block direct browser calls from
+  // other domains, so going through the server is the only reliable route.
   const newsList = document.getElementById('news-list');
   const newsStatus = document.getElementById('news-status');
   const newsFallback = document.getElementById('news-fallback');
@@ -3687,114 +3686,37 @@
   const srcButtons = document.querySelectorAll('.news-src');
   let newsLoaded = false;
 
-  const ENDPOINTS = {
-    ffl: [
-      'https://site.api.espn.com/apis/fantasy/v2/games/ffl/news?limit=50',
-      'https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=50'
-    ],
-    nfl: [
-      'https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=50',
-      'https://now.core.api.espn.com/v1/sports/news?limit=50&sport=football'
-    ]
-  };
-
-  const SEARCH_PROMPT = {
-    ffl: 'Search the web for the latest fantasy football player news from the last 3 days - injuries, injury designations, depth chart changes, snap counts, target share, waiver wire adds, and roster moves that affect fantasy lineups.',
-    nfl: 'Search the web for the latest NFL news from the last 3 days that is relevant to fantasy football - signings, trades, injuries, suspensions, and starter changes.'
-  };
-
-  const FF_WORDS = /\b(fantasy|injur|questionable|doubtful|out for|ruled out|return|targets?|carries|snap|touches|start(ing|er)?|bench|waiver|add|drop|trade|sign(s|ed|ing)?|activat|placed on|IR\b|PUP\b|suspend|depth chart|backup|starter|workload|red zone|touchdown|yards|reps|practice|limited|DNP|hamstring|ankle|knee|concussion|rookie|breakout|usage)\b/i;
-
   function esc(s) {
     const d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
     return d.innerHTML;
   }
 
-  function stripTags(s) {
-    if (!s) return '';
-    const d = document.createElement('div');
-    d.innerHTML = s;
-    return (d.textContent || '').replace(/\s+/g, ' ').trim();
-  }
-
-  function normalize(data) {
-    const raw = data.articles || data.feed || data.items || data.news || data.headlines || [];
-    return raw.map(a => {
-      let link = '';
-      if (a.links) {
-        if (a.links.web && a.links.web.href) link = a.links.web.href;
-        else if (Array.isArray(a.links) && a.links[0]) link = a.links[0].href || '';
-      }
-      if (!link && a.link) link = typeof a.link === 'string' ? a.link : (a.link.href || '');
-      return {
-        title: a.headline || a.title || a.shortHeadline || '',
-        desc: stripTags(a.description || a.story || a.summary || ''),
-        date: a.published || a.lastModified || a.pubDate || a.date || '',
-        link: link
-      };
-    }).filter(x => x.title);
-  }
-
-  function render(items, label) {
+  function renderNews(items, label) {
     newsStatus.hidden = true;
     newsFallback.hidden = true;
-    newsList.innerHTML = items.slice(0, 30).map(i => {
+    newsList.innerHTML = items.map(i => {
       const d = i.date ? new Date(i.date) : null;
       const when = (d && !isNaN(d))
         ? d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-        : (i.date ? String(i.date) : '');
-      const open = i.link ? '<a class="news-item" href="' + esc(i.link) + '" target="_blank" rel="noopener">' : '<div class="news-item">';
+        : '';
+      const open = i.link
+        ? '<a class="news-item" href="' + esc(i.link) + '" target="_blank" rel="noopener">'
+        : '<div class="news-item">';
       const close = i.link ? '</a>' : '</div>';
       return open
         + '<div class="news-item-title">' + esc(i.title) + '</div>'
-        + (i.desc ? '<div class="news-item-desc">' + esc(i.desc.slice(0, 280)) + '</div>' : '')
+        + (i.desc ? '<div class="news-item-desc">' + esc(i.desc) + '</div>' : '')
         + '<div class="news-item-meta">' + esc(label) + (when ? ' \u00b7 ' + when : '') + '</div>'
         + close;
     }).join('');
   }
 
-  // --- Path 1: ESPN direct ---
-  async function tryEspn(srcKey) {
-    for (const url of ENDPOINTS[srcKey]) {
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      if (!res.ok) continue;
-      const data = await res.json();
-      let items = normalize(data);
-      if (!items.length) continue;
-      const filtered = items.filter(i => FF_WORDS.test(i.title + ' ' + i.desc));
-      if (filtered.length >= 5) items = filtered;
-      return items;
-    }
-    return null;
-  }
-
-  // --- Path 2: live web search via Anthropic API ---
-  async function trySearch(srcKey) {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: SEARCH_PROMPT[srcKey] +
-            '\n\nReturn ONLY a JSON array (no prose, no markdown fences) of up to 20 objects with keys: ' +
-            '"title" (the headline), "desc" (one sentence, your own words - do NOT copy sentences from the sources), ' +
-            '"date" (e.g. "Aug 19"), "link" (the source URL). Newest first.'
-        }],
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
-      })
-    });
-    if (!res.ok) throw new Error('search request failed (' + res.status + ')');
-    const data = await res.json();
-    const text = (data.content || []).map(b => (b.type === 'text' ? b.text : '')).join('\n');
-    const clean = text.replace(/```json|```/g, '').trim();
-    const match = clean.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('no results parsed');
-    const items = JSON.parse(match[0]);
-    return Array.isArray(items) && items.length ? items : null;
+  function showNewsProblem(detail) {
+    newsStatus.hidden = true;
+    newsList.innerHTML = '';
+    newsFallback.hidden = false;
+    newsErrDetail.textContent = detail;
   }
 
   async function loadFeed(srcKey, label) {
@@ -3803,34 +3725,26 @@
     newsStatus.hidden = false;
     newsStatus.textContent = 'Loading ' + label + '\u2026';
 
-    let espnErr = '';
-    try {
-      const items = await tryEspn(srcKey);
-      if (items) { render(items, label); return; }
-      espnErr = 'no items returned';
-    } catch (e) {
-      espnErr = e.message || 'blocked';
-    }
-
-    newsStatus.textContent = 'Direct feed blocked \u2014 pulling headlines via live search\u2026';
-    try {
-      const items = await trySearch(srcKey);
-      if (items) { render(items, label + ' (live search)'); return; }
-    } catch (e) {
-      newsErrDetail.textContent =
-        'Direct feed: ' + espnErr + '. Live search: ' + (e.message || 'failed') +
-        '. If you are viewing this inside a preview pane, outside requests are sandboxed \u2014 host the file on your own domain and the direct feed will work.';
-      newsStatus.hidden = true;
-      newsFallback.hidden = false;
+    if (API_BASE === null) {
+      showNewsProblem(
+        'The news feed is served by the league server, which isn\'t connected yet. '
+        + 'Once the site is running on Railway this fills in automatically. '
+        + 'In the meantime:');
       return;
     }
 
-    newsErrDetail.textContent = 'Direct feed: ' + espnErr + '. No headlines came back.';
-    newsStatus.hidden = true;
-    newsFallback.hidden = false;
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/news?src=' + encodeURIComponent(srcKey));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'server ' + res.status);
+      if (!data.items || !data.items.length) throw new Error('no headlines came back');
+      renderNews(data.items, label);
+    } catch (e) {
+      showNewsProblem('Couldn\'t load headlines: ' + (e.message || 'unknown error') + '. Straight to the sources:');
+    }
   }
 
-  function currentSrc() {
+  function currentNewsSrc() {
     const b = document.querySelector('.news-src.active');
     return [b.dataset.src, b.dataset.label];
   }
@@ -3843,11 +3757,12 @@
     });
   });
 
-  newsRefresh.addEventListener('click', () => loadFeed(...currentSrc()));
+  newsRefresh.addEventListener('click', () => loadFeed(...currentNewsSrc()));
 
   document.querySelector('nav.tabs button[data-tab="news"]').addEventListener('click', () => {
-    if (!newsLoaded) { newsLoaded = true; loadFeed(...currentSrc()); }
+    if (!newsLoaded) { newsLoaded = true; loadFeed(...currentNewsSrc()); }
   });
+
 </script>
 
 </body>
