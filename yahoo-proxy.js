@@ -33,6 +33,13 @@
  *   GET  /activity?limit=&type=&owner=&season=   normalized transaction feed
  *   GET  /activity/stats                         per-owner counts
  *   POST /activity/sync                          force a poll right now
+ *   GET  /announcement                           the pinned announcement
+ *   POST /announcement                           overwrite it (needs the code)
+ *   GET  /votes                                  rule-change proposals + tallies
+ *   POST /votes/proposal                         new proposal (needs the code)
+ *   POST /votes/:id/cast                         cast a vote (one per owner)
+ *   GET  /board                                  message board posts (auto-purged at 6 months)
+ *   POST /board                                  new post
  *   GET  /league-data                            keepers, costs, draft, trades from the Sheet
  *   GET  /power                                  projection-averaged power rankings
  *   GET  /history                                champions + lifetime records
@@ -94,6 +101,41 @@ db.exec(`
     owner           TEXT,               -- the manager this move belongs to
     FOREIGN KEY (transaction_key) REFERENCES transactions(transaction_key)
   );
+
+  CREATE TABLE IF NOT EXISTS posts (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    author     TEXT NOT NULL,
+    body       TEXT NOT NULL,
+    reply_to   INTEGER,
+    created_at INTEGER NOT NULL      -- unix seconds
+  );
+
+  CREATE TABLE IF NOT EXISTS announcement (
+    id         INTEGER PRIMARY KEY CHECK (id = 1),   -- only ever one row
+    body       TEXT NOT NULL,
+    author     TEXT,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS proposals (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    title       TEXT NOT NULL,
+    body        TEXT,
+    author      TEXT,
+    created_at  INTEGER NOT NULL,
+    closed_at   INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS votes (
+    proposal_id INTEGER NOT NULL,
+    owner       TEXT NOT NULL,
+    choice      TEXT NOT NULL,          -- yes | no
+    cast_at     INTEGER NOT NULL,
+    PRIMARY KEY (proposal_id, owner)    -- one vote per owner, enforced here
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_posts_time ON posts(created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_posts_reply ON posts(reply_to);
 
   CREATE INDEX IF NOT EXISTS idx_tx_time   ON transactions(timestamp DESC);
   CREATE INDEX IF NOT EXISTS idx_tx_season ON transactions(season);
@@ -706,6 +748,237 @@ app.get('/power', async (_req, res) => {
    The sheet must be shared "anyone with the link can view."
    ================================================================ */
 
+
+/* ================================================================
+   MESSAGE BOARD
+   Posts older than BOARD_RETENTION_DAYS (default 180 = 6 months) are
+   deleted on a rolling basis. The purge runs hourly and also on boot,
+   so nothing lingers just because the server was asleep.
+
+   Set BOARD_PASSWORD in .env to require a shared league password before
+   anyone can post. Leave it unset and anyone who finds the site can post.
+   ================================================================ */
+
+const RETENTION_DAYS = Number(process.env.BOARD_RETENTION_DAYS || 180);
+const BOARD_PASSWORD = process.env.BOARD_PASSWORD || '';
+
+function purgeOldPosts() {
+  const cutoff = Math.floor(Date.now() / 1000) - RETENTION_DAYS * 86400;
+  // drop replies to purged posts too, so nothing is orphaned
+  const gone = db.prepare('DELETE FROM posts WHERE created_at < ?').run(cutoff);
+  db.prepare(`
+    DELETE FROM posts
+    WHERE reply_to IS NOT NULL
+      AND reply_to NOT IN (SELECT id FROM posts)
+  `).run();
+  if (gone.changes) console.log(`[board] purged ${gone.changes} post(s) past ${RETENTION_DAYS} days`);
+  return gone.changes;
+}
+
+purgeOldPosts();
+setInterval(purgeOldPosts, 60 * 60 * 1000);
+
+
+/* ----------------------------------------------------------------
+   ANNOUNCEMENT
+   One message, pinned above the board. Posting overwrites whatever
+   was there before — there's no history, by design.
+
+   Guarded by ANNOUNCE_CODE (default 6699). The code is checked here on
+   the server, so it never appears in the page source.
+   ---------------------------------------------------------------- */
+
+const ANNOUNCE_CODE = process.env.ANNOUNCE_CODE || '6699';
+
+app.get('/announcement', (_req, res) => {
+  const row = db.prepare('SELECT body, author, updated_at FROM announcement WHERE id = 1').get();
+  res.json(row
+    ? { body: row.body, author: row.author, updatedAt: row.updated_at }
+    : { body: null });
+});
+
+app.post('/announcement', (req, res) => {
+  const { body, author, code } = req.body || {};
+
+  if (String(code || '') !== ANNOUNCE_CODE) {
+    return res.status(401).json({ error: 'Wrong code.' });
+  }
+
+  const text = String(body || '').trim().slice(0, 1500);
+  const name = String(author || '').trim().slice(0, 40);
+
+  if (!text) {
+    db.prepare('DELETE FROM announcement WHERE id = 1').run();
+    return res.json({ ok: true, cleared: true });
+  }
+
+  db.prepare(`
+    INSERT INTO announcement (id, body, author, updated_at)
+    VALUES (1, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET body = excluded.body,
+                                  author = excluded.author,
+                                  updated_at = excluded.updated_at
+  `).run(text, name || null, Math.floor(Date.now() / 1000));
+
+  res.json({ ok: true });
+});
+
+
+/* ----------------------------------------------------------------
+   LEAGUE VOTE
+   Proposing a rule change needs ANNOUNCE_CODE. Voting doesn't — every
+   owner just picks their name and votes yes or no.
+
+   One vote per owner is enforced by the primary key on (proposal_id,
+   owner), so a second vote replaces the first rather than stacking.
+
+   PASS_THRESHOLD yes votes carries it. With 12 owners, once enough
+   owners have voted no that 7 yes is unreachable, it's marked failed
+   automatically — no need for anyone to close it.
+   ---------------------------------------------------------------- */
+
+const PASS_THRESHOLD = Number(process.env.VOTE_PASS_THRESHOLD || 7);
+const LEAGUE_OWNERS = (process.env.LEAGUE_OWNERS ||
+  'Rogan,Marc,Palumberi,Jared,Fito,Post,Hexx,Opie,Derek,Rebel,Gregg,Garett')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
+function tallyProposal(p) {
+  const rows = db.prepare('SELECT owner, choice FROM votes WHERE proposal_id = ?').all(p.id);
+  const yes = rows.filter(r => r.choice === 'yes');
+  const no = rows.filter(r => r.choice === 'no');
+  const remaining = LEAGUE_OWNERS.length - rows.length;
+
+  let status = 'open';
+  if (yes.length >= PASS_THRESHOLD) status = 'passed';
+  else if (yes.length + remaining < PASS_THRESHOLD) status = 'failed';
+
+  return {
+    id: p.id,
+    title: p.title,
+    body: p.body,
+    author: p.author,
+    createdAt: p.created_at,
+    yes: yes.length,
+    no: no.length,
+    needed: PASS_THRESHOLD,
+    status,
+    voters: rows.map(r => ({ owner: r.owner, choice: r.choice }))
+  };
+}
+
+app.get('/votes', (_req, res) => {
+  const rows = db.prepare('SELECT * FROM proposals ORDER BY created_at DESC LIMIT 100').all();
+  res.json({
+    owners: LEAGUE_OWNERS,
+    threshold: PASS_THRESHOLD,
+    proposals: rows.map(tallyProposal)
+  });
+});
+
+app.post('/votes/proposal', (req, res) => {
+  const { title, body, author, code } = req.body || {};
+  if (String(code || '') !== ANNOUNCE_CODE) {
+    return res.status(401).json({ error: 'Wrong code.' });
+  }
+  const t = String(title || '').trim().slice(0, 140);
+  if (!t) return res.status(400).json({ error: 'Give the proposal a title.' });
+
+  const info = db.prepare(`
+    INSERT INTO proposals (title, body, author, created_at) VALUES (?, ?, ?, ?)
+  `).run(t, String(body || '').trim().slice(0, 2000),
+         String(author || '').trim().slice(0, 40) || null,
+         Math.floor(Date.now() / 1000));
+
+  res.json({ ok: true, id: info.lastInsertRowid });
+});
+
+app.post('/votes/:id/cast', (req, res) => {
+  const { owner, choice } = req.body || {};
+  const id = Number(req.params.id);
+
+  if (!LEAGUE_OWNERS.includes(owner)) {
+    return res.status(400).json({ error: 'Pick your name from the list.' });
+  }
+  if (choice !== 'yes' && choice !== 'no') {
+    return res.status(400).json({ error: 'Vote yes or no.' });
+  }
+  const p = db.prepare('SELECT * FROM proposals WHERE id = ?').get(id);
+  if (!p) return res.status(404).json({ error: 'No such proposal.' });
+
+  const current = tallyProposal(p);
+  if (current.status !== 'open') {
+    return res.status(409).json({ error: 'That vote is already decided.' });
+  }
+
+  db.prepare(`
+    INSERT INTO votes (proposal_id, owner, choice, cast_at) VALUES (?, ?, ?, ?)
+    ON CONFLICT(proposal_id, owner) DO UPDATE SET choice = excluded.choice,
+                                                  cast_at = excluded.cast_at
+  `).run(id, owner, choice, Math.floor(Date.now() / 1000));
+
+  res.json({ ok: true, proposal: tallyProposal(p) });
+});
+
+app.delete('/votes/:id', (req, res) => {
+  if (String(req.query.code || '') !== ANNOUNCE_CODE) {
+    return res.status(401).json({ error: 'Wrong code.' });
+  }
+  const id = Number(req.params.id);
+  db.prepare('DELETE FROM votes WHERE proposal_id = ?').run(id);
+  db.prepare('DELETE FROM proposals WHERE id = ?').run(id);
+  res.json({ ok: true });
+});
+
+app.get('/board', (_req, res) => {
+  purgeOldPosts();
+  const rows = db.prepare(`
+    SELECT id, author, body, reply_to, created_at
+    FROM posts
+    ORDER BY created_at DESC
+    LIMIT 500
+  `).all();
+
+  res.json({
+    retentionDays: RETENTION_DAYS,
+    passwordRequired: !!BOARD_PASSWORD,
+    posts: rows.map(r => ({
+      id: r.id,
+      author: r.author,
+      body: r.body,
+      replyTo: r.reply_to,
+      createdAt: r.created_at
+    }))
+  });
+});
+
+app.post('/board', (req, res) => {
+  const { author, body, replyTo, password } = req.body || {};
+
+  if (BOARD_PASSWORD && password !== BOARD_PASSWORD) {
+    return res.status(401).json({ error: 'Wrong league password.' });
+  }
+  const name = String(author || '').trim().slice(0, 40);
+  const text = String(body || '').trim().slice(0, 2000);
+  if (!name) return res.status(400).json({ error: 'Name is required.' });
+  if (!text) return res.status(400).json({ error: 'Message is empty.' });
+
+  const info = db.prepare(`
+    INSERT INTO posts (author, body, reply_to, created_at) VALUES (?, ?, ?, ?)
+  `).run(name, text, Number.isFinite(Number(replyTo)) ? Number(replyTo) : null,
+         Math.floor(Date.now() / 1000));
+
+  res.json({ ok: true, id: info.lastInsertRowid });
+});
+
+app.delete('/board/:id', (req, res) => {
+  if (BOARD_PASSWORD && req.query.password !== BOARD_PASSWORD) {
+    return res.status(401).json({ error: 'Wrong league password.' });
+  }
+  const id = Number(req.params.id);
+  db.prepare('DELETE FROM posts WHERE id = ? OR reply_to = ?').run(id, id);
+  res.json({ ok: true });
+});
+
 app.get('/league-data', async (req, res) => {
   try {
     if (!process.env.SHEET_ID) {
@@ -735,7 +1008,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/auth') || req.path.startsWith('/activity') ||
       req.path.startsWith('/history') || req.path.startsWith('/power') ||
       req.path.startsWith('/standings') || req.path.startsWith('/health') ||
-      req.path.startsWith('/league-data')) {
+      req.path.startsWith('/league-data') || req.path.startsWith('/board') || req.path.startsWith('/announcement') || req.path.startsWith('/votes')) {
     return next();
   }
   res.sendFile(path.join(__dirname, 'index.html'));

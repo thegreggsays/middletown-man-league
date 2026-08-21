@@ -1064,27 +1064,392 @@
     margin-bottom: 5px;
   }
 
-  .sum-tabs { display: flex; flex-direction: column; gap: 11px; }
-  .sum-tab {
-    font-size: 13px;
-    color: var(--text-dim);
-    line-height: 1.6;
-    padding-bottom: 11px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-  .sum-tab:last-child { border-bottom: none; padding-bottom: 0; }
-  .sum-tab-n {
-    display: block;
-    font-family: 'Oswald', sans-serif;
-    font-weight: 600;
-    font-size: 13.5px;
-    text-transform: uppercase;
-    color: var(--text);
-    margin-bottom: 2px;
-  }
 
   .sum-note { background: rgba(227,168,60,0.06); border-color: rgba(227,168,60,0.24); }
   .sum-note p { font-size: 13px; color: var(--text-dim); line-height: 1.65; }
+
+
+
+
+
+  /* ---- VOTING RESULTS (Summary) ---- */
+  .vr-group { margin-bottom: 22px; }
+  .vr-group:last-child { margin-bottom: 0; }
+
+  .vr-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 11px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .vr-label.passed { color: var(--win); }
+  .vr-label.failed { color: var(--loss); }
+
+  .vr-list { display: flex; flex-direction: column; gap: 9px; }
+
+  .vr-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 15px;
+  }
+  .vr-item.passed { border-left: 3px solid var(--win); }
+  .vr-item.failed { border-left: 3px solid var(--loss); opacity: 0.8; }
+
+  .vr-title { font-weight: 600; font-size: 14px; line-height: 1.4; }
+  .vr-note { font-size: 12.5px; color: var(--text-dim); line-height: 1.55; margin-top: 4px; white-space: pre-wrap; }
+  .vr-by { font-family: 'Roboto Mono', monospace; font-size: 9.5px; color: var(--text-dim); opacity: 0.7; margin-top: 6px; }
+
+  .vr-score {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    text-align: right;
+  }
+  .vr-item.passed .vr-score { color: var(--win); }
+  .vr-item.failed .vr-score { color: var(--loss); }
+
+  .vr-empty {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    opacity: 0.6;
+    padding: 4px 0;
+  }
+
+  /* ---- LEAGUE VOTE ---- */
+  .vt-who { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .vt-who-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .vt-select {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    min-height: 40px;
+    outline: none;
+    cursor: pointer;
+  }
+  .vt-select:focus { border-color: rgba(227,168,60,0.5); }
+  .vt-select option { background: var(--bg-2); color: var(--text); }
+
+  .vt-newwrap { margin-top: 22px; }
+  .vt-toggle {
+    width: 100%;
+    background: var(--glass);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    color: var(--gold-1);
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 14px;
+    cursor: pointer;
+    min-height: 46px;
+    transition: background 0.2s ease;
+  }
+  .vt-toggle:hover { background: var(--glass-hover); }
+
+  .vt-form {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .vt-list { display: flex; flex-direction: column; gap: 12px; }
+  #vt-list:empty { display: none; }
+
+  .vt-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .vt-card.passed { border-color: rgba(76,255,176,0.4); background: rgba(76,255,176,0.05); }
+  .vt-card.failed { border-color: rgba(255,92,77,0.3); opacity: 0.75; }
+
+  .vt-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .vt-title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.25;
+    flex: 1;
+    min-width: 60%;
+  }
+  .vt-badge {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .vt-badge.open { background: rgba(227,168,60,0.15); color: var(--gold-1); }
+  .vt-badge.passed { background: rgba(76,255,176,0.15); color: var(--win); }
+  .vt-badge.failed { background: rgba(255,92,77,0.15); color: var(--loss); }
+
+  .vt-body { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap; margin-bottom: 12px; }
+  .vt-author { font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-dim); opacity: 0.75; }
+
+  .vt-tally { display: flex; align-items: center; gap: 12px; margin: 12px 0 10px; flex-wrap: wrap; }
+  .vt-bar {
+    flex: 1;
+    min-width: 120px;
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+  }
+  .vt-bar-yes { background: linear-gradient(90deg, rgba(76,255,176,0.5), var(--win)); }
+  .vt-bar-no { background: linear-gradient(90deg, rgba(255,92,77,0.4), var(--loss)); }
+  .vt-count { font-family: 'Roboto Mono', monospace; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .vt-count .y { color: var(--win); }
+  .vt-count .n { color: var(--loss); }
+  .vt-count .need { color: var(--text-dim); font-weight: 500; }
+
+  .vt-buttons { display: flex; gap: 8px; }
+  .vt-btn {
+    flex: 1;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    padding: 11px;
+    cursor: pointer;
+    min-height: 44px;
+    transition: all 0.15s ease;
+  }
+  .vt-btn.yes:hover, .vt-btn.yes.mine { background: rgba(76,255,176,0.15); border-color: var(--win); color: var(--win); }
+  .vt-btn.no:hover, .vt-btn.no.mine { background: rgba(255,92,77,0.15); border-color: var(--loss); color: var(--loss); }
+  .vt-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .vt-voters { font-family: 'Roboto Mono', monospace; font-size: 9.5px; color: var(--text-dim); opacity: 0.7; margin-top: 10px; line-height: 1.6; }
+  .vt-empty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); opacity: 0.7; padding: 20px 0; text-align: center; }
+
+  /* ---- ANNOUNCEMENTS ---- */
+  .ann-wrap {
+    background: linear-gradient(100deg, rgba(227,168,60,0.10), rgba(227,168,60,0.03));
+    border: 1px solid rgba(227,168,60,0.35);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-top: 12px;
+  }
+
+  .ann-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .ann-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gold-1);
+  }
+  .ann-edit {
+    margin-left: auto;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--gold-1);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    cursor: pointer;
+    min-height: 32px;
+    transition: background 0.2s ease;
+  }
+  .ann-edit:hover { background: rgba(255,255,255,0.08); }
+
+  .ann-body { font-size: 15px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .ann-body.ann-empty { color: var(--text-dim); font-style: italic; font-size: 14px; }
+
+  .ann-meta {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0.75;
+    margin-top: 9px;
+  }
+
+  .ann-form-row { display: flex; gap: 8px; margin-top: 8px; }
+  .ann-author { flex: 1; }
+  .ann-code { max-width: 120px; }
+
+  .ann-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .ann-actions .bd-post { margin-left: 0; }
+  .ann-cancel {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-dim);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    cursor: pointer;
+    min-height: 42px;
+  }
+  .ann-cancel:hover { color: var(--text); }
+
+  .ann-hint {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    color: var(--text-dim);
+    opacity: 0.7;
+    margin-top: 9px;
+    line-height: 1.5;
+  }
+
+  /* ---- MESSAGE BOARD ---- */
+  .bd-compose {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 22px;
+  }
+  .bd-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .bd-input, .bd-textarea {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .bd-input:focus, .bd-textarea:focus { border-color: rgba(227,168,60,0.5); }
+  .bd-input::placeholder, .bd-textarea::placeholder { color: var(--text-dim); opacity: 0.7; }
+  .bd-textarea { resize: vertical; min-height: 74px; line-height: 1.5; }
+  .bd-pass { max-width: 190px; }
+
+  .bd-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .bd-post {
+    margin-left: auto;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #1A1204;
+    background: linear-gradient(100deg, var(--gold-1), var(--gold-2));
+    border: none;
+    border-radius: 999px;
+    padding: 10px 24px;
+    cursor: pointer;
+    min-height: 42px;
+    transition: opacity 0.2s ease;
+  }
+  .bd-post:hover { opacity: 0.88; }
+  .bd-post:disabled { opacity: 0.45; cursor: default; }
+
+  .bd-msg { font-family: 'Roboto Mono', monospace; font-size: 11px; color: var(--text-dim); }
+  .bd-msg.err { color: var(--loss); }
+  .bd-msg.ok { color: var(--win); }
+
+  .bd-replying {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    color: var(--gold-1);
+    background: rgba(227,168,60,0.12);
+    border-radius: 999px;
+    padding: 5px 11px;
+    cursor: pointer;
+  }
+
+  .bd-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .bd-post-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+  }
+  .bd-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 7px; }
+  .bd-author {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+  }
+  .bd-when { font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  .bd-age { margin-left: auto; font-family: 'Roboto Mono', monospace; font-size: 9.5px; color: var(--text-dim); opacity: 0.6; }
+  .bd-age.expiring { color: var(--loss); opacity: 1; }
+
+  .bd-body { font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+
+  .bd-foot { margin-top: 9px; display: flex; gap: 12px; }
+  .bd-reply-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .bd-reply-btn:hover { color: var(--gold-1); }
+
+  .bd-replies { margin-top: 10px; padding-left: 14px; border-left: 2px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+  .bd-reply { padding-top: 2px; }
+  .bd-reply .bd-author { font-size: 13px; }
+  .bd-reply .bd-body { font-size: 13px; }
+
+  .bd-empty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); opacity: 0.7; padding: 20px 0; text-align: center; }
+
+  .bd-note {
+    background: rgba(227,168,60,0.06);
+    border: 1px solid rgba(227,168,60,0.22);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 18px;
+  }
 
   /* ---- ACTIVITY ---- */
   .act-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -1344,6 +1709,25 @@
     .sum-rules li::before { width: 22px; height: 22px; font-size: 10px; }
     .sum-rule-t { font-size: 14px; }
 
+    .vr-item { grid-template-columns: 1fr; gap: 6px; padding: 12px 14px; }
+    .vr-score { text-align: left; }
+
+    .vt-card { padding: 14px 15px; }
+    .vt-title { font-size: 15.5px; min-width: 100%; }
+    .vt-who { gap: 8px; }
+    .vt-select { width: 100%; }
+
+    .ann-wrap { padding: 14px 15px; }
+    .ann-form-row { flex-direction: column; }
+    .ann-code { max-width: none; }
+    .ann-actions .bd-post { flex: 1; }
+
+    .bd-compose { padding: 14px 15px; }
+    .bd-row { flex-direction: column; }
+    .bd-pass { max-width: none; }
+    .bd-post-card { padding: 13px 15px; }
+    .bd-age { width: 100%; margin-left: 0; }
+
     .act-filters { overflow-x: auto; scrollbar-width: none; }
     .act-filters::-webkit-scrollbar { display: none; }
     .act-f { flex: 0 0 auto; white-space: nowrap; min-height: 40px; }
@@ -1429,8 +1813,37 @@
     <button class="ss-toggle" id="ss-toggle" aria-expanded="false">Show all 12</button>
   </div>
 
+  <div class="ann-wrap">
+    <div class="ann-head">
+      <span class="ann-label">Announcements</span>
+      <button id="ann-edit" class="ann-edit">Edit</button>
+    </div>
+
+    <div id="ann-view" class="ann-view">
+      <div id="ann-body" class="ann-body ann-empty">No announcements right now.</div>
+      <div id="ann-meta" class="ann-meta"></div>
+    </div>
+
+    <div id="ann-form" class="ann-form" hidden>
+      <textarea id="ann-text" class="bd-textarea" maxlength="1500" rows="3"
+        placeholder="What does the league need to know?"></textarea>
+      <div class="ann-form-row">
+        <input id="ann-author" class="bd-input ann-author" type="text" maxlength="40" placeholder="Your name (optional)">
+        <input id="ann-code" class="bd-input ann-code" type="password" inputmode="numeric" maxlength="12" placeholder="Code">
+      </div>
+      <div class="ann-actions">
+        <span id="ann-msg" class="bd-msg"></span>
+        <button id="ann-cancel" class="ann-cancel">Cancel</button>
+        <button id="ann-save" class="bd-post">Save</button>
+      </div>
+      <div class="ann-hint">Saving replaces the current announcement. Leave the box empty and save to clear it.</div>
+    </div>
+  </div>
+
   <nav class="tabs" role="tablist">
     <button class="active" role="tab" aria-selected="true" data-tab="summary">Summary</button>
+    <button role="tab" aria-selected="false" data-tab="board">Board</button>
+    <button role="tab" aria-selected="false" data-tab="vote">Vote</button>
     <button role="tab" aria-selected="false" data-tab="news">News</button>
     <button role="tab" aria-selected="false" data-tab="activity">Activity</button>
     <button role="tab" aria-selected="false" data-tab="keepers">Keepers</button>
@@ -1475,16 +1888,20 @@
     </div>
 
     <div class="sum-block">
-      <div class="sum-head">Using the Site</div>
-      <div class="sum-tabs">
-        <div class="sum-tab"><span class="sum-tab-n">Standings box (top of page)</span>Toggle between live standings and Power Rankings. Power Rankings averages free public projection sources (ESPN and Sleeper) and totals them per roster &mdash; until Yahoo is connected it falls back to draft capital, which is labelled as such.</div>
-        <div class="sum-tab"><span class="sum-tab-n">News</span>Fantasy-relevant NFL headlines, refreshed on demand.</div>
-        <div class="sum-tab"><span class="sum-tab-n">Activity</span>A running log of adds, drops and trades. Goes live once Yahoo is connected.</div>
-        <div class="sum-tab"><span class="sum-tab-n">Keepers</span>Who each owner has declared for next season. Green dot means first year kept, red means second &mdash; and red means it's his last.</div>
-        <div class="sum-tab"><span class="sum-tab-n">Keeper Costs</span>Every player on every roster with his price. "Back to pool" means he can't be kept, with the reason underneath.</div>
-        <div class="sum-tab"><span class="sum-tab-n">Draft Results</span>The full draft board. Owner names stay pinned up top and round numbers stay pinned left, so you can scroll around without losing your place. Gold cells were traded picks.</div>
-        <div class="sum-tab"><span class="sum-tab-n">Pick Trades</span>Every pick and player swap on record, by season. This lives in the Google Sheet, not Yahoo.</div>
-        <div class="sum-tab"><span class="sum-tab-n">League History</span>Champions and lifetime records. Also waiting on Yahoo.</div>
+      <div class="sum-head">Voting Results</div>
+
+      <div class="vr-group">
+        <div class="vr-label passed">New Rules</div>
+        <div id="vr-passed" class="vr-list">
+          <div class="vr-empty">Nothing passed yet.</div>
+        </div>
+      </div>
+
+      <div class="vr-group">
+        <div class="vr-label failed">Rejected Rules</div>
+        <div id="vr-failed" class="vr-list">
+          <div class="vr-empty">Nothing rejected yet.</div>
+        </div>
       </div>
     </div>
 
@@ -1492,6 +1909,59 @@
       <div class="sum-head">Heads up</div>
       <p>Standings records and League History are placeholders until the Yahoo connection is live. Everything keeper-related &mdash; costs, declarations, the draft board, trades &mdash; is real, pulled straight from the league sheet.</p>
     </div>
+  </section>
+
+  <section class="panel" id="board">
+    <h2 class="panel-title">Board</h2>
+    <p class="panel-sub">League chatter &middot; posts clear themselves after 6 months</p>
+
+    <div class="bd-compose">
+      <div class="bd-row">
+        <input id="bd-name" class="bd-input" type="text" maxlength="40" placeholder="Your name" autocomplete="nickname">
+        <input id="bd-pass" class="bd-input bd-pass" type="password" maxlength="60" placeholder="League password" hidden>
+      </div>
+      <textarea id="bd-body" class="bd-textarea" maxlength="2000" rows="3" placeholder="Say something&hellip;"></textarea>
+      <div class="bd-actions">
+        <span id="bd-replying" class="bd-replying" hidden></span>
+        <span id="bd-msg" class="bd-msg"></span>
+        <button id="bd-post" class="bd-post">Post</button>
+      </div>
+    </div>
+
+    <div id="bd-status" class="news-status" hidden></div>
+    <div id="bd-list" class="bd-list"></div>
+  </section>
+
+  <section class="panel" id="vote">
+    <h2 class="panel-title">League Vote</h2>
+    <p class="panel-sub">Proposed rule changes &middot; 7 yes votes carries it</p>
+
+    <div class="vt-who">
+      <label class="vt-who-label" for="vt-owner">Voting as</label>
+      <select id="vt-owner" class="vt-select">
+        <option value="">Pick your name&hellip;</option>
+      </select>
+    </div>
+
+    <div id="vt-status" class="news-status" hidden></div>
+    <div id="vt-list" class="vt-list"></div>
+    <div class="vt-newwrap">
+      <button id="vt-toggle" class="vt-toggle">+ Propose a rule change</button>
+      <div id="vt-form" class="vt-form" hidden>
+        <input id="vt-title" class="bd-input" type="text" maxlength="140" placeholder="The change, in one line">
+        <textarea id="vt-body" class="bd-textarea" maxlength="2000" rows="3" placeholder="Why? Any detail people need before voting."></textarea>
+        <div class="ann-form-row">
+          <input id="vt-author" class="bd-input ann-author" type="text" maxlength="40" placeholder="Your name (optional)">
+          <input id="vt-code" class="bd-input ann-code" type="password" inputmode="numeric" maxlength="12" placeholder="Code">
+        </div>
+        <div class="ann-actions">
+          <span id="vt-msg" class="bd-msg"></span>
+          <button id="vt-cancel" class="ann-cancel">Cancel</button>
+          <button id="vt-submit" class="bd-post">Put it to a vote</button>
+        </div>
+      </div>
+    </div>
+
   </section>
 
   <section class="panel" id="news">
@@ -2488,6 +2958,7 @@
   }
 
   loadLeagueData();
+  loadAnnouncement();
 
   // ---- Standings strip: expand + Standings/Power switch ----
   const ssStrip = document.querySelector('.standings-strip');
@@ -2542,6 +3013,565 @@
       tag.textContent = 'live projections unavailable (' + (e.message || 'error') + ') \u2014 showing draft capital';
     }
   }
+
+
+
+
+  // ---- Preview storage ----
+  // With no server, the board, announcements and votes are held in memory for
+  // the session so the features can be exercised. Deliberately plain: no
+  // browser or sandbox storage API is touched, because those aren't available
+  // everywhere this file gets opened and a failing one takes the feature with
+  // it. Nothing here survives a refresh — that's expected in preview. On the
+  // real server everything goes to the database and persists for the league.
+  const pvMemory = new Map();
+
+  const pvStore = {
+    persistent: false,
+    async get(key) { return pvMemory.has(key) ? pvMemory.get(key) : null; },
+    async set(key, value) { pvMemory.set(key, value); },
+    async remove(key) { pvMemory.delete(key); }
+  };
+
+  // ---- Announcement ----
+  // One pinned message. Saving overwrites it; there's no history kept.
+  // On the server the code is checked server-side, so it isn't in this file.
+  // In preview mode there's no server, so it's checked here just to let you
+  // try the flow — that check is cosmetic and anyone could read around it.
+  const PREVIEW_ANN_CODE = '6699';
+
+  const annView = document.getElementById('ann-view');
+  const annForm = document.getElementById('ann-form');
+  const annBody = document.getElementById('ann-body');
+  const annMeta = document.getElementById('ann-meta');
+  const annText = document.getElementById('ann-text');
+  const annAuthor = document.getElementById('ann-author');
+  const annCode = document.getElementById('ann-code');
+  const annMsg = document.getElementById('ann-msg');
+  let annCurrent = { body: null, author: null, updatedAt: null };
+
+  function annSay(text, kind) {
+    annMsg.textContent = text || '';
+    annMsg.className = 'bd-msg' + (kind ? ' ' + kind : '');
+    if (text) setTimeout(() => { if (annMsg.textContent === text) annSay(''); }, 4000);
+  }
+
+  function renderAnnouncement(a) {
+    annCurrent = a || { body: null };
+    if (a && a.body) {
+      annBody.textContent = a.body;
+      annBody.classList.remove('ann-empty');
+      const when = a.updatedAt
+        ? new Date(a.updatedAt * 1000).toLocaleString(undefined,
+            { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+        : '';
+      annMeta.textContent = [a.author ? 'posted by ' + a.author : '', when]
+        .filter(Boolean).join(' \u00b7 ');
+    } else {
+      annBody.textContent = 'No announcements right now.';
+      annBody.classList.add('ann-empty');
+      annMeta.textContent = '';
+    }
+  }
+
+  async function loadAnnouncement() {
+    if (API_BASE !== null) {
+      try {
+        const res = await fetch(API_BASE.replace(/\/$/, '') + '/announcement');
+        if (res.ok) return renderAnnouncement(await res.json());
+      } catch (e) { /* fall through */ }
+      return renderAnnouncement(null);
+    }
+    renderAnnouncement(await pvStore.get('board:announcement'));
+  }
+
+  document.getElementById('ann-edit').addEventListener('click', () => {
+    annText.value = annCurrent.body || '';
+    annAuthor.value = annCurrent.author || '';
+    annCode.value = '';
+    annView.hidden = true;
+    annForm.hidden = false;
+    annText.focus();
+  });
+
+  document.getElementById('ann-cancel').addEventListener('click', () => {
+    annForm.hidden = true;
+    annView.hidden = false;
+    annSay('');
+  });
+
+  document.getElementById('ann-save').addEventListener('click', async () => {
+    const body = annText.value.trim();
+    const author = annAuthor.value.trim();
+    const code = annCode.value.trim();
+
+    if (!code) { annSay('Enter the code.', 'err'); annCode.focus(); return; }
+
+    try {
+      if (API_BASE !== null) {
+        const res = await fetch(API_BASE.replace(/\/$/, '') + '/announcement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body, author, code })
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'server ' + res.status);
+      } else {
+        if (code !== PREVIEW_ANN_CODE) throw new Error('Wrong code.');
+        const payload = body
+          ? { body, author: author || null, updatedAt: Math.floor(Date.now() / 1000) }
+          : null;
+        if (payload) await pvStore.set('board:announcement', payload);
+        else await pvStore.remove('board:announcement');
+      }
+
+      annForm.hidden = true;
+      annView.hidden = false;
+      await loadAnnouncement();
+    } catch (e) {
+      annSay(e.message || 'Could not save.', 'err');
+    }
+  });
+
+
+  // ---- League vote ----
+  // Proposing needs the code; voting doesn't. One vote per owner is enforced
+  // by the server (a second vote replaces the first, it doesn't stack).
+  // Passing threshold is 7 yes. With 12 owners, once enough no votes land that
+  // 7 yes can't be reached, it's marked failed without anyone closing it.
+  const VOTE_THRESHOLD = 7;
+  const DEFAULT_OWNERS = ['Rogan','Marc','Palumberi','Jared','Fito','Post',
+                          'Hexx','Opie','Derek','Rebel','Gregg','Garett'];
+
+  const vtOwner = document.getElementById('vt-owner');
+  const vtList = document.getElementById('vt-list');
+  const vtForm = document.getElementById('vt-form');
+  const vtMsg = document.getElementById('vt-msg');
+  let vtLoaded = false;
+  let vtData = { owners: DEFAULT_OWNERS, threshold: VOTE_THRESHOLD, proposals: [] };
+
+  DEFAULT_OWNERS.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    vtOwner.appendChild(opt);
+  });
+
+  function vtSay(t, kind) {
+    vtMsg.textContent = t || '';
+    vtMsg.className = 'bd-msg' + (kind ? ' ' + kind : '');
+    if (t) setTimeout(() => { if (vtMsg.textContent === t) vtSay(''); }, 4000);
+  }
+
+  const vtServer = () => API_BASE !== null;
+
+  async function vtLocalGet() {
+    return (await pvStore.get('vote:proposals')) || [];
+  }
+  async function vtLocalSet(v) {
+    await pvStore.set('vote:proposals', v);   // throws if it can't save
+  }
+
+  function vtTally(p, ownerCount) {
+    const votes = p.voters || [];
+    const yes = votes.filter(v => v.choice === 'yes').length;
+    const no = votes.filter(v => v.choice === 'no').length;
+    const remaining = ownerCount - votes.length;
+    let status = 'open';
+    if (yes >= VOTE_THRESHOLD) status = 'passed';
+    else if (yes + remaining < VOTE_THRESHOLD) status = 'failed';
+    return { ...p, yes, no, status, needed: VOTE_THRESHOLD };
+  }
+
+  function renderVotes() {
+    const me = vtOwner.value;
+    const props = vtData.proposals;
+
+    if (!props.length) {
+      vtList.innerHTML = '<div class="vt-empty">No proposals yet.</div>';
+      renderVotingResults([]);
+      return;
+    }
+
+    // Decided proposals move to the Summary tab and leave this list.
+    const open = props.filter(p => p.status === 'open');
+    renderVotingResults(props);
+
+    if (!open.length) {
+      vtList.innerHTML = '<div class="vt-empty">No open votes. '
+        + 'Decided ones are on the Summary tab.</div>';
+      return;
+    }
+    const sorted = open.slice().sort((a, b) => b.createdAt - a.createdAt);
+
+    vtList.innerHTML = sorted.map(p => {
+      const total = vtData.owners.length;
+      const yesPct = (p.yes / total) * 100;
+      const noPct = (p.no / total) * 100;
+      const mine = (p.voters || []).find(v => v.owner === me);
+      const decided = p.status !== 'open';
+
+      const badge = p.status === 'passed' ? 'Passed'
+        : p.status === 'failed' ? 'Did not pass' : 'Open';
+
+      const voterLine = (p.voters || []).length
+        ? '<div class="vt-voters">Yes: '
+          + ((p.voters.filter(v => v.choice === 'yes').map(v => esc(v.owner)).join(', ')) || '\u2014')
+          + ' &nbsp;|&nbsp; No: '
+          + ((p.voters.filter(v => v.choice === 'no').map(v => esc(v.owner)).join(', ')) || '\u2014')
+          + '</div>'
+        : '';
+
+      return '<div class="vt-card ' + p.status + '">'
+        + '<div class="vt-head">'
+        + '<div class="vt-title">' + esc(p.title) + '</div>'
+        + '<span class="vt-badge ' + p.status + '">' + badge + '</span>'
+        + '</div>'
+        + (p.body ? '<div class="vt-body">' + esc(p.body) + '</div>' : '')
+        + (p.author ? '<div class="vt-author">proposed by ' + esc(p.author) + '</div>' : '')
+        + '<div class="vt-tally">'
+        + '<div class="vt-bar">'
+        + '<div class="vt-bar-yes" style="width:' + yesPct + '%"></div>'
+        + '<div class="vt-bar-no" style="width:' + noPct + '%"></div>'
+        + '</div>'
+        + '<span class="vt-count"><span class="y">' + p.yes + ' yes</span> / '
+        + '<span class="n">' + p.no + ' no</span> '
+        + '<span class="need">\u00b7 need ' + VOTE_THRESHOLD + '</span></span>'
+        + '</div>'
+        + (decided ? '' :
+            '<div class="vt-buttons">'
+            + '<button class="vt-btn yes' + (mine && mine.choice === 'yes' ? ' mine' : '') + '" '
+            + 'data-id="' + p.id + '" data-choice="yes">Yes</button>'
+            + '<button class="vt-btn no' + (mine && mine.choice === 'no' ? ' mine' : '') + '" '
+            + 'data-id="' + p.id + '" data-choice="no">No</button>'
+            + '</div>')
+        + voterLine
+        + '</div>';
+    }).join('');
+
+    vtList.querySelectorAll('.vt-btn').forEach(b => {
+      b.addEventListener('click', () => castVote(Number(b.dataset.id), b.dataset.choice));
+    });
+
+  }
+
+  // Decided proposals live on the Summary tab, split into New Rules and
+  // Rejected Rules. They're removed from the Vote tab once settled.
+  function renderVotingResults(props) {
+    const passedBox = document.getElementById('vr-passed');
+    const failedBox = document.getElementById('vr-failed');
+    if (!passedBox || !failedBox) return;
+
+    const byNewest = (a, b) => b.createdAt - a.createdAt;
+    const passed = props.filter(p => p.status === 'passed').sort(byNewest);
+    const failed = props.filter(p => p.status === 'failed').sort(byNewest);
+
+    const item = (p, kind) =>
+      '<div class="vr-item ' + kind + '">'
+      + '<div>'
+      + '<div class="vr-title">' + esc(p.title) + '</div>'
+      + (p.body ? '<div class="vr-note">' + esc(p.body) + '</div>' : '')
+      + (p.author ? '<div class="vr-by">proposed by ' + esc(p.author) + '</div>' : '')
+      + '</div>'
+      + '<div class="vr-score">' + p.yes + '\u2013' + p.no + '</div>'
+      + '</div>';
+
+    passedBox.innerHTML = passed.length
+      ? passed.map(p => item(p, 'passed')).join('')
+      : '<div class="vr-empty">Nothing passed yet.</div>';
+
+    failedBox.innerHTML = failed.length
+      ? failed.map(p => item(p, 'failed')).join('')
+      : '<div class="vr-empty">Nothing rejected yet.</div>';
+  }
+
+  async function castVote(id, choice) {
+    const me = vtOwner.value;
+    if (!me) { vtSay('Pick your name first.', 'err'); vtOwner.focus(); return; }
+
+    if (vtServer()) {
+      try {
+        const res = await fetch(API_BASE.replace(/\/$/, '') + '/votes/' + id + '/cast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ owner: me, choice })
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'server ' + res.status);
+      } catch (e) { vtSay(e.message, 'err'); return; }
+    } else {
+      const props = await vtLocalGet();
+      const p = props.find(x => x.id === id);
+      if (!p) return;
+      p.voters = (p.voters || []).filter(v => v.owner !== me);
+      p.voters.push({ owner: me, choice });
+      await vtLocalSet(props);
+    }
+    await loadVotes();
+  }
+
+  async function loadVotes() {
+    if (vtServer()) {
+      try {
+        const res = await fetch(API_BASE.replace(/\/$/, '') + '/votes');
+        if (!res.ok) throw new Error('server ' + res.status);
+        vtData = await res.json();
+        renderVotes();
+        return;
+      } catch (e) {
+        vtList.innerHTML = '<div class="vt-empty">Could not reach the league server.</div>';
+        return;
+      }
+    }
+    const props = (await vtLocalGet()).map(p => vtTally(p, DEFAULT_OWNERS.length));
+    vtData = { owners: DEFAULT_OWNERS, threshold: VOTE_THRESHOLD, proposals: props };
+    renderVotes();
+
+    if (!document.getElementById('vt-preview-note')) {
+      const where = 'this browser session only, and they clear when you refresh';
+      vtList.insertAdjacentHTML('beforebegin',
+        '<div class="bd-note" id="vt-preview-note"><strong>Preview mode.</strong> '
+        + 'No server yet, so proposals and votes are stored on ' + where
+        + ' &mdash; nobody else sees them. Once the site is on Railway, everyone votes on '
+        + 'the same proposals and the one-vote-per-owner limit is enforced properly.</div>');
+    }
+  }
+
+  document.getElementById('vt-toggle').addEventListener('click', () => {
+    vtForm.hidden = !vtForm.hidden;
+  });
+  document.getElementById('vt-cancel').addEventListener('click', () => {
+    vtForm.hidden = true;
+  });
+  vtOwner.addEventListener('change', renderVotes);
+
+  document.getElementById('vt-submit').addEventListener('click', async () => {
+    const title = document.getElementById('vt-title').value.trim();
+    const body = document.getElementById('vt-body').value.trim();
+    const author = document.getElementById('vt-author').value.trim();
+    const code = document.getElementById('vt-code').value.trim();
+
+    if (!title) { vtSay('Give it a title.', 'err'); return; }
+    if (!code) { vtSay('Enter the code.', 'err'); return; }
+
+    try {
+      if (vtServer()) {
+        const res = await fetch(API_BASE.replace(/\/$/, '') + '/votes/proposal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, body, author, code })
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'server ' + res.status);
+      } else {
+        if (code !== PREVIEW_ANN_CODE) throw new Error('Wrong code.');
+        const props = await vtLocalGet();
+        props.push({
+          id: Date.now(), title, body,
+          author: author || null,
+          createdAt: Math.floor(Date.now() / 1000),
+          voters: []
+        });
+        await vtLocalSet(props);
+      }
+      document.getElementById('vt-title').value = '';
+      document.getElementById('vt-body').value = '';
+      document.getElementById('vt-code').value = '';
+      vtForm.hidden = true;
+      await loadVotes();
+    } catch (e) {
+      vtSay(e.message || 'Could not post it.', 'err');
+    }
+  });
+
+  document.querySelector('nav.tabs button[data-tab="vote"]').addEventListener('click', () => {
+    if (!vtLoaded) { vtLoaded = true; loadVotes(); }
+  });
+
+  // load once at start so passed rules land in Summary without visiting the tab
+  loadVotes().then(() => { vtLoaded = true; });
+
+  // ---- Message board ----
+  // Real board lives on the server (all 12 owners see the same posts).
+  // In a preview sandbox there's no server, so posts are kept locally just so
+  // the thing can be tried out — that's clearly labelled in the UI.
+  const RETENTION_DAYS = 180;   // 6 months
+
+  const bdName = document.getElementById('bd-name');
+  const bdPass = document.getElementById('bd-pass');
+  const bdBody = document.getElementById('bd-body');
+  const bdPostBtn = document.getElementById('bd-post');
+  const bdList = document.getElementById('bd-list');
+  const bdMsg = document.getElementById('bd-msg');
+  const bdReplying = document.getElementById('bd-replying');
+  let bdReplyTo = null;
+  let bdLoaded = false;
+  let bdLocalMode = false;
+
+  const bdServer = () => API_BASE !== null;
+
+  function bdSay(text, kind) {
+    bdMsg.textContent = text || '';
+    bdMsg.className = 'bd-msg' + (kind ? ' ' + kind : '');
+    if (text) setTimeout(() => { if (bdMsg.textContent === text) bdSay(''); }, 4000);
+  }
+
+  function timeAgo(sec) {
+    const mins = Math.floor((Date.now() / 1000 - sec) / 60);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return days + 'd ago';
+    return Math.floor(days / 30) + 'mo ago';
+  }
+
+  function daysLeft(sec) {
+    return RETENTION_DAYS - Math.floor((Date.now() / 1000 - sec) / 86400);
+  }
+
+  /* --- local fallback storage (preview only) --- */
+  async function localGet() {
+    return (await pvStore.get('board:posts')) || [];
+  }
+  async function localSet(posts) {
+    await pvStore.set('board:posts', posts);   // throws if it can't save
+  }
+
+  function purgeLocal(posts) {
+    const cutoff = Math.floor(Date.now() / 1000) - RETENTION_DAYS * 86400;
+    const kept = posts.filter(p => p.createdAt >= cutoff);
+    const ids = new Set(kept.map(p => p.id));
+    return kept.filter(p => p.replyTo == null || ids.has(p.replyTo));
+  }
+
+  /* --- rendering --- */
+  function renderBoard(posts, opts = {}) {
+    if (!posts.length) {
+      bdList.innerHTML = '<div class="bd-empty">Nothing here yet. Somebody start something.</div>';
+      return;
+    }
+
+    const tops = posts.filter(p => p.replyTo == null)
+      .sort((a, b) => b.createdAt - a.createdAt);
+    const repliesFor = id => posts.filter(p => p.replyTo === id)
+      .sort((a, b) => a.createdAt - b.createdAt);
+
+    const card = (p, isReply) => {
+      const left = daysLeft(p.createdAt);
+      const ageCls = left <= 14 ? 'bd-age expiring' : 'bd-age';
+      const ageTxt = left <= 30 ? 'clears in ' + Math.max(left, 0) + 'd' : '';
+      return '<div class="' + (isReply ? 'bd-reply' : 'bd-post-card') + '">'
+        + '<div class="bd-head">'
+        + '<span class="bd-author">' + esc(p.author) + '</span>'
+        + '<span class="bd-when">' + timeAgo(p.createdAt) + '</span>'
+        + (ageTxt ? '<span class="' + ageCls + '">' + ageTxt + '</span>' : '')
+        + '</div>'
+        + '<div class="bd-body">' + esc(p.body) + '</div>'
+        + (isReply ? '' :
+            '<div class="bd-foot"><button class="bd-reply-btn" data-reply="' + p.id
+            + '" data-author="' + esc(p.author) + '">Reply</button></div>')
+        + '</div>';
+    };
+
+    bdList.innerHTML = tops.map(p => {
+      const kids = repliesFor(p.id);
+      const inner = kids.length
+        ? '<div class="bd-replies">' + kids.map(k => card(k, true)).join('') + '</div>'
+        : '';
+      return card(p, false).replace(/<\/div>$/, inner + '</div>');
+    }).join('');
+
+    bdList.querySelectorAll('.bd-reply-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        bdReplyTo = Number(b.dataset.reply);
+        bdReplying.hidden = false;
+        bdReplying.textContent = 'replying to ' + b.dataset.author + ' \u00d7';
+        bdBody.focus();
+      });
+    });
+  }
+
+  bdReplying.addEventListener('click', () => {
+    bdReplyTo = null;
+    bdReplying.hidden = true;
+  });
+
+  /* --- load + post --- */
+  async function loadBoard() {
+    if (bdServer()) {
+      try {
+        const res = await fetch(API_BASE.replace(/\/$/, '') + '/board');
+        if (!res.ok) throw new Error('server ' + res.status);
+        const d = await res.json();
+        bdPass.hidden = !d.passwordRequired;
+        renderBoard(d.posts || []);
+        return;
+      } catch (e) {
+        bdSay('Could not reach the board (' + e.message + ')', 'err');
+        return;
+      }
+    }
+
+    // no server — local preview mode
+    bdLocalMode = true;
+    if (!document.getElementById('bd-local-note')) {
+      bdList.insertAdjacentHTML('beforebegin',
+        '<div class="bd-note" id="bd-local-note"><strong>Preview mode.</strong> '
+        + 'There\'s no server here, so these posts are stored on this device only '
+        + '&mdash; nobody else can see them. Once the site is on Railway, the board '
+        + 'is shared across the whole league and the 6-month cleanup runs on the server.</div>');
+    }
+    renderBoard(purgeLocal(await localGet()));
+  }
+
+  async function submitPost() {
+    const author = bdName.value.trim();
+    const body = bdBody.value.trim();
+    if (!author) { bdSay('Add your name first.', 'err'); bdName.focus(); return; }
+    if (!body) { bdSay('Nothing to post.', 'err'); bdBody.focus(); return; }
+
+    bdPostBtn.disabled = true;
+    try {
+      if (bdServer()) {
+        const res = await fetch(API_BASE.replace(/\/$/, '') + '/board', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ author, body, replyTo: bdReplyTo, password: bdPass.value })
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'server ' + res.status);
+      } else {
+        const posts = purgeLocal(await localGet());
+        posts.push({
+          id: Date.now(),
+          author, body,
+          replyTo: bdReplyTo,
+          createdAt: Math.floor(Date.now() / 1000)
+        });
+        await localSet(posts);
+      }
+
+      bdBody.value = '';
+      bdReplyTo = null;
+      bdReplying.hidden = true;
+      bdSay('Posted.', 'ok');
+      await loadBoard();
+    } catch (e) {
+      bdSay(e.message || 'Could not post.', 'err');
+    } finally {
+      bdPostBtn.disabled = false;
+    }
+  }
+
+  bdPostBtn.addEventListener('click', submitPost);
+  bdBody.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submitPost();
+  });
+
+  document.querySelector('nav.tabs button[data-tab="board"]').addEventListener('click', () => {
+    if (!bdLoaded) { bdLoaded = true; loadBoard(); }
+  });
 
   // ---- Activity feed (reads the logged archive from your proxy) ----
   const actStatus = document.getElementById('act-status');
