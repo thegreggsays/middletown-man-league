@@ -33,7 +33,7 @@
  *   GET  /activity?limit=&type=&owner=&season=   normalized transaction feed
  *   GET  /activity/stats                         per-owner counts
  *   POST /activity/sync                          force a poll right now
- *   GET  /news?src=ffl|nfl                       fantasy news, fetched server-side
+ *   GET  /news                                   fantasy news, merged + fetched server-side
  *   GET  /announcement                           the pinned announcement
  *   POST /announcement                           overwrite it (needs the code)
  *   GET  /votes                                  rule-change proposals + tallies
@@ -838,35 +838,48 @@ function normalizeNews(data) {
   }).filter(x => x.title);
 }
 
-app.get('/news', async (req, res) => {
-  const key = NEWS_SOURCES[req.query.src] ? req.query.src : 'ffl';
-
-  const hit = newsCache.get(key);
+app.get('/news', async (_req, res) => {
+  const hit = newsCache.get('all');
   if (hit && Date.now() - hit.at < NEWS_CACHE_MINUTES * 60 * 1000) {
     return res.json({ source: 'ESPN', cached: true, items: hit.items });
   }
 
+  // Pull every source, merge, drop duplicates, newest first.
+  const urls = [...new Set([...NEWS_SOURCES.ffl, ...NEWS_SOURCES.nfl])];
   const problems = [];
-  for (const url of NEWS_SOURCES[key]) {
+  const seen = new Set();
+  let merged = [];
+
+  for (const url of urls) {
     try {
       const r = await fetch(url, { headers: { Accept: 'application/json' } });
       if (!r.ok) { problems.push(`${r.status} from ${new URL(url).host}`); continue; }
-
-      let items = normalizeNews(await r.json());
-      if (!items.length) { problems.push('no items'); continue; }
-
-      const filtered = items.filter(i => FF_WORDS.test(i.title + ' ' + i.desc));
-      if (filtered.length >= 5) items = filtered;
-
-      items = items.slice(0, 30);
-      newsCache.set(key, { at: Date.now(), items });
-      return res.json({ source: 'ESPN', cached: false, items });
+      for (const item of normalizeNews(await r.json())) {
+        const key = (item.link || item.title).toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(item);
+      }
     } catch (e) {
       problems.push(e.message);
     }
   }
 
-  res.status(502).json({ error: 'No news source responded.', detail: problems });
+  if (!merged.length) {
+    return res.status(502).json({ error: 'No news source responded.', detail: problems });
+  }
+
+  const filtered = merged.filter(i => FF_WORDS.test(i.title + ' ' + i.desc));
+  if (filtered.length >= 8) merged = filtered;
+
+  merged.sort((a, b) => {
+    const da = Date.parse(a.date) || 0, dbb = Date.parse(b.date) || 0;
+    return dbb - da;
+  });
+
+  const items = merged.slice(0, 40);
+  newsCache.set('all', { at: Date.now(), items });
+  res.json({ source: 'ESPN', cached: false, items });
 });
 
 app.get('/announcement', (_req, res) => {
