@@ -36,6 +36,9 @@
  *   GET  /news                                   fantasy news, merged + fetched server-side
  *   GET  /announcement                           the pinned announcement
  *   POST /announcement                           overwrite it (needs the code)
+ *   GET  /rosters                                rosters for the parlay dropdown
+ *   GET  /parlay?week=N                          weekly TD picks + who has scored
+ *   POST /parlay                                 submit or change a pick
  *   GET  /votes                                  rule-change proposals + tallies
  *   POST /votes/proposal                         new proposal (needs the code)
  *   POST /votes/:id/cast                         cast a vote (one per owner)
@@ -134,6 +137,17 @@ db.exec(`
     cast_at     INTEGER NOT NULL,
     PRIMARY KEY (proposal_id, owner)    -- one vote per owner, enforced here
   );
+
+  CREATE TABLE IF NOT EXISTS parlay_picks (
+    season     INTEGER NOT NULL,
+    week       INTEGER NOT NULL,
+    owner      TEXT NOT NULL,
+    player     TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (season, week, owner)      -- one pick per owner per week
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_parlay ON parlay_picks(season, week);
 
   CREATE INDEX IF NOT EXISTS idx_posts_time ON posts(created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_posts_reply ON posts(reply_to);
@@ -958,6 +972,232 @@ function tallyProposal(p) {
   };
 }
 
+
+/* ----------------------------------------------------------------
+   TOUCHDOWN PARLAY
+   Everyone picks one player a week. We check ESPN's scoring plays to
+   see who found the end zone.
+
+   Uses ESPN rather than Yahoo because it needs no key and no approval,
+   so it works right away. Nothing here depends on the Yahoo hookup.
+
+   A passing touchdown does NOT count for the quarterback — the receiver
+   is the one who scored. ESPN writes those plays as
+   "<receiver> 12 Yd pass from <QB>", so only the part before "from"
+   counts as the scorer.
+   ---------------------------------------------------------------- */
+
+const parlayCache = new Map();   // "season:week" -> { at, scorers, games }
+
+function currentNflSeason() {
+  const now = new Date();
+  // the season is named for the year it starts; January belongs to the prior one
+  return now.getMonth() <= 1 ? now.getFullYear() - 1 : now.getFullYear();
+}
+
+function playerNameKey(n) {
+  return String(n || '')
+    .toLowerCase()
+    .replace(/[.'`]/g, '')
+    .replace(/-/g, ' ')
+    .replace(/\b(jr|sr|ii|iii|iv|v)\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Pull every touchdown scorer for a given week. */
+async function fetchWeekScorers(season, week) {
+  const key = `${season}:${week}`;
+  const hit = parlayCache.get(key);
+  if (hit && Date.now() - hit.at < 2 * 60 * 1000) return hit;   // 2 min
+
+  const sbUrl = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard'
+    + `?week=${week}&seasontype=2&dates=${season}`;
+  const sbRes = await fetch(sbUrl, { headers: { Accept: 'application/json' } });
+  if (!sbRes.ok) throw new Error(`ESPN scoreboard ${sbRes.status}`);
+  const sb = await sbRes.json();
+
+  const events = (sb.events || []).map(e => ({
+    id: e.id,
+    name: e.shortName,
+    state: ((e.status || {}).type || {}).state || 'pre'
+  }));
+
+  const scorers = new Set();
+
+  await Promise.all(events.map(async ev => {
+    if (ev.state === 'pre') return;   // nothing to read yet
+    try {
+      const r = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${ev.id}`,
+        { headers: { Accept: 'application/json' } });
+      if (!r.ok) return;
+      const data = await r.json();
+
+      for (const play of data.scoringPlays || []) {
+        const type = ((play.type || {}).abbreviation || play.scoringType?.abbreviation || '').toUpperCase();
+        const text = String(play.text || '');
+        if (type && type !== 'TD') continue;
+        if (!type && !/touchdown|\bTD\b|Yd (run|pass|reception|return)/i.test(text)) continue;
+
+        // the scorer is named before " from "
+        const scorerPart = text.split(/\sfrom\s/i)[0];
+
+        // ESPN sometimes attaches the athletes directly — prefer that
+        const participants = play.participants || [];
+        let named = false;
+        for (const p of participants) {
+          const role = (p.type || '').toLowerCase();
+          if (role && role !== 'scorer' && role !== 'rusher' && role !== 'receiver') continue;
+          const nm = ((p.athlete || {}).displayName) || '';
+          if (nm) { scorers.add(playerNameKey(nm)); named = true; }
+        }
+        if (!named) {
+          // fall back to the leading name in the play text
+          const m = scorerPart.match(/^([A-Z][A-Za-z.'`-]+(?:\s[A-Z][A-Za-z.'`-]+){1,2})/);
+          if (m) scorers.add(playerNameKey(m[1]));
+        }
+      }
+    } catch (e) { /* skip this game */ }
+  }));
+
+  const out = {
+    at: Date.now(),
+    scorers,
+    games: events.map(e => ({ name: e.name, state: e.state }))
+  };
+  parlayCache.set(key, out);
+  return out;
+}
+
+
+/* ----------------------------------------------------------------
+   ROSTERS
+   Feeds the parlay dropdown. Prefers live Yahoo rosters; falls back to
+   the ending rosters in the Google Sheet when Yahoo isn't hooked up.
+   The response says which source it used so the page can be honest
+   about how current the list is.
+   ---------------------------------------------------------------- */
+
+
+/** Yahoo nicknames don't always match the names used in the sheet. */
+function canonOwnerName(name) {
+  const n = String(name || '').trim();
+  const hit = LEAGUE_OWNERS.find(o => o.toLowerCase() === n.toLowerCase());
+  return hit || n;
+}
+
+let rosterCache = { at: 0, data: null };
+
+app.get('/rosters', async (_req, res) => {
+  if (rosterCache.data && Date.now() - rosterCache.at < 10 * 60 * 1000) {
+    return res.json(rosterCache.data);
+  }
+
+  // 1. live from Yahoo, if we're authorized
+  if (readTokens() && LEAGUE_KEYS.length) {
+    try {
+      const teams = await currentRosters();
+      const data = {
+        source: 'yahoo',
+        label: 'live Yahoo rosters',
+        teams: teams.map(t => ({
+          owner: canonOwnerName(t.owner),
+          players: t.players.map(p => ({ name: p.name, pos: p.position }))
+        }))
+      };
+      rosterCache = { at: Date.now(), data };
+      return res.json(data);
+    } catch (e) { /* fall through to the sheet */ }
+  }
+
+  // 2. the sheet's end-of-season rosters
+  try {
+    if (!process.env.SHEET_ID) throw new Error('SHEET_ID not set');
+    const league = await loadLeagueData(process.env.SHEET_ID);
+    const byOwner = new Map();
+    for (const r of league.keeperCosts) {
+      if (!byOwner.has(r.owner)) byOwner.set(r.owner, []);
+      byOwner.get(r.owner).push({ name: r.player, pos: r.pos });
+    }
+    const data = {
+      source: 'sheet',
+      label: 'last season\'s ending rosters (Yahoo not connected yet)',
+      teams: [...byOwner.entries()].map(([owner, players]) => ({ owner, players }))
+    };
+    rosterCache = { at: Date.now(), data };
+    return res.json(data);
+  } catch (e) {
+    return res.status(503).json({ error: 'No roster source available: ' + e.message });
+  }
+});
+
+app.get('/parlay', async (req, res) => {
+  const season = Number(req.query.season) || currentNflSeason();
+  const week = Number(req.query.week) || 1;
+
+  const picks = db.prepare(`
+    SELECT owner, player, created_at FROM parlay_picks
+    WHERE season = ? AND week = ? ORDER BY created_at
+  `).all(season, week);
+
+  let scorers = null, games = [], note = null;
+  try {
+    const wk = await fetchWeekScorers(season, week);
+    scorers = wk.scorers;
+    games = wk.games;
+  } catch (e) {
+    note = 'Live scoring unavailable: ' + e.message;
+  }
+
+  res.json({
+    season,
+    week,
+    owners: LEAGUE_OWNERS,
+    note,
+    gamesStarted: games.filter(g => g.state !== 'pre').length,
+    gamesTotal: games.length,
+    picks: picks.map(p => ({
+      owner: p.owner,
+      player: p.player,
+      scored: scorers ? scorers.has(playerNameKey(p.player)) : null
+    }))
+  });
+});
+
+app.post('/parlay', (req, res) => {
+  const { owner, player, week, season } = req.body || {};
+  const s = Number(season) || currentNflSeason();
+  const w = Number(week);
+
+  if (!LEAGUE_OWNERS.includes(owner)) {
+    return res.status(400).json({ error: 'Pick your name from the list.' });
+  }
+  if (!Number.isFinite(w) || w < 1 || w > 18) {
+    return res.status(400).json({ error: 'Week must be 1-18.' });
+  }
+  const name = String(player || '').trim().slice(0, 60);
+  if (!name) return res.status(400).json({ error: 'Enter a player.' });
+
+  db.prepare(`
+    INSERT INTO parlay_picks (season, week, owner, player, created_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(season, week, owner)
+      DO UPDATE SET player = excluded.player, created_at = excluded.created_at
+  `).run(s, w, owner, name, Math.floor(Date.now() / 1000));
+
+  res.json({ ok: true });
+});
+
+app.delete('/parlay', (req, res) => {
+  const s = Number(req.query.season) || currentNflSeason();
+  const w = Number(req.query.week);
+  const owner = req.query.owner;
+  db.prepare('DELETE FROM parlay_picks WHERE season = ? AND week = ? AND owner = ?')
+    .run(s, w, owner);
+  res.json({ ok: true });
+});
+
 app.get('/votes', (_req, res) => {
   const rows = db.prepare('SELECT * FROM proposals ORDER BY created_at DESC LIMIT 100').all();
   res.json({
@@ -1100,7 +1340,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/auth') || req.path.startsWith('/activity') ||
       req.path.startsWith('/history') || req.path.startsWith('/power') ||
       req.path.startsWith('/standings') || req.path.startsWith('/health') ||
-      req.path.startsWith('/league-data') || req.path.startsWith('/board') || req.path.startsWith('/announcement') || req.path.startsWith('/votes') || req.path.startsWith('/news')) {
+      req.path.startsWith('/league-data') || req.path.startsWith('/board') || req.path.startsWith('/announcement') || req.path.startsWith('/votes') || req.path.startsWith('/news') || req.path.startsWith('/parlay') || req.path.startsWith('/rosters')) {
     return next();
   }
   res.sendFile(path.join(__dirname, 'index.html'));

@@ -442,6 +442,26 @@
   .kc-row.not-keepable .kc-name { text-decoration: none; }
   .kc-row.not-keepable .kc-name { color: var(--text-dim); }
 
+
+  .kc-warn {
+    background: rgba(255,92,77,0.07);
+    border: 1px solid rgba(255,92,77,0.3);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .kc-warn-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--loss);
+    margin-bottom: 8px;
+  }
+  .kc-warn p { font-size: 12.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 6px; }
+  .kc-warn p:last-child { margin-bottom: 0; }
+
   .kc-legend {
     font-size: 13px;
     color: var(--text-dim);
@@ -858,7 +878,7 @@
 
   /* ---- COMPACT STANDINGS STRIP ---- */
   .standings-strip {
-    margin: 30px 0 0;
+    margin: 14px 0 0;
     background: var(--glass);
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -1105,6 +1125,165 @@
     padding: 4px 0;
   }
 
+
+
+  /* ---- ROSTERS ---- */
+  .rs-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .rs-bar .pl-note { margin-top: 0; }
+  .rs-bar .news-refresh { margin-left: auto; }
+
+  .rs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .rs-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+
+  .rs-owner {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 4px;
+  }
+  .rs-count {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    opacity: 0.7;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rs-player {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13.5px;
+  }
+  .rs-player:last-child { border-bottom: none; }
+
+  .rs-pos {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--gold-2);
+    text-transform: uppercase;
+  }
+  .rs-name { font-weight: 500; }
+
+  .rs-empty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); opacity: 0.7; padding: 6px 0; }
+
+  /* ---- TD PARLAY ---- */
+  .pl-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .pl-week {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .pl-arrow {
+    background: none;
+    border: none;
+    color: var(--gold-1);
+    font-size: 18px;
+    line-height: 1;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 999px;
+    min-height: 34px;
+  }
+  .pl-arrow:hover { background: rgba(255,255,255,0.06); }
+  .pl-arrow:disabled { opacity: 0.3; cursor: default; }
+  .pl-weeklabel {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    min-width: 74px;
+    text-align: center;
+  }
+  .pl-games { font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  .pl-bar .news-refresh { margin-left: auto; }
+
+  .pl-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+
+  .pl-row {
+    display: grid;
+    grid-template-columns: 92px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .pl-row.hit { border-color: rgba(76,255,176,0.45); background: rgba(76,255,176,0.06); }
+
+  .pl-owner-name {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+  }
+  .pl-player-name { font-weight: 600; font-size: 14.5px; }
+  .pl-row.hit .pl-player-name { color: var(--win); }
+
+  .pl-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--loss);
+    box-shadow: 0 0 8px rgba(255,92,77,0.45);
+    justify-self: end;
+  }
+  .pl-dot.hit { background: var(--win); box-shadow: 0 0 10px rgba(76,255,176,0.65); }
+  .pl-dot.unknown { background: var(--text-dim); box-shadow: none; opacity: 0.4; }
+
+  .pl-empty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); opacity: 0.7; padding: 18px 0; text-align: center; }
+
+  .pl-add {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .pl-add-row { display: flex; gap: 8px; align-items: center; }
+  .pl-add-row .bd-input { flex: 1; }
+  .pl-add-row .bd-post { margin-left: 0; white-space: nowrap; }
+
+
+  .pl-pick { flex: 1; min-width: 0; }
+  .pl-addfoot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .pl-addfoot .pl-note { margin-top: 0; margin-left: auto; text-align: right; }
+
+  .pl-note {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0.7;
+    margin-top: 9px;
+    line-height: 1.5;
+  }
+
   /* ---- LEAGUE VOTE ---- */
   .vt-who { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
   .vt-who-label {
@@ -1245,7 +1424,7 @@
     border: 1px solid rgba(227,168,60,0.35);
     border-radius: 14px;
     padding: 16px 18px;
-    margin-top: 12px;
+    margin-top: 30px;
   }
 
   .ann-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -1613,7 +1792,7 @@
     .wrap { padding: 0 16px 70px; }
 
     header.hero { padding: 40px 0 22px; }
-    .standings-strip { margin-top: 22px; padding: 10px 12px; border-radius: 10px; }
+    .standings-strip { margin-top: 12px; padding: 10px 12px; border-radius: 10px; }
     .ss-row { padding: 6px 6px; gap: 8px; }
     .ss-owner { font-size: 12px; }
     .ss-rec { font-size: 11px; }
@@ -1691,12 +1870,22 @@
     .vr-item { grid-template-columns: 1fr; gap: 6px; padding: 12px 14px; }
     .vr-score { text-align: left; }
 
+    .rs-grid { grid-template-columns: 1fr; }
+    .rs-card { padding: 14px 16px; }
+
+    .pl-row { grid-template-columns: 74px 1fr auto; padding: 11px 13px; gap: 10px; }
+    .pl-player-name { font-size: 13.5px; }
+    .pl-add-row { flex-direction: column; align-items: stretch; }
+    .pl-pick { width: 100%; }
+    .pl-addfoot .pl-note { margin-left: 0; text-align: left; }
+    .pl-add-row .bd-post { width: 100%; }
+
     .vt-card { padding: 14px 15px; }
     .vt-title { font-size: 15.5px; min-width: 100%; }
     .vt-who { gap: 8px; }
     .vt-select { width: 100%; }
 
-    .ann-wrap { padding: 14px 15px; }
+    .ann-wrap { padding: 14px 15px; margin-top: 22px; }
     .ann-form-row { flex-direction: column; }
     .ann-code { max-width: none; }
     .ann-actions .bd-post { flex: 1; }
@@ -1741,6 +1930,33 @@
     <p class="hero-sub">Everything the league complains about, in one place.</p>
 
   </header>
+
+  <div class="ann-wrap">
+    <div class="ann-head">
+      <span class="ann-label">Announcements</span>
+      <button id="ann-edit" class="ann-edit">Edit</button>
+    </div>
+
+    <div id="ann-view" class="ann-view">
+      <div id="ann-body" class="ann-body ann-empty">No announcements right now.</div>
+      <div id="ann-meta" class="ann-meta"></div>
+    </div>
+
+    <div id="ann-form" class="ann-form" hidden>
+      <textarea id="ann-text" class="bd-textarea" maxlength="1500" rows="3"
+        placeholder="What does the league need to know?"></textarea>
+      <div class="ann-form-row">
+        <input id="ann-author" class="bd-input ann-author" type="text" maxlength="40" placeholder="Your name (optional)">
+        <input id="ann-code" class="bd-input ann-code" type="password" inputmode="numeric" maxlength="12" placeholder="Code">
+      </div>
+      <div class="ann-actions">
+        <span id="ann-msg" class="bd-msg"></span>
+        <button id="ann-cancel" class="ann-cancel">Cancel</button>
+        <button id="ann-save" class="bd-post">Save</button>
+      </div>
+      <div class="ann-hint">Saving replaces the current announcement. Leave the box empty and save to clear it.</div>
+    </div>
+  </div>
 
   <div class="standings-strip" aria-label="League standings">
     <div class="ss-head">
@@ -1789,39 +2005,14 @@
     <button class="ss-toggle" id="ss-toggle" aria-expanded="false">Show all 12</button>
   </div>
 
-  <div class="ann-wrap">
-    <div class="ann-head">
-      <span class="ann-label">Announcements</span>
-      <button id="ann-edit" class="ann-edit">Edit</button>
-    </div>
-
-    <div id="ann-view" class="ann-view">
-      <div id="ann-body" class="ann-body ann-empty">No announcements right now.</div>
-      <div id="ann-meta" class="ann-meta"></div>
-    </div>
-
-    <div id="ann-form" class="ann-form" hidden>
-      <textarea id="ann-text" class="bd-textarea" maxlength="1500" rows="3"
-        placeholder="What does the league need to know?"></textarea>
-      <div class="ann-form-row">
-        <input id="ann-author" class="bd-input ann-author" type="text" maxlength="40" placeholder="Your name (optional)">
-        <input id="ann-code" class="bd-input ann-code" type="password" inputmode="numeric" maxlength="12" placeholder="Code">
-      </div>
-      <div class="ann-actions">
-        <span id="ann-msg" class="bd-msg"></span>
-        <button id="ann-cancel" class="ann-cancel">Cancel</button>
-        <button id="ann-save" class="bd-post">Save</button>
-      </div>
-      <div class="ann-hint">Saving replaces the current announcement. Leave the box empty and save to clear it.</div>
-    </div>
-  </div>
-
   <nav class="tabs" role="tablist">
     <button class="active" role="tab" aria-selected="true" data-tab="summary">Summary</button>
+    <button role="tab" aria-selected="false" data-tab="parlay">Parlay</button>
+    <button role="tab" aria-selected="false" data-tab="rosters">Rosters</button>
     <button role="tab" aria-selected="false" data-tab="board">Board</button>
-    <button role="tab" aria-selected="false" data-tab="vote">Vote</button>
-    <button role="tab" aria-selected="false" data-tab="news">News</button>
     <button role="tab" aria-selected="false" data-tab="activity">Activity</button>
+    <button role="tab" aria-selected="false" data-tab="news">News</button>
+    <button role="tab" aria-selected="false" data-tab="vote">Vote</button>
     <button role="tab" aria-selected="false" data-tab="keepers">Keepers</button>
     <button role="tab" aria-selected="false" data-tab="keepercosts">Keeper Costs</button>
     <button role="tab" aria-selected="false" data-tab="draftboard">Draft Results</button>
@@ -1887,6 +2078,52 @@
     </div>
   </section>
 
+  <section class="panel" id="parlay">
+    <h2 class="panel-title">TD Parlay</h2>
+    <p class="panel-sub">One pick each &middot; dot turns green when he scores</p>
+
+    <div class="pl-bar">
+      <div class="pl-week">
+        <button id="pl-prev" class="pl-arrow" aria-label="Previous week">&#8249;</button>
+        <span id="pl-weeklabel" class="pl-weeklabel">Week 1</span>
+        <button id="pl-next" class="pl-arrow" aria-label="Next week">&#8250;</button>
+      </div>
+      <span id="pl-games" class="pl-games"></span>
+      <button id="pl-refresh" class="news-refresh">Refresh</button>
+    </div>
+
+    <div id="pl-list" class="pl-list"></div>
+
+    <div class="pl-add">
+      <div class="pl-add-row">
+        <select id="pl-owner" class="vt-select">
+          <option value="">Your name&hellip;</option>
+        </select>
+        <select id="pl-pick" class="vt-select pl-pick" disabled>
+          <option value="">Select an anytime TD player&hellip;</option>
+        </select>
+        <button id="pl-save" class="bd-post">Lock it in</button>
+      </div>
+      <div class="pl-addfoot">
+        <span id="pl-msg" class="bd-msg"></span>
+        <span id="pl-src" class="pl-note"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="rosters">
+    <h2 class="panel-title">Rosters</h2>
+    <p class="panel-sub">Every team, every player</p>
+
+    <div class="rs-bar">
+      <span id="rs-src" class="pl-note"></span>
+      <button id="rs-refresh" class="news-refresh">Refresh</button>
+    </div>
+
+    <div id="rs-status" class="news-status">Loading rosters&hellip;</div>
+    <div id="rs-grid" class="rs-grid"></div>
+  </section>
+
   <section class="panel" id="board">
     <h2 class="panel-title">Board</h2>
     <p class="panel-sub">League chatter &middot; posts clear themselves after 6 months</p>
@@ -1906,6 +2143,54 @@
 
     <div id="bd-status" class="news-status" hidden></div>
     <div id="bd-list" class="bd-list"></div>
+  </section>
+
+  <section class="panel" id="activity">
+    <h2 class="panel-title">Activity</h2>
+    <p class="panel-sub">Every add, drop and trade &mdash; logged automatically</p>
+
+    <div class="act-bar">
+      <div class="act-filters">
+        <button class="act-f active" data-type="">All</button>
+        <button class="act-f" data-type="add">Adds</button>
+        <button class="act-f" data-type="drop">Drops</button>
+        <button class="act-f" data-type="trade">Trades</button>
+      </div>
+      <span id="act-sync" class="act-sync"></span>
+    </div>
+
+    <div id="act-status" class="news-status">Loading activity&hellip;</div>
+
+    <div id="act-setup" class="hist-setup" hidden>
+      <div class="hist-setup-title">Logger not connected yet</div>
+      <p>This feed reads from your own server, which polls Yahoo on a timer and archives every transaction to a local database. Set <code>API_BASE</code> at the top of this file once <code>yahoo-proxy.js</code> is running.</p>
+      <p class="hist-setup-sub">Worth starting early: Yahoo only exposes a rolling window of recent transactions, so the archive only contains what the logger was running to catch.</p>
+    </div>
+
+    <div id="act-list" class="act-list"></div>
+  </section>
+
+  <section class="panel" id="news">
+    <h2 class="panel-title">News</h2>
+    <p class="panel-sub">Latest fantasy-relevant NFL headlines</p>
+
+    <div class="news-bar">
+      <button id="news-refresh" class="news-refresh">Refresh</button>
+    </div>
+
+    <div id="news-status" class="news-status">Loading the wire&hellip;</div>
+    <div id="news-list" class="news-list"></div>
+
+    <div class="news-fallback" id="news-fallback" hidden>
+      <div class="news-fallback-title">Couldn't reach a news source</div>
+      <p id="news-error-detail"></p>
+      <div class="news-links">
+        <a href="https://www.nbcsports.com/fantasy/football" target="_blank" rel="noopener">Rotoworld</a>
+        <a href="https://www.rotowire.com/football/" target="_blank" rel="noopener">RotoWire</a>
+        <a href="https://www.espn.com/fantasy/football/" target="_blank" rel="noopener">ESPN Fantasy</a>
+        <a href="https://profootballtalk.nbcsports.com/" target="_blank" rel="noopener">ProFootballTalk</a>
+      </div>
+    </div>
   </section>
 
   <section class="panel" id="vote">
@@ -1938,54 +2223,6 @@
       </div>
     </div>
 
-  </section>
-
-  <section class="panel" id="news">
-    <h2 class="panel-title">News</h2>
-    <p class="panel-sub">Latest fantasy-relevant NFL headlines</p>
-
-    <div class="news-bar">
-      <button id="news-refresh" class="news-refresh">Refresh</button>
-    </div>
-
-    <div id="news-status" class="news-status">Loading the wire&hellip;</div>
-    <div id="news-list" class="news-list"></div>
-
-    <div class="news-fallback" id="news-fallback" hidden>
-      <div class="news-fallback-title">Couldn't reach a news source</div>
-      <p id="news-error-detail"></p>
-      <div class="news-links">
-        <a href="https://www.nbcsports.com/fantasy/football" target="_blank" rel="noopener">Rotoworld</a>
-        <a href="https://www.rotowire.com/football/" target="_blank" rel="noopener">RotoWire</a>
-        <a href="https://www.espn.com/fantasy/football/" target="_blank" rel="noopener">ESPN Fantasy</a>
-        <a href="https://profootballtalk.nbcsports.com/" target="_blank" rel="noopener">ProFootballTalk</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="activity">
-    <h2 class="panel-title">Activity</h2>
-    <p class="panel-sub">Every add, drop and trade &mdash; logged automatically</p>
-
-    <div class="act-bar">
-      <div class="act-filters">
-        <button class="act-f active" data-type="">All</button>
-        <button class="act-f" data-type="add">Adds</button>
-        <button class="act-f" data-type="drop">Drops</button>
-        <button class="act-f" data-type="trade">Trades</button>
-      </div>
-      <span id="act-sync" class="act-sync"></span>
-    </div>
-
-    <div id="act-status" class="news-status">Loading activity&hellip;</div>
-
-    <div id="act-setup" class="hist-setup" hidden>
-      <div class="hist-setup-title">Logger not connected yet</div>
-      <p>This feed reads from your own server, which polls Yahoo on a timer and archives every transaction to a local database. Set <code>API_BASE</code> at the top of this file once <code>yahoo-proxy.js</code> is running.</p>
-      <p class="hist-setup-sub">Worth starting early: Yahoo only exposes a rolling window of recent transactions, so the archive only contains what the logger was running to catch.</p>
-    </div>
-
-    <div id="act-list" class="act-list"></div>
   </section>
 
   <section class="panel" id="keepers">
@@ -2658,6 +2895,8 @@
   </section>
 
 
+
+
   <footer>All data on this page is placeholder — Standings will sync live from Yahoo Fantasy once the API key is approved. Keepers pulls from the league Google Sheet.</footer>
 
 </div>
@@ -2916,6 +3155,36 @@
     anchor.insertAdjacentHTML('beforeend', html);
   }
 
+
+  // Flags things in the sheet that quietly make keeper costs wrong — an empty
+  // trade log, or a player who couldn't be matched to a draft pick.
+  function showSheetWarnings(q) {
+    const panel = document.getElementById('keepercosts');
+    if (!panel || !q) return;
+    const existing = document.getElementById('kc-warn');
+    if (existing) existing.remove();
+
+    const notes = [];
+    if (q.inSeasonTradesLogged === 0) {
+      notes.push('No in-season trades are logged for last season. Players who '
+        + 'changed hands by trade are being priced as waiver pickups, which is '
+        + 'usually more expensive.');
+    }
+    if (q.timesKeptBlank_lastSeason && q.timesKeptBlank_lastSeason.length) {
+      notes.push('"Times Kept" is blank for ' + q.timesKeptBlank_lastSeason.length
+        + ' of last season\'s keepers, so their second-year status was worked out '
+        + 'by comparing seasons instead: ' + q.timesKeptBlank_lastSeason.join(', ') + '.');
+    }
+    if (!notes.length) return;
+
+    const badge = panel.querySelector('.sheet-badge');
+    const html = '<div class="kc-warn" id="kc-warn">'
+      + '<div class="kc-warn-title">Worth checking in the sheet</div>'
+      + notes.map(n => '<p>' + n + '</p>').join('') + '</div>';
+    if (badge) badge.insertAdjacentHTML('afterend', html);
+    else panel.insertAdjacentHTML('beforeend', html);
+  }
+
   function markLive(when) {
     const stamp = when
       ? new Date(when).toLocaleString(undefined,
@@ -2939,6 +3208,7 @@
       if (d.draft) renderDraft(d.draft);
       if (d.tradeSections) renderTrades(d.tradeSections);
       markLive(d.fetchedAt);
+      showSheetWarnings(d.dataQuality);
     } catch (e) {
       // keep the built-in snapshot
     }
@@ -3376,6 +3646,260 @@
 
   // load once at start so passed rules land in Summary without visiting the tab
 
+
+
+
+  // ---- Rosters ----
+  // Shares the same feed as the parlay dropdown: live Yahoo rosters when
+  // available, the sheet's ending rosters until then. Always says which.
+  const rsGrid = document.getElementById('rs-grid');
+  const rsStatus = document.getElementById('rs-status');
+  const rsSrc = document.getElementById('rs-src');
+  let rsLoaded = false;
+
+  const POS_ORDER = ['QB','RB','WR','TE','W/R/T','FLEX','K','DEF','D/ST','BN','IR'];
+  const posRank = p => {
+    const i = POS_ORDER.indexOf(String(p || '').toUpperCase());
+    return i === -1 ? POS_ORDER.length : i;
+  };
+
+  function renderRosters(d) {
+    rsStatus.hidden = true;
+    rsSrc.textContent = d.label ? 'Source: ' + d.label : '';
+
+    const teams = (d.teams || []).slice()
+      .sort((a, b) => a.owner.localeCompare(b.owner));
+
+    if (!teams.length) {
+      rsGrid.innerHTML = '<div class="rs-empty">No rosters available.</div>';
+      return;
+    }
+
+    rsGrid.innerHTML = teams.map(t => {
+      const players = t.players.slice().sort((a, b) =>
+        posRank(a.pos) - posRank(b.pos) || a.name.localeCompare(b.name));
+      const rows = players.length
+        ? players.map(p =>
+            '<div class="rs-player">'
+            + '<span class="rs-pos">' + esc(p.pos || '') + '</span>'
+            + '<span class="rs-name">' + esc(p.name) + '</span>'
+            + '</div>').join('')
+        : '<div class="rs-empty">No players listed.</div>';
+      return '<div class="rs-card">'
+        + '<div class="rs-owner">' + esc(t.owner) + '</div>'
+        + '<div class="rs-count">' + players.length + ' players</div>'
+        + rows + '</div>';
+    }).join('');
+  }
+
+  async function loadRosterTab() {
+    await serverReady;
+    rsStatus.hidden = false;
+    rsStatus.textContent = 'Loading rosters\u2026';
+
+    if (API_BASE === null) {
+      rsStatus.hidden = true;
+      rsGrid.innerHTML = '<div class="rs-empty">Rosters come from the league server, '
+        + 'which isn\'t reachable from here.</div>';
+      return;
+    }
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/rosters');
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'server ' + res.status);
+      renderRosters(d);
+    } catch (e) {
+      rsStatus.hidden = true;
+      rsGrid.innerHTML = '<div class="rs-empty">Could not load rosters ('
+        + esc(e.message) + ').</div>';
+    }
+  }
+
+  document.getElementById('rs-refresh').addEventListener('click', loadRosterTab);
+
+  document.querySelector('nav.tabs button[data-tab="rosters"]').addEventListener('click', () => {
+    if (!rsLoaded) { rsLoaded = true; loadRosterTab(); }
+  });
+
+  // ---- TD parlay ----
+  // Everyone picks one player a week; the server checks ESPN's scoring plays.
+  // Red dot until he scores, green after. Grey means we can't tell yet
+  // (no server, or the week's games haven't kicked off).
+  const plOwner = document.getElementById('pl-owner');
+  const plList = document.getElementById('pl-list');
+  const plMsg = document.getElementById('pl-msg');
+  const plWeekLabel = document.getElementById('pl-weeklabel');
+  const plGames = document.getElementById('pl-games');
+  let plWeek = 1;
+  let plLoaded = false;
+  let plLocal = new Map();      // preview mode: "week" -> [{owner, player}]
+
+  DEFAULT_OWNERS.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    plOwner.appendChild(opt);
+  });
+
+  function plSay(t, kind) {
+    plMsg.textContent = t || '';
+    plMsg.className = 'bd-msg' + (kind ? ' ' + kind : '');
+    if (t) setTimeout(() => { if (plMsg.textContent === t) plSay(''); }, 4000);
+  }
+
+  // rough guess at the current week so it doesn't always open on Week 1
+  function guessWeek() {
+    const now = new Date();
+    const year = now.getMonth() <= 1 ? now.getFullYear() - 1 : now.getFullYear();
+    const kickoff = new Date(year, 8, 5);      // early September
+    const weeks = Math.floor((now - kickoff) / (7 * 864e5)) + 1;
+    return Math.min(Math.max(weeks, 1), 18);
+  }
+  plWeek = guessWeek();
+
+  function renderParlay(data) {
+    plWeekLabel.textContent = 'Week ' + plWeek;
+    plGames.textContent = data && data.gamesTotal
+      ? data.gamesStarted + ' of ' + data.gamesTotal + ' games started'
+      : '';
+
+    const picks = (data && data.picks) || [];
+    if (!picks.length) {
+      plList.innerHTML = '<div class="pl-empty">No picks in for this week yet.</div>';
+      return;
+    }
+
+    plList.innerHTML = picks.map(p => {
+      const hit = p.scored === true;
+      const unknown = p.scored === null || p.scored === undefined;
+      return '<div class="pl-row' + (hit ? ' hit' : '') + '">'
+        + '<span class="pl-owner-name">' + esc(p.owner) + '</span>'
+        + '<span class="pl-player-name">' + esc(p.player) + '</span>'
+        + '<span class="pl-dot' + (hit ? ' hit' : unknown ? ' unknown' : '') + '"></span>'
+        + '</div>';
+    }).join('');
+
+    if (data && data.note) {
+      plList.insertAdjacentHTML('beforeend',
+        '<div class="pl-note">' + esc(data.note) + '</div>');
+    }
+  }
+
+  async function loadParlay() {
+    await serverReady;
+    if (API_BASE === null) {
+      const picks = (plLocal.get(plWeek) || []).map(p => ({ ...p, scored: null }));
+      renderParlay({ picks, gamesTotal: 0,
+        note: 'Preview mode — picks are session-only and scoring needs the live server.' });
+      return;
+    }
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/parlay?week=' + plWeek);
+      if (!res.ok) throw new Error('server ' + res.status);
+      renderParlay(await res.json());
+    } catch (e) {
+      plList.innerHTML = '<div class="pl-empty">Could not load picks (' + esc(e.message) + ').</div>';
+    }
+  }
+
+
+  // Roster list that feeds the pick dropdown. Live Yahoo rosters when they're
+  // available, otherwise the sheet's end-of-season rosters — the page says
+  // which, so nobody assumes it's current when it isn't.
+  const plPick = document.getElementById('pl-pick');
+  const plSrc = document.getElementById('pl-src');
+  let plRosters = null;
+
+  async function loadRosters() {
+    await serverReady;
+    if (API_BASE === null) return;
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/rosters');
+      if (!res.ok) return;
+      const d = await res.json();
+      if (d.error || !d.teams) return;
+      plRosters = d;
+      plSrc.textContent = 'Roster source: ' + d.label;
+      fillPickList();
+    } catch (e) { /* dropdown stays in manual mode */ }
+  }
+
+  function fillPickList() {
+    const owner = plOwner.value;
+    plPick.innerHTML = '';
+
+    if (!owner) {
+      plPick.disabled = true;
+      plPick.innerHTML = '<option value="">Select an anytime TD player\u2026</option>';
+      return;
+    }
+
+    const team = plRosters && plRosters.teams.find(t => t.owner === owner);
+    plPick.disabled = false;
+
+    if (!team || !team.players.length) {
+      plPick.disabled = true;
+      plPick.innerHTML = '<option value="">No roster found for ' + esc(owner) + '</option>';
+      return;
+    }
+
+    // skip kickers and defenses — they can't score the kind of TD we're tracking
+    const skip = /^(K|DEF|D\/ST)$/i;
+    const players = team.players
+      .filter(p => !skip.test(p.pos || ''))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    plPick.innerHTML = '<option value="">Select an anytime TD player\u2026</option>'
+      + players.map(p =>
+          '<option value="' + esc(p.name) + '">' + esc(p.name)
+          + (p.pos ? '  \u00b7 ' + esc(p.pos) : '') + '</option>').join('');
+  }
+
+  plOwner.addEventListener('change', fillPickList);
+
+  document.getElementById('pl-prev').addEventListener('click', () => {
+    if (plWeek > 1) { plWeek--; loadParlay(); }
+  });
+  document.getElementById('pl-next').addEventListener('click', () => {
+    if (plWeek < 18) { plWeek++; loadParlay(); }
+  });
+  document.getElementById('pl-refresh').addEventListener('click', loadParlay);
+
+  document.getElementById('pl-save').addEventListener('click', async () => {
+    const owner = plOwner.value;
+    const player = plPick.value;
+    if (!owner) { plSay('Pick your name.', 'err'); return; }
+    if (!player) { plSay('Select a player.', 'err'); return; }
+
+    await serverReady;
+    if (API_BASE === null) {
+      const list = (plLocal.get(plWeek) || []).filter(p => p.owner !== owner);
+      list.push({ owner, player });
+      plLocal.set(plWeek, list);
+      plPick.value = '';
+      plSay('Locked in.', 'ok');
+      return loadParlay();
+    }
+
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/parlay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner, player, week: plWeek })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'server ' + res.status);
+      plPick.value = '';
+      plSay('Locked in.', 'ok');
+      loadParlay();
+    } catch (e) {
+      plSay(e.message || 'Could not save.', 'err');
+    }
+  });
+
+
+  document.querySelector('nav.tabs button[data-tab="parlay"]').addEventListener('click', () => {
+    if (!plLoaded) { plLoaded = true; loadRosters(); loadParlay(); }
+  });
 
   // ---- Message board ----
   // Real board lives on the server (all 12 owners see the same posts).

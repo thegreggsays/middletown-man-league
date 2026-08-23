@@ -85,11 +85,13 @@ const cell = (grid, r, c) => ((grid[r] || [])[c] || '').trim();
  * Left side = what's typed in the sheet, right side = the real name.
  */
 const NICKNAMES = {
-  'cmc': 'Christian McCaffrey'
+  'cmc': 'Christian McCaffrey',
+  'devonte adams': 'Davante Adams'      // spelled this way on the draft board
 };
 
 function expandNickname(name) {
-  const k = String(name || '').trim().toLowerCase();
+  const k = String(name || '').trim().toLowerCase()
+    .replace(/[.']/g, '').replace(/\s+/g, ' ');
   return NICKNAMES[k] || name;
 }
 
@@ -124,6 +126,7 @@ function norm(name) {
  */
 const OWNER_ALIASES = {
   rebeyo: 'Rebel',     // same owner, spelled both ways across tabs
+  mark: 'Marc',        // spelled both ways across tabs
   prender: 'Marc',     // Marc took over this franchise
   flynn: 'Palumberi'   // Palumberi took over this franchise
 };
@@ -141,6 +144,36 @@ const isEmpty = v => EMPTY.has(String(v || '').trim().toLowerCase());
  * "Higgins", "Puca Nacua". Match on last name plus a loose first-name check
  * rather than demanding an exact string.
  */
+
+/** Levenshtein distance, but it gives up as soon as it exceeds max. */
+function editDistanceAtMost(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return false;
+
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = a[i - 1] === b[j - 1]
+        ? prev[j - 1]
+        : 1 + Math.min(prev[j - 1], prev[j], cur[j - 1]);
+      if (cur[j] < best) best = cur[j];
+    }
+    if (best > max) return false;      // no path back under the limit
+    prev = cur;
+  }
+  return prev[b.length] <= max;
+}
+
+/**
+ * How much misspelling to forgive in a first name. Short names get one edit —
+ * "Brian" and "Bijan" are two apart and must stay separate people. Long names
+ * get two, which covers hand-typed ones like "Tetaitora" for "Tetairoa".
+ */
+function firstNameTypoBudget(a, b) {
+  return Math.min(a.length, b.length) >= 8 ? 2 : 1;
+}
+
 function samePlayer(a, b) {
   const A = norm(a), B = norm(b);
   if (!A || !B) return false;
@@ -155,11 +188,22 @@ function samePlayer(a, b) {
   if (!lastMatch) return false;
 
   // Surname alone is NOT enough — "Hunter Henry" is not "Derrick Henry".
-  // Only accept when one side gave no first name at all (the sheet often
-  // just says "Achane" or "Higgins"), or the first names agree.
+  // Accept when one side gave no first name at all (the sheet often just says
+  // "Achane" or "Higgins"), otherwise the first names have to genuinely agree.
   const fa = pa.join(' '), fb = pb.join(' ');
   if (!fa || !fb) return true;
-  return fa === fb || fa[0] === fb[0] || fa.startsWith(fb) || fb.startsWith(fa);
+  if (fa === fb) return true;
+
+  // an initial standing in for the full name: "a j brown" / "aj brown"
+  if (fa.length <= 2 || fb.length <= 2) return fa[0] === fb[0];
+
+  // one is a genuine prefix of the other: "mike" / "michael" style
+  if (fa.startsWith(fb) || fb.startsWith(fa)) return true;
+
+  // otherwise allow a single typo only — catches "Derick"/"Derrick" and
+  // "Sawuon"/"Saquon" while still rejecting "Brian"/"Bijan", which differ by
+  // two characters and are different people.
+  return editDistanceAtMost(fa, fb, firstNameTypoBudget(fa, fb));
 }
 
 function ordinal(n) {
@@ -179,40 +223,75 @@ function roundNumber(text) {
 /* Section readers                                                  */
 /* ---------------------------------------------------------------- */
 
+/** Turn "1st" / "2nd" from the Times Kept column into a number. */
+function timesKept(text) {
+  const m = String(text || '').match(/(\d+)/);
+  return m ? Number(m[1]) : null;
+}
+
 /**
- * Keeper declarations. Column positions differ between tabs because the
- * sheet grew an extra blank column in the 2025-2026 season.
+ * Keeper declarations, "Keepers By Team".
+ * One row per keeper: owner | player | round | times kept.
+ * Rows are grouped per owner, so an owner with no keeper still gets a row
+ * with the player cell blank.
  */
 function readKeepers(grid, cols) {
-  const out = [];
-  for (let r = 1; r <= 12; r++) {
+  const byOwner = new Map();
+
+  for (let r = cols.firstRow; r < grid.length; r++) {
     const owner = canonOwner(cell(grid, r, cols.owner));
     if (!owner) continue;
+    if (owner.toLowerCase() === 'player' || owner.toLowerCase() === 'team') continue;
+
+    if (!byOwner.has(owner)) byOwner.set(owner, { owner, keepers: [] });
+
+    const player = cell(grid, r, cols.player);
+    if (isEmpty(player)) continue;
+
+    byOwner.get(owner).keepers.push({
+      player,
+      round: cell(grid, r, cols.round),
+      timesKept: timesKept(cell(grid, r, cols.times))
+    });
+  }
+  return [...byOwner.values()];
+}
+
+/** Older season tabs still use the wide layout: owner | k1 | rd | k2 | rd. */
+function readKeepersLegacy(grid) {
+  const out = [];
+  for (let r = 1; r <= 14; r++) {
+    const owner = canonOwner(cell(grid, r, 0));
+    if (!owner || owner.toLowerCase() === 'player') continue;
     const keepers = [];
-    for (const pair of cols.pairs) {
-      const player = cell(grid, r, pair[0]);
-      const round = cell(grid, r, pair[1]);
-      if (!isEmpty(player)) keepers.push({ player, round });
+    for (const [pc, rc] of [[1, 2], [3, 4]]) {
+      const player = cell(grid, r, pc);
+      if (!isEmpty(player)) keepers.push({ player, round: cell(grid, r, rc), timesKept: null });
     }
     out.push({ owner, keepers });
   }
   return out;
 }
 
-/** Draft board: round, overall pick, owner, player. */
-function readDraft(grid) {
+/**
+ * Draft board — "Draft Order - By Round w/ Trades".
+ * Columns: Rd | Pick | Team | Player, one row per pick.
+ * A team cell may read "Fito (From Hexx)" when the pick was traded.
+ */
+function readDraft(grid, cols) {
   const picks = [];
-  for (let r = 30; r < grid.length; r++) {
-    const rnd = cell(grid, r, 0);
-    const player = cell(grid, r, 3);
+  for (let r = cols.firstRow; r < grid.length; r++) {
+    const rnd = cell(grid, r, cols.round);
+    const player = cell(grid, r, cols.player);
     if (!rnd || !player) continue;
-    if (!/^\d+(\.0+)?$/.test(rnd)) continue;   // "3" or "3.0" depending on export
+    if (!/^\d+(\.0+)?$/.test(rnd)) continue;
 
-    const raw = cell(grid, r, 2);
+    const raw = cell(grid, r, cols.team);
     const from = (raw.match(/\(from ([^)]*)\)/i) || [])[1] || null;
+
     picks.push({
       round: Math.round(Number(rnd)),
-      pick: Math.round(Number(cell(grid, r, 1))) || 0,
+      pick: Math.round(Number(cell(grid, r, cols.pick))) || 0,
       owner: canonOwner(raw.replace(/\s*\(from [^)]*\)/i, '')),
       tradedFrom: from ? canonOwner(from) : null,
       player: expandNickname(player)
@@ -221,16 +300,32 @@ function readDraft(grid) {
   return picks;
 }
 
-/** End-of-season rosters, used to price keepers. */
+/**
+ * End-of-season rosters, used to price keepers.
+ * The export repeats section headers inside each team's block
+ * ("Pos / Offense", "Kickers", "Defense/Special Teams") — those rows carry a
+ * team name but no player, so they have to be filtered out or they'd be
+ * treated as rostered players.
+ */
+const ROSTER_NOISE = new Set([
+  'pos', 'offense', 'kickers', 'defense/special teams', 'bench', 'team', ''
+]);
+
 function readRosters(grid, cols) {
   const out = [];
-  for (let r = 1; r < grid.length; r++) {
+  for (let r = cols.firstRow; r < grid.length; r++) {
     const owner = canonOwner(cell(grid, r, cols.owner));
     const pos = cell(grid, r, cols.pos);
-    const player = cell(grid, r, cols.player);
-    if (!owner || !player || pos === 'Pos') continue;
-    if (player === '(Empty)') continue;
-    out.push({ owner, pos, player: cleanPlayer(player) });
+    const raw = cell(grid, r, cols.player);
+    if (!owner || !raw) continue;
+
+    if (ROSTER_NOISE.has(pos.toLowerCase())) continue;
+    if (ROSTER_NOISE.has(raw.toLowerCase())) continue;
+
+    const player = cleanPlayer(raw);
+    if (!player || player === '(Empty)') continue;
+
+    out.push({ owner, pos, player });
   }
   return out;
 }
@@ -243,7 +338,7 @@ function readTrades(grid, startCol, width) {
   const years = {};
   for (let c = startCol + 1; c < startCol + width; c++) {
     const y = cell(grid, 1, c);
-    if (y) years[c] = String(y).replace(/\.0$/, '');
+    if (y) years[c] = String(y).replace(/\.0+$/, '');
   }
 
   const rows = [];
@@ -360,51 +455,79 @@ async function loadLeagueData(sheetId, opts = {}) {
     fetchTab(sheetId, '2024-2025').catch(() => [])
   ]);
 
-  // column layouts differ per tab
-  const CUR_KEEPERS = { owner: 0, pairs: [[1, 2], [3, 4]] };
-  const PREV_KEEPERS = { owner: 0, pairs: [[2, 3], [4, 5]] };
-
-  const declared = readKeepers(cur, CUR_KEEPERS);
-  const lastSeason = readKeepers(prev, PREV_KEEPERS);
-  const twoSeasonsAgo = prev2.length ? readKeepers(prev2, CUR_KEEPERS) : [];
-
-  const keptIn = (list, owner, player) => {
-    const row = list.find(x => x.owner === owner);
-    return !!(row && row.keepers.some(k => samePlayer(k.player, player)));
+  /* --------------------------------------------------------------
+     COLUMN MAP (0-based). The two current tabs share a layout, but
+     2025-2026 carries one extra trade year, which pushes everything
+     to its right over by one column.
+     -------------------------------------------------------------- */
+  const CUR = {
+    keepers: { firstRow: 2, owner: 8, player: 9, round: 10, times: 11 },   // I J K L
+    draft:   { firstRow: 2, round: 3, pick: 4, team: 5, player: 6 },       // D E F G
+    rosters: { firstRow: 2, owner: 22, pos: 23, player: 24 },              // W X Y
+    preseason: { col: 13, width: 3 },                                      // N + O P
+    inSeason:  { col: 17, width: 4 }                                       // R + S T U
+  };
+  const PREV = {
+    keepers: { firstRow: 2, owner: 8, player: 9, round: 10, times: 11 },   // I J K L
+    draft:   { firstRow: 2, round: 3, pick: 4, team: 5, player: 6 },       // D E F G
+    rosters: { firstRow: 2, owner: 23, pos: 24, player: 25 },              // X Y Z
+    preseason: { col: 13, width: 4 },                                      // N + O P Q
+    inSeason:  { col: 18, width: 4 }                                       // S + T U V
   };
 
-  // YEARS KEPT, derived: kept last season too => this is year two
+  const declared = readKeepers(cur, CUR.keepers);
+  const lastSeason = readKeepers(prev, PREV.keepers);
+  const twoSeasonsAgo = prev2.length ? readKeepersLegacy(prev2) : [];
+
+  const findKeep = (list, owner, player) => {
+    const row = list.find(x => x.owner === owner);
+    if (!row) return null;
+    return row.keepers.find(k => samePlayer(k.player, player)) || null;
+  };
+
+  /* YEARS KEPT
+     Prefer the sheet's own "Times Kept" column. Where it's blank, fall back
+     to comparing seasons: kept last year too means this is year two. */
+  const derivedYears = [];
   const keepers = declared.map(row => ({
     owner: row.owner,
-    keepers: row.keepers.map(k => ({
-      ...k,
-      year: keptIn(lastSeason, row.owner, k.player) ? 2 : 1
-    }))
+    keepers: row.keepers.map(k => {
+      if (k.timesKept) return { ...k, year: k.timesKept, source: 'sheet' };
+      const kept = !!findKeep(lastSeason, row.owner, k.player);
+      derivedYears.push(`${row.owner}: ${k.player}`);
+      return { ...k, year: kept ? 2 : 1, source: 'derived' };
+    })
   }));
 
-  // players who already used both years and must go back in the pool
+  /* EXHAUSTED — used both years, so back in the pool.
+     Same idea: trust the column, fall back to history where it's blank. */
   const exhausted = [];
+  const missingTimesKept = [];
   for (const row of lastSeason) {
     for (const k of row.keepers) {
-      if (keptIn(twoSeasonsAgo, row.owner, k.player)) {
-        exhausted.push({ owner: row.owner, player: k.player });
+      let twice;
+      if (k.timesKept) {
+        twice = k.timesKept >= 2;
+      } else {
+        twice = !!findKeep(twoSeasonsAgo, row.owner, k.player);
+        missingTimesKept.push(`${row.owner}: ${k.player}`);
       }
+      if (twice) exhausted.push({ owner: row.owner, player: k.player });
     }
   }
 
-  const draft = readDraft(prev);
-  const rosters = readRosters(prev, { owner: 17, pos: 18, player: 19 });
-  const preseasonPrev = readTrades(prev, 7, 4);
-  const inSeasonPrev = readTrades(prev, 12, 4);
-  const preseasonCur = readTrades(cur, 6, 4);
-  const inSeasonCur = readTrades(cur, 10, 4);
+  const draft = readDraft(prev, PREV.draft);
+  const rosters = readRosters(prev, PREV.rosters);
+
+  const preseasonPrev = readTrades(prev, PREV.preseason.col, PREV.preseason.width);
+  const inSeasonPrev = readTrades(prev, PREV.inSeason.col, PREV.inSeason.width);
+  const preseasonCur = readTrades(cur, CUR.preseason.col, CUR.preseason.width);
+  const inSeasonCur = readTrades(cur, CUR.inSeason.col, CUR.inSeason.width);
 
   const keeperCosts = computeKeeperCosts({
     rosters, draft, inSeasonTrades: inSeasonPrev, exhausted
   });
 
-  // Anything showing as undrafted is either a genuine waiver pickup or a name
-  // the matcher couldn't resolve. Surfacing the list is how typos get caught.
   const unmatched = keeperCosts
     .filter(k => k.draftRound === null)
     .map(k => `${k.owner}: ${k.player}`);
@@ -414,7 +537,10 @@ async function loadLeagueData(sheetId, opts = {}) {
     dataQuality: {
       draftPicks: draft.length,
       rosterPlayers: rosters.length,
-      notFoundOnDraftBoard: unmatched
+      inSeasonTradesLogged: inSeasonPrev.length,
+      notFoundOnDraftBoard: unmatched,
+      timesKeptBlank_lastSeason: missingTimesKept,
+      timesKeptBlank_thisSeason: derivedYears
     },
     keepers,
     keeperCosts,
@@ -432,4 +558,5 @@ async function loadLeagueData(sheetId, opts = {}) {
   return data;
 }
 
-module.exports = { loadLeagueData, parseCSV, samePlayer, ordinal, canonOwner, OWNER_ALIASES };
+module.exports = { loadLeagueData, parseCSV, samePlayer, ordinal, canonOwner,
+                   OWNER_ALIASES, editDistanceAtMost };
