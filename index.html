@@ -1128,6 +1128,9 @@
 
 
   /* ---- ROSTERS ---- */
+  .rs-srcline { margin-top: 0; margin-bottom: 16px; }
+  .rs-single { max-width: 520px; }
+
   .rs-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
   .rs-bar .pl-note { margin-top: 0; }
   .rs-bar .news-refresh { margin-left: auto; }
@@ -2116,9 +2119,12 @@
     <p class="panel-sub">Every team, every player</p>
 
     <div class="rs-bar">
-      <span id="rs-src" class="pl-note"></span>
+      <select id="rs-owner" class="vt-select">
+        <option value="">Loading teams&hellip;</option>
+      </select>
       <button id="rs-refresh" class="news-refresh">Refresh</button>
     </div>
+    <div id="rs-src" class="pl-note rs-srcline"></div>
 
     <div id="rs-status" class="news-status">Loading rosters&hellip;</div>
     <div id="rs-grid" class="rs-grid"></div>
@@ -3650,12 +3656,15 @@
 
 
   // ---- Rosters ----
-  // Shares the same feed as the parlay dropdown: live Yahoo rosters when
-  // available, the sheet's ending rosters until then. Always says which.
+  // One team at a time, chosen from a dropdown. Shares the same feed as the
+  // parlay picker: live Yahoo rosters when available, the sheet's ending
+  // rosters until then. Always says which.
   const rsGrid = document.getElementById('rs-grid');
   const rsStatus = document.getElementById('rs-status');
   const rsSrc = document.getElementById('rs-src');
+  const rsOwner = document.getElementById('rs-owner');
   let rsLoaded = false;
+  let rsData = null;
 
   const POS_ORDER = ['QB','RB','WR','TE','W/R/T','FLEX','K','DEF','D/ST','BN','IR'];
   const posRank = p => {
@@ -3663,58 +3672,82 @@
     return i === -1 ? POS_ORDER.length : i;
   };
 
-  function renderRosters(d) {
-    rsStatus.hidden = true;
-    rsSrc.textContent = d.label ? 'Source: ' + d.label : '';
-
-    const teams = (d.teams || []).slice()
-      .sort((a, b) => a.owner.localeCompare(b.owner));
-
-    if (!teams.length) {
-      rsGrid.innerHTML = '<div class="rs-empty">No rosters available.</div>';
+  function renderOneRoster(owner) {
+    if (!rsData || !owner) {
+      rsGrid.innerHTML = '';
+      return;
+    }
+    const team = rsData.teams.find(t => t.owner === owner);
+    if (!team) {
+      rsGrid.innerHTML = '<div class="rs-empty">No roster found for ' + esc(owner) + '.</div>';
       return;
     }
 
-    rsGrid.innerHTML = teams.map(t => {
-      const players = t.players.slice().sort((a, b) =>
-        posRank(a.pos) - posRank(b.pos) || a.name.localeCompare(b.name));
-      const rows = players.length
-        ? players.map(p =>
-            '<div class="rs-player">'
-            + '<span class="rs-pos">' + esc(p.pos || '') + '</span>'
-            + '<span class="rs-name">' + esc(p.name) + '</span>'
-            + '</div>').join('')
-        : '<div class="rs-empty">No players listed.</div>';
-      return '<div class="rs-card">'
-        + '<div class="rs-owner">' + esc(t.owner) + '</div>'
-        + '<div class="rs-count">' + players.length + ' players</div>'
-        + rows + '</div>';
-    }).join('');
+    const players = team.players.slice().sort((a, b) =>
+      posRank(a.pos) - posRank(b.pos) || a.name.localeCompare(b.name));
+
+    const rows = players.length
+      ? players.map(p =>
+          '<div class="rs-player">'
+          + '<span class="rs-pos">' + esc(p.pos || '') + '</span>'
+          + '<span class="rs-name">' + esc(p.name) + '</span>'
+          + '</div>').join('')
+      : '<div class="rs-empty">No players listed.</div>';
+
+    rsGrid.innerHTML = '<div class="rs-card rs-single">'
+      + '<div class="rs-owner">' + esc(team.owner) + '</div>'
+      + '<div class="rs-count">' + players.length + ' players</div>'
+      + rows + '</div>';
+  }
+
+  function fillOwnerPicker() {
+    const owners = (rsData.teams || []).map(t => t.owner).sort((a, b) => a.localeCompare(b));
+    rsOwner.innerHTML = '<option value="">Select a team\u2026</option>'
+      + owners.map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('');
+    rsOwner.disabled = false;
   }
 
   async function loadRosterTab() {
     await serverReady;
     rsStatus.hidden = false;
     rsStatus.textContent = 'Loading rosters\u2026';
+    rsGrid.innerHTML = '';
 
     if (API_BASE === null) {
       rsStatus.hidden = true;
+      rsOwner.innerHTML = '<option value="">Unavailable</option>';
+      rsOwner.disabled = true;
       rsGrid.innerHTML = '<div class="rs-empty">Rosters come from the league server, '
         + 'which isn\'t reachable from here.</div>';
       return;
     }
+
     try {
       const res = await fetch(API_BASE.replace(/\/$/, '') + '/rosters');
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'server ' + res.status);
-      renderRosters(d);
+
+      rsData = d;
+      rsStatus.hidden = true;
+      rsSrc.textContent = d.label ? 'Source: ' + d.label : '';
+
+      const previous = rsOwner.value;
+      fillOwnerPicker();
+      // keep the same team selected across a refresh
+      if (previous && d.teams.some(t => t.owner === previous)) {
+        rsOwner.value = previous;
+        renderOneRoster(previous);
+      }
     } catch (e) {
       rsStatus.hidden = true;
+      rsOwner.innerHTML = '<option value="">Unavailable</option>';
+      rsOwner.disabled = true;
       rsGrid.innerHTML = '<div class="rs-empty">Could not load rosters ('
         + esc(e.message) + ').</div>';
     }
   }
 
+  rsOwner.addEventListener('change', () => renderOneRoster(rsOwner.value));
   document.getElementById('rs-refresh').addEventListener('click', loadRosterTab);
 
   document.querySelector('nav.tabs button[data-tab="rosters"]').addEventListener('click', () => {
