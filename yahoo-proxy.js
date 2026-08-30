@@ -1116,13 +1116,15 @@ app.get('/rosters', async (_req, res) => {
     if (!process.env.SHEET_ID) throw new Error('SHEET_ID not set');
     const league = await loadLeagueData(process.env.SHEET_ID);
     const byOwner = new Map();
-    for (const r of league.keeperCosts) {
+    for (const r of league.rosters || []) {
       if (!byOwner.has(r.owner)) byOwner.set(r.owner, []);
       byOwner.get(r.owner).push({ name: r.player, pos: r.pos });
     }
+    const season = league.rosterSeason || 'the sheet';
     const data = {
       source: 'sheet',
-      label: 'last season\'s ending rosters (Yahoo not connected yet)',
+      season,
+      label: `${season} rosters from the Google Sheet`,
       teams: [...byOwner.entries()].map(([owner, players]) => ({ owner, players }))
     };
     rosterCache = { at: Date.now(), data };

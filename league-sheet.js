@@ -516,8 +516,37 @@ async function loadLeagueData(sheetId, opts = {}) {
     }
   }
 
-  const draft = readDraft(prev, PREV.draft);
-  const rosters = readRosters(prev, PREV.rosters);
+  /* Keeper costs are priced off LAST season's draft and ending rosters —
+     that's what the rules refer to. The Draft Results and Rosters tabs
+     instead want whatever is most current, so read both and prefer the
+     current tab when it has anything in it. */
+  const prevDraft = readDraft(prev, PREV.draft);
+  const prevRosters = readRosters(prev, PREV.rosters);
+
+  const curDraft = readDraft(cur, CUR.draft);
+  const curRosters = readRosters(cur, CUR.rosters);
+
+  const draft = prevDraft;                    // keeper-cost math
+
+  /* A season's draft board starts life holding only the keepers, pre-slotted
+     into the rounds they cost — so an "empty" board still has ~10 rows in it.
+     Treat the current board as a real draft as soon as it holds anything the
+     keeper list doesn't account for. That way it takes over the moment the
+     draft is entered, without a ten-keeper board masquerading as a draft. */
+  const declaredKeeperCount = declared.reduce((n, o) => n + o.keepers.length, 0);
+  const curNonKeeperPicks = curDraft.filter(p =>
+    !declared.some(o => o.keepers.some(k => samePlayer(k.player, p.player)))
+  ).length;
+  const curDraftIsReal = curNonKeeperPicks > 0;
+
+  const displayDraft = curDraftIsReal ? curDraft : prevDraft;
+  const displayDraftSeason = curDraftIsReal ? '2026-2027' : '2025-2026';
+  const preSlottedKeepers = curDraftIsReal ? 0 : curDraft.length;
+
+  const displayRosters = curRosters.length ? curRosters : prevRosters;
+  const displayRosterSeason = curRosters.length ? '2026-2027' : '2025-2026';
+
+  const rosters = prevRosters;                // keeper-cost math
 
   const preseasonPrev = readTrades(prev, PREV.preseason.col, PREV.preseason.width);
   const inSeasonPrev = readTrades(prev, PREV.inSeason.col, PREV.inSeason.width);
@@ -535,8 +564,15 @@ async function loadLeagueData(sheetId, opts = {}) {
   const data = {
     fetchedAt: new Date().toISOString(),
     dataQuality: {
-      draftPicks: draft.length,
-      rosterPlayers: rosters.length,
+      draftPicks: displayDraft.length,
+      draftSeasonShown: displayDraftSeason,
+      currentDraftEntries: curDraft.length,
+      currentDraftNonKeeperPicks: curNonKeeperPicks,
+      declaredKeepers: declaredKeeperCount,
+      currentDraftLooksLikeKeepersOnly: !curDraftIsReal && curDraft.length > 0,
+      rosterPlayers: displayRosters.length,
+      rosterSeasonShown: displayRosterSeason,
+      keeperCostBasis: '2025-2026 draft + ending rosters',
       inSeasonTradesLogged: inSeasonPrev.length,
       notFoundOnDraftBoard: unmatched,
       timesKeptBlank_lastSeason: missingTimesKept,
@@ -544,7 +580,16 @@ async function loadLeagueData(sheetId, opts = {}) {
     },
     keepers,
     keeperCosts,
-    draft,
+
+    // what the Draft Results tab shows
+    draft: displayDraft,
+    draftSeason: displayDraftSeason,
+    preSlottedKeepers,
+
+    // what the Rosters tab shows
+    rosters: displayRosters,
+    rosterSeason: displayRosterSeason,
+
     exhausted,
     tradeSections: [
       { season: '2026-2027', label: 'Preseason Trades', trades: preseasonCur },

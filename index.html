@@ -3191,6 +3191,20 @@
     else panel.insertAdjacentHTML('beforeend', html);
   }
 
+
+  // Say which season's board is on screen, and whether the next one has
+  // started filling up — otherwise "Draft Results" is ambiguous in August.
+  function labelDraftSeason(d) {
+    const sub = document.querySelector('#draftboard .panel-sub');
+    if (!sub || !d.draftSeason) return;
+    let text = d.draftSeason + ' draft board \u00b7 scroll sideways to see all 12 teams';
+    if (d.preSlottedKeepers) {
+      text += ' \u00b7 ' + d.preSlottedKeepers
+        + ' keepers already slotted into the next draft';
+    }
+    sub.textContent = text;
+  }
+
   function markLive(when) {
     const stamp = when
       ? new Date(when).toLocaleString(undefined,
@@ -3211,7 +3225,7 @@
       if (d.error) return;
       if (d.keepers) renderKeepers(d.keepers);
       if (d.keeperCosts) renderKeeperCosts(d.keeperCosts);
-      if (d.draft) renderDraft(d.draft);
+      if (d.draft) { renderDraft(d.draft); labelDraftSeason(d); }
       if (d.tradeSections) renderTrades(d.tradeSections);
       markLive(d.fetchedAt);
       showSheetWarnings(d.dataQuality);
