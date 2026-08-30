@@ -505,39 +505,21 @@ async function loadLeagueData(sheetId, opts = {}) {
     })
   }));
 
-  /* EXHAUSTED — used both years, so back in the pool.
-     Same idea: trust the column, fall back to history where it's blank. */
-  const exhausted = [];
-  const missingTimesKept = [];
-  for (const row of lastSeason) {
-    for (const k of row.keepers) {
-      let twice;
-      if (k.timesKept) {
-        twice = k.timesKept >= 2;
-      } else {
-        twice = !!findKeep(twoSeasonsAgo, row.owner, k.player);
-        missingTimesKept.push(`${row.owner}: ${k.player}`);
-      }
-      if (twice) exhausted.push({ owner: row.owner, player: k.player });
-    }
-  }
+  /* ---- What each part of the site is built from ---------------- */
 
-  /* Keeper costs are priced off LAST season's draft and ending rosters —
-     that's what the rules refer to. The Draft Results and Rosters tabs
-     instead want whatever is most current, so read both and prefer the
-     current tab when it has anything in it. */
   const prevDraft = readDraft(prev, PREV.draft);
   const prevRosters = readRosters(prev, PREV.rosters);
-
   const curDraft = readDraft(cur, CUR.draft);
 
-  const draft = prevDraft;                    // keeper-cost math
+  const preseasonPrev = readTrades(prev, PREV.preseason.col, PREV.preseason.width);
+  const inSeasonPrev = readTrades(prev, PREV.inSeason.col, PREV.inSeason.width);
+  const preseasonCur = readTrades(cur, CUR.preseason.col, CUR.preseason.width);
+  const inSeasonCur = readTrades(cur, CUR.inSeason.col, CUR.inSeason.width);
 
   /* A season's draft board starts life holding only the keepers, pre-slotted
-     into the rounds they cost — so an "empty" board still has ~10 rows in it.
-     Treat the current board as a real draft as soon as it holds anything the
-     keeper list doesn't account for. That way it takes over the moment the
-     draft is entered, without a ten-keeper board masquerading as a draft. */
+     into the rounds they cost — so an "empty" board still has rows in it.
+     Treat it as a real draft only once it holds something the keeper list
+     doesn't account for. */
   const declaredKeeperCount = declared.reduce((n, o) => n + o.keepers.length, 0);
   const curNonKeeperPicks = curDraft.filter(p =>
     !declared.some(o => o.keepers.some(k => samePlayer(k.player, p.player)))
@@ -550,38 +532,24 @@ async function loadLeagueData(sheetId, opts = {}) {
 
   /* Rosters for the current season come from the DRAFT BOARD (cols D-G).
      That's the league's starting point for the year — keepers are already
-     slotted into it, so it's the whole team.
-
-     The "Ending Rosters" columns are deliberately not used here: they only
-     get filled in at the END of a season, so during the season they're either
-     empty or describe last year. They're still used for keeper-cost maths,
-     where last season's final roster is exactly what the rules refer to.
+     slotted into it, so it's the whole team. The "Ending Rosters" columns
+     are deliberately not used: they only get filled in at the END of a
+     season. Once Yahoo is connected, live rosters replace this entirely.
 
      Positions aren't on the draft board. Last season's roster column looks
-     like it holds positions, but it's really the LINEUP SLOT from the final
-     week — so a good RB who happened to be benched reads "BN", which is
-     nonsense in a fresh season. Only genuine position slots are carried over;
-     everything else is left blank rather than guessed at.
-
-     Real positions for everyone (and therefore a proper starting lineup) come
-     with the Yahoo hookup. Until then the roster is shown in draft order,
-     which is honest and actually useful — you can see how each team was
-     built. */
+     like positions but is really the LINEUP SLOT from the final week, so a
+     good back who happened to be benched reads "BN". Only genuine position
+     slots carry over; anything else is left blank rather than guessed at. */
   const REAL_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'K', 'DEF', 'D/ST']);
-
   const posByPlayer = new Map();
   for (const r of prevRosters) {
     const slot = String(r.pos || '').toUpperCase();
     if (REAL_POSITIONS.has(slot)) posByPlayer.set(norm(r.player), slot);
   }
-
-  /** Team defenses are recognisable by name even without a position column. */
-  function guessPosition(name) {
-    return /\b(def|d\/st|defense)\b/i.test(name) ? 'DEF' : '';
-  }
+  const guessPosition = name =>
+    /\b(def|d\/st|defense)\b/i.test(name) ? 'DEF' : '';
 
   let displayRosters, displayRosterSeason, rosterBasis;
-
   if (curDraftIsReal) {
     displayRosters = curDraft
       .slice()
@@ -601,15 +569,41 @@ async function loadLeagueData(sheetId, opts = {}) {
     rosterBasis = 'ending rosters';
   }
 
-  const rosters = prevRosters;                // keeper-cost math
+  /* ---- Keeper cost basis ---------------------------------------
+     Prices come off the most recent COMPLETED draft, against the roster as
+     it stands now. Once the new draft is in, everything shifts forward a
+     season: you keep into 2027 based on where you took him in 2026. */
+  const costDraft = curDraftIsReal ? curDraft : prevDraft;
+  const costRosters = displayRosters;
+  const costSeason = curDraftIsReal ? '2026-2027' : '2025-2026';
+  const costInSeasonTrades = curDraftIsReal ? inSeasonCur : inSeasonPrev;
 
-  const preseasonPrev = readTrades(prev, PREV.preseason.col, PREV.preseason.width);
-  const inSeasonPrev = readTrades(prev, PREV.inSeason.col, PREV.inSeason.width);
-  const preseasonCur = readTrades(cur, CUR.preseason.col, CUR.preseason.width);
-  const inSeasonCur = readTrades(cur, CUR.inSeason.col, CUR.inSeason.width);
+  /* EXHAUSTED — already kept twice, so back in the pool. Read off whichever
+     keeper list is current, trusting the "Times Kept" column and falling
+     back to comparing seasons where it's blank. */
+  const exhaustedSource = curDraftIsReal ? declared : lastSeason;
+  const exhaustedPrior = curDraftIsReal ? lastSeason : twoSeasonsAgo;
+
+  const exhausted = [];
+  const missingTimesKept = [];
+  for (const row of exhaustedSource) {
+    for (const k of row.keepers) {
+      let twice;
+      if (k.timesKept) {
+        twice = k.timesKept >= 2;
+      } else {
+        twice = !!findKeep(exhaustedPrior, row.owner, k.player);
+        missingTimesKept.push(`${row.owner}: ${k.player}`);
+      }
+      if (twice) exhausted.push({ owner: row.owner, player: k.player });
+    }
+  }
 
   const keeperCosts = computeKeeperCosts({
-    rosters, draft, inSeasonTrades: inSeasonPrev, exhausted
+    rosters: costRosters,
+    draft: costDraft,
+    inSeasonTrades: costInSeasonTrades,
+    exhausted
   });
 
   const unmatched = keeperCosts
@@ -628,7 +622,8 @@ async function loadLeagueData(sheetId, opts = {}) {
       rosterPlayers: displayRosters.length,
       rosterSeasonShown: displayRosterSeason,
       rosterBasis,
-      keeperCostBasis: '2025-2026 draft + ending rosters',
+      keeperCostBasis: `${costSeason} draft + current rosters`,
+      keeperCostSeason: costSeason,
       inSeasonTradesLogged: inSeasonPrev.length,
       notFoundOnDraftBoard: unmatched,
       timesKeptBlank_lastSeason: missingTimesKept,

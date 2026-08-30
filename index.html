@@ -3263,6 +3263,21 @@
     sub.textContent = text;
   }
 
+
+  // Say plainly which roster and which draft the keeper prices are built from,
+  // so nobody has to guess whether they're looking at current data.
+  function labelKeeperBasis(d) {
+    const sub = document.querySelector('#keepercosts .panel-sub');
+    if (!sub) return;
+    const season = d.dataQuality && d.dataQuality.keeperCostSeason;
+    const basis = d.rosterBasis === 'draft board'
+      ? 'current rosters from the ' + (d.rosterSeason || '') + ' draft board'
+      : 'last season\'s ending rosters';
+    sub.textContent = season
+      ? 'Priced off the ' + season + ' draft \u00b7 ' + basis
+      : sub.textContent;
+  }
+
   function markLive(when) {
     const stamp = when
       ? new Date(when).toLocaleString(undefined,
@@ -3287,6 +3302,7 @@
       if (d.tradeSections) renderTrades(d.tradeSections);
       markLive(d.fetchedAt);
       showSheetWarnings(d.dataQuality);
+      labelKeeperBasis(d);
     } catch (e) {
       // keep the built-in snapshot
     }
