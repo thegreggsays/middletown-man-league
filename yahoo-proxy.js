@@ -1121,10 +1121,16 @@ app.get('/rosters', async (_req, res) => {
       byOwner.get(r.owner).push({ name: r.player, pos: r.pos });
     }
     const season = league.rosterSeason || 'the sheet';
+    const basisText = {
+      'draft board': `${season} rosters, from the draft board`,
+      'ending rosters': `${season} ending rosters (this season's draft not entered yet)`
+    }[league.rosterBasis] || `${season} rosters from the Google Sheet`;
+
     const data = {
       source: 'sheet',
       season,
-      label: `${season} rosters from the Google Sheet`,
+      basis: league.rosterBasis,
+      label: basisText,
       teams: [...byOwner.entries()].map(([owner, players]) => ({ owner, players }))
     };
     rosterCache = { at: Date.now(), data };

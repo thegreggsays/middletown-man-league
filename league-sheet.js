@@ -524,7 +524,6 @@ async function loadLeagueData(sheetId, opts = {}) {
   const prevRosters = readRosters(prev, PREV.rosters);
 
   const curDraft = readDraft(cur, CUR.draft);
-  const curRosters = readRosters(cur, CUR.rosters);
 
   const draft = prevDraft;                    // keeper-cost math
 
@@ -543,8 +542,41 @@ async function loadLeagueData(sheetId, opts = {}) {
   const displayDraftSeason = curDraftIsReal ? '2026-2027' : '2025-2026';
   const preSlottedKeepers = curDraftIsReal ? 0 : curDraft.length;
 
-  const displayRosters = curRosters.length ? curRosters : prevRosters;
-  const displayRosterSeason = curRosters.length ? '2026-2027' : '2025-2026';
+  /* Rosters for the current season come from the DRAFT BOARD (cols D-G).
+     That's the league's starting point for the year — keepers are already
+     slotted into it, so it's the whole team.
+
+     The "Ending Rosters" columns are deliberately not used here: they only
+     get filled in at the END of a season, so during the season they're either
+     empty or describe last year. They're still used for keeper-cost maths,
+     where last season's final roster is exactly what the rules refer to.
+
+     Positions aren't on the draft board, so where a player was also on a
+     roster last season we borrow the position from there — it keeps the
+     parlay picker able to hide kickers and defenses. */
+  const posByPlayer = new Map();
+  for (const r of prevRosters) {
+    if (r.pos) posByPlayer.set(norm(r.player), r.pos);
+  }
+
+  let displayRosters, displayRosterSeason, rosterBasis;
+
+  if (curDraftIsReal) {
+    displayRosters = curDraft
+      .slice()
+      .sort((a, b) => a.pick - b.pick)
+      .map(p => ({
+        owner: p.owner,
+        pos: posByPlayer.get(norm(p.player)) || '',
+        player: p.player
+      }));
+    displayRosterSeason = '2026-2027';
+    rosterBasis = 'draft board';
+  } else {
+    displayRosters = prevRosters;
+    displayRosterSeason = '2025-2026';
+    rosterBasis = 'ending rosters';
+  }
 
   const rosters = prevRosters;                // keeper-cost math
 
@@ -572,6 +604,7 @@ async function loadLeagueData(sheetId, opts = {}) {
       currentDraftLooksLikeKeepersOnly: !curDraftIsReal && curDraft.length > 0,
       rosterPlayers: displayRosters.length,
       rosterSeasonShown: displayRosterSeason,
+      rosterBasis,
       keeperCostBasis: '2025-2026 draft + ending rosters',
       inSeasonTradesLogged: inSeasonPrev.length,
       notFoundOnDraftBoard: unmatched,
@@ -589,6 +622,7 @@ async function loadLeagueData(sheetId, opts = {}) {
     // what the Rosters tab shows
     rosters: displayRosters,
     rosterSeason: displayRosterSeason,
+    rosterBasis,
 
     exhausted,
     tradeSections: [

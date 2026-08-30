@@ -3889,10 +3889,13 @@
       return;
     }
 
-    // skip kickers and defenses — they can't score the kind of TD we're tracking
-    const skip = /^(K|DEF|D\/ST)$/i;
+    // Skip kickers and defenses — they can't score the kind of TD we're tracking.
+    // When rosters come from the draft board there are no positions attached,
+    // so fall back to spotting defenses by name.
+    const skipPos = /^(K|DEF|D\/ST)$/i;
+    const looksLikeDefense = /\b(def|d\/st|defense)\b/i;
     const players = team.players
-      .filter(p => !skip.test(p.pos || ''))
+      .filter(p => !skipPos.test(p.pos || '') && !looksLikeDefense.test(p.name))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     plPick.innerHTML = '<option value="">Select an anytime TD player\u2026</option>'
