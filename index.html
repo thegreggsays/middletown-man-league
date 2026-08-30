@@ -1190,6 +1190,20 @@
   }
   .rs-name { font-weight: 500; }
 
+  .rs-tag {
+    display: inline-block;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--gold-2);
+    background: rgba(227,168,60,0.12);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
   .rs-empty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); opacity: 0.7; padding: 6px 0; }
 
   /* ---- TD PARLAY ---- */
@@ -3697,20 +3711,31 @@
       return;
     }
 
+    // When rosters come off the draft board we know the round each player went
+    // in, so show it in draft order. Otherwise fall back to grouping by slot.
+    const drafted = team.players.some(p => p.pick);
     const players = team.players.slice().sort((a, b) =>
-      posRank(a.pos) - posRank(b.pos) || a.name.localeCompare(b.name));
+      drafted
+        ? (a.pick || 0) - (b.pick || 0)
+        : posRank(a.pos) - posRank(b.pos) || a.name.localeCompare(b.name));
 
     const rows = players.length
-      ? players.map(p =>
-          '<div class="rs-player">'
-          + '<span class="rs-pos">' + esc(p.pos || '') + '</span>'
-          + '<span class="rs-name">' + esc(p.name) + '</span>'
-          + '</div>').join('')
+      ? players.map(p => {
+          const left = drafted
+            ? 'Rd ' + (p.round || '?')
+            : (p.pos || '');
+          return '<div class="rs-player">'
+            + '<span class="rs-pos">' + esc(left) + '</span>'
+            + '<span class="rs-name">' + esc(p.name)
+            + (drafted && p.pos ? '<span class="rs-tag">' + esc(p.pos) + '</span>' : '')
+            + '</span></div>';
+        }).join('')
       : '<div class="rs-empty">No players listed.</div>';
 
     rsGrid.innerHTML = '<div class="rs-card rs-single">'
       + '<div class="rs-owner">' + esc(team.owner) + '</div>'
-      + '<div class="rs-count">' + players.length + ' players</div>'
+      + '<div class="rs-count">' + players.length + ' players'
+      + (drafted ? ' \u00b7 in draft order' : '') + '</div>'
       + rows + '</div>';
   }
 

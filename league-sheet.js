@@ -551,12 +551,27 @@ async function loadLeagueData(sheetId, opts = {}) {
      empty or describe last year. They're still used for keeper-cost maths,
      where last season's final roster is exactly what the rules refer to.
 
-     Positions aren't on the draft board, so where a player was also on a
-     roster last season we borrow the position from there — it keeps the
-     parlay picker able to hide kickers and defenses. */
+     Positions aren't on the draft board. Last season's roster column looks
+     like it holds positions, but it's really the LINEUP SLOT from the final
+     week — so a good RB who happened to be benched reads "BN", which is
+     nonsense in a fresh season. Only genuine position slots are carried over;
+     everything else is left blank rather than guessed at.
+
+     Real positions for everyone (and therefore a proper starting lineup) come
+     with the Yahoo hookup. Until then the roster is shown in draft order,
+     which is honest and actually useful — you can see how each team was
+     built. */
+  const REAL_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE', 'K', 'DEF', 'D/ST']);
+
   const posByPlayer = new Map();
   for (const r of prevRosters) {
-    if (r.pos) posByPlayer.set(norm(r.player), r.pos);
+    const slot = String(r.pos || '').toUpperCase();
+    if (REAL_POSITIONS.has(slot)) posByPlayer.set(norm(r.player), slot);
+  }
+
+  /** Team defenses are recognisable by name even without a position column. */
+  function guessPosition(name) {
+    return /\b(def|d\/st|defense)\b/i.test(name) ? 'DEF' : '';
   }
 
   let displayRosters, displayRosterSeason, rosterBasis;
@@ -567,13 +582,15 @@ async function loadLeagueData(sheetId, opts = {}) {
       .sort((a, b) => a.pick - b.pick)
       .map(p => ({
         owner: p.owner,
-        pos: posByPlayer.get(norm(p.player)) || '',
-        player: p.player
+        player: p.player,
+        pos: posByPlayer.get(norm(p.player)) || guessPosition(p.player),
+        round: p.round,
+        pick: p.pick
       }));
     displayRosterSeason = '2026-2027';
     rosterBasis = 'draft board';
   } else {
-    displayRosters = prevRosters;
+    displayRosters = prevRosters.map(r => ({ ...r, round: null, pick: null }));
     displayRosterSeason = '2025-2026';
     rosterBasis = 'ending rosters';
   }

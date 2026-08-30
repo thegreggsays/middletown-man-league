@@ -1118,7 +1118,9 @@ app.get('/rosters', async (_req, res) => {
     const byOwner = new Map();
     for (const r of league.rosters || []) {
       if (!byOwner.has(r.owner)) byOwner.set(r.owner, []);
-      byOwner.get(r.owner).push({ name: r.player, pos: r.pos });
+      byOwner.get(r.owner).push({
+        name: r.player, pos: r.pos, round: r.round, pick: r.pick
+      });
     }
     const season = league.rosterSeason || 'the sheet';
     const basisText = {
