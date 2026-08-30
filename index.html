@@ -149,10 +149,21 @@
   .trash-talk::before { content: "🔥 "; font-style: normal; }
 
   /* NAV TABS — glass pill */
+
+  .tabs-hint {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    opacity: 0.6;
+    margin: 26px 0 6px;
+  }
+
   nav.tabs {
     display: inline-flex;
     gap: 4px;
-    margin: 44px 0 32px;
+    margin: 0 0 32px;
     padding: 5px;
     background: var(--glass);
     border: 1px solid var(--border);
@@ -1012,6 +1023,18 @@
     border-bottom: 1px solid var(--border);
   }
 
+
+  .sum-rulename {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 15px;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 6px;
+  }
+  .sum-lede { font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 16px; }
+
   .sum-rules { list-style: none; counter-reset: sr; display: flex; flex-direction: column; gap: 15px; }
   .sum-rules li {
     counter-increment: sr;
@@ -1068,9 +1091,6 @@
   .sum-note p { font-size: 13px; color: var(--text-dim); line-height: 1.65; }
 
 
-
-
-
   /* ---- VOTING RESULTS (Summary) ---- */
   .vr-group { margin-bottom: 22px; }
   .vr-group:last-child { margin-bottom: 0; }
@@ -1124,7 +1144,6 @@
     opacity: 0.6;
     padding: 4px 0;
   }
-
 
 
   /* ---- ROSTERS ---- */
@@ -1435,6 +1454,93 @@
   .vt-voters { font-family: 'Roboto Mono', monospace; font-size: 9.5px; color: var(--text-dim); opacity: 0.7; margin-top: 10px; line-height: 1.6; }
   .vt-empty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); opacity: 0.7; padding: 20px 0; text-align: center; }
 
+
+  /* ---- MARC'S RANKINGS ---- */
+  .marc-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .marc-item {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .marc-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: zoom-in;
+  }
+  .marc-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 9px 12px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .marc-week-tag { color: var(--gold-1); font-weight: 700; }
+  .marc-cap { font-family: 'Barlow', sans-serif; font-size: 12.5px; color: var(--text); }
+
+  .marc-empty {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: 0.65;
+    padding: 14px 0;
+  }
+
+  .marc-toggle {
+    width: 100%;
+    margin-top: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--gold-1);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px;
+    cursor: pointer;
+    min-height: 40px;
+  }
+  .marc-toggle:hover { background: rgba(255,255,255,0.06); }
+
+  .marc-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .marc-file {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .marc-file::file-selector-button {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--gold-1);
+    padding: 7px 12px;
+    margin-right: 10px;
+    cursor: pointer;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+  .marc-week { max-width: 90px; }
+
+  .marc-lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    cursor: zoom-out;
+  }
+  .marc-lightbox img { max-width: 100%; max-height: 100%; border-radius: 6px; }
+
   /* ---- ANNOUNCEMENTS ---- */
   .ann-wrap {
     background: linear-gradient(100deg, rgba(227,168,60,0.10), rgba(227,168,60,0.03));
@@ -1513,14 +1619,6 @@
   }
 
   /* ---- MESSAGE BOARD ---- */
-  .bd-compose {
-    background: var(--glass);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px 18px;
-    margin-bottom: 22px;
-  }
-  .bd-row { display: flex; gap: 8px; margin-bottom: 8px; }
   .bd-input, .bd-textarea {
     background: rgba(255,255,255,0.03);
     border: 1px solid var(--border);
@@ -1536,9 +1634,7 @@
   .bd-input:focus, .bd-textarea:focus { border-color: rgba(227,168,60,0.5); }
   .bd-input::placeholder, .bd-textarea::placeholder { color: var(--text-dim); opacity: 0.7; }
   .bd-textarea { resize: vertical; min-height: 74px; line-height: 1.5; }
-  .bd-pass { max-width: 190px; }
 
-  .bd-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
   .bd-post {
     margin-left: auto;
     font-family: 'Oswald', sans-serif;
@@ -1562,69 +1658,6 @@
   .bd-msg.err { color: var(--loss); }
   .bd-msg.ok { color: var(--win); }
 
-  .bd-replying {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 10.5px;
-    color: var(--gold-1);
-    background: rgba(227,168,60,0.12);
-    border-radius: 999px;
-    padding: 5px 11px;
-    cursor: pointer;
-  }
-
-  .bd-list { display: flex; flex-direction: column; gap: 10px; }
-
-  .bd-post-card {
-    background: var(--glass);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 18px;
-  }
-  .bd-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 7px; }
-  .bd-author {
-    font-family: 'Oswald', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    text-transform: uppercase;
-    color: var(--gold-1);
-  }
-  .bd-when { font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-dim); }
-  .bd-age { margin-left: auto; font-family: 'Roboto Mono', monospace; font-size: 9.5px; color: var(--text-dim); opacity: 0.6; }
-  .bd-age.expiring { color: var(--loss); opacity: 1; }
-
-  .bd-body { font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-
-  .bd-foot { margin-top: 9px; display: flex; gap: 12px; }
-  .bd-reply-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    font-family: 'Roboto Mono', monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    cursor: pointer;
-  }
-  .bd-reply-btn:hover { color: var(--gold-1); }
-
-  .bd-replies { margin-top: 10px; padding-left: 14px; border-left: 2px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
-  .bd-reply { padding-top: 2px; }
-  .bd-reply .bd-author { font-size: 13px; }
-  .bd-reply .bd-body { font-size: 13px; }
-
-  .bd-empty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); opacity: 0.7; padding: 20px 0; text-align: center; }
-
-  .bd-note {
-    background: rgba(227,168,60,0.06);
-    border: 1px solid rgba(227,168,60,0.22);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 12.5px;
-    color: var(--text-dim);
-    line-height: 1.6;
-    margin-bottom: 18px;
-  }
 
   /* ---- ACTIVITY ---- */
   .act-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -1820,7 +1853,18 @@
     .trash-talk { font-size: 13px; padding: 11px 16px; }
 
     /* tabs: swipeable strip instead of wrapping pill */
-    nav.tabs {
+  
+  .tabs-hint {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    opacity: 0.6;
+    margin: 26px 0 6px;
+  }
+
+  nav.tabs {
       display: flex;
       width: 100%;
       margin: 28px 0 24px;
@@ -1907,11 +1951,6 @@
     .ann-code { max-width: none; }
     .ann-actions .bd-post { flex: 1; }
 
-    .bd-compose { padding: 14px 15px; }
-    .bd-row { flex-direction: column; }
-    .bd-pass { max-width: none; }
-    .bd-post-card { padding: 13px 15px; }
-    .bd-age { width: 100%; margin-left: 0; }
 
     .act-filters { overflow-x: auto; scrollbar-width: none; }
     .act-filters::-webkit-scrollbar { display: none; }
@@ -1979,7 +2018,8 @@
     <div class="ss-head">
       <div class="ss-switch">
         <button class="ss-sw active" data-view="standings">Standings</button>
-        <button class="ss-sw" data-view="power">Power Rankings</button>
+        <button class="ss-sw" data-view="marc">Marc's Rankings</button>
+        <button class="ss-sw" data-view="power">Unofficial Projections</button>
       </div>
     </div>
 
@@ -2001,8 +2041,27 @@
       </div>
     </div>
 
+    <div class="ss-view" id="ss-view-marc">
+      <div class="ss-tag">Marc's weekly power rankings &middot; posted as images</div>
+      <div id="marc-list" class="marc-list"></div>
+      <button id="marc-toggle" class="marc-toggle">+ Post a ranking</button>
+      <div id="marc-form" class="marc-form" hidden>
+        <input id="marc-file" class="marc-file" type="file" accept="image/*">
+        <input id="marc-caption" class="bd-input" type="text" maxlength="200" placeholder="Caption (optional)">
+        <div class="ann-form-row">
+          <input id="marc-week" class="bd-input marc-week" type="number" min="1" max="18" placeholder="Week">
+          <input id="marc-code" class="bd-input ann-code" type="password" inputmode="numeric" maxlength="12" placeholder="Code">
+        </div>
+        <div class="ann-actions">
+          <span id="marc-msg" class="bd-msg"></span>
+          <button id="marc-cancel" class="ann-cancel">Cancel</button>
+          <button id="marc-save" class="bd-post">Post it</button>
+        </div>
+      </div>
+    </div>
+
     <div class="ss-view" id="ss-view-power">
-      <div class="ss-tag" id="ss-tag-power">interim: draft capital &mdash; switches to averaged ESPN + Sleeper projections once connected</div>
+      <div class="ss-tag" id="ss-tag-power">unofficial &mdash; draft capital for now, switches to averaged ESPN + Sleeper projections once connected</div>
       <div class="ss-list" id="ss-list-power">
         <div class="ss-row lead"><span class="ss-rank">1</span><span class="ss-owner">Gregg</span><span class="ss-rec">484.9</span></div>
         <div class="ss-row"><span class="ss-rank">2</span><span class="ss-owner">Derek</span><span class="ss-rec">484.9</span></div>
@@ -2022,17 +2081,17 @@
     <button class="ss-toggle" id="ss-toggle" aria-expanded="false">Show all 12</button>
   </div>
 
+  <div class="tabs-hint">Scroll right for more&hellip;</div>
   <nav class="tabs" role="tablist">
     <button class="active" role="tab" aria-selected="true" data-tab="summary">Summary</button>
     <button role="tab" aria-selected="false" data-tab="parlay">Parlay</button>
     <button role="tab" aria-selected="false" data-tab="rosters">Rosters</button>
-    <button role="tab" aria-selected="false" data-tab="board">Board</button>
+    <button role="tab" aria-selected="false" data-tab="draftboard">Draft Results</button>
+    <button role="tab" aria-selected="false" data-tab="keepercosts">Keeper Costs</button>
+    <button role="tab" aria-selected="false" data-tab="keepers">Keepers</button>
     <button role="tab" aria-selected="false" data-tab="activity">Activity</button>
     <button role="tab" aria-selected="false" data-tab="news">News</button>
     <button role="tab" aria-selected="false" data-tab="vote">Vote</button>
-    <button role="tab" aria-selected="false" data-tab="keepers">Keepers</button>
-    <button role="tab" aria-selected="false" data-tab="keepercosts">Keeper Costs</button>
-    <button role="tab" aria-selected="false" data-tab="draftboard">Draft Results</button>
     <button role="tab" aria-selected="false" data-tab="picktrades">Pick Trades</button>
     <button role="tab" aria-selected="false" data-tab="history">League History</button>
   </nav>
@@ -2043,31 +2102,39 @@
 
     <div class="sum-block">
       <div class="sum-head">Keeper Rules</div>
+      <div class="sum-rulename">Simplified Keeper Costs</div>
+      <p class="sum-lede">You can only keep a player you drafted yourself, or traded for.
+      Anyone picked up off waivers goes back into the pool.</p>
       <ol class="sum-rules">
         <li>
-          <span class="sum-rule-t">Base cost is one round earlier than where he was drafted.</span>
-          Drafted in the 3rd? Keeping him costs your 2nd. Drafted in the 8th? Costs your 7th.
-        </li>
-        <li>
-          <span class="sum-rule-t">1st-round picks can't be kept.</span>
-          Anyone taken in round 1 goes back into the draft pool. No exceptions, and this beats every other rule below.
-        </li>
-        <li>
-          <span class="sum-rule-t">Two years is the limit.</span>
-          Once you've kept a guy two seasons running, he's done. Back in the pool.
+          <span class="sum-rule-t">Cost is one round earlier than where you drafted him.</span>
+          Took him in the 3rd? Keeping him costs your 2nd. Took him in the 8th? Costs your 7th.
         </li>
         <li>
           <span class="sum-rule-t">Traded players keep their original cost.</span>
-          If you traded for him, you pay one round earlier than wherever he was originally drafted &mdash; not a discount, not a penalty.
+          If you traded for him, you pay one round earlier than wherever he was
+          <em>originally</em> drafted &mdash; not where you got him.
         </li>
         <li>
-          <span class="sum-rule-t">Waiver pickups cost a 5th.</span>
-          Grabbed him off waivers or free agency? Flat 5th-round price &mdash; <em>unless</em> he was originally drafted in the top 4 rounds, in which case the normal one-round-earlier rule applies instead.
+          <span class="sum-rule-t">Waiver pickups can't be kept.</span>
+          Grabbed him off waivers or free agency? He goes back into the pool, whatever
+          round he originally went in. This is the change we voted in.
+        </li>
+        <li>
+          <span class="sum-rule-t">1st-round picks can't be kept.</span>
+          Anyone taken in round 1 goes back into the pool. No exceptions, and this beats
+          every other rule here.
+        </li>
+        <li>
+          <span class="sum-rule-t">Two years is the limit.</span>
+          Once you've kept a guy two seasons running, he's done.
         </li>
       </ol>
       <div class="sum-example">
-        <span class="sum-ex-label">For example</span>
-        Jacory Croskey-Merritt was drafted by Post in the 4th, then ended up on Fito's roster. Because round 4 is inside the top 4, Fito pays a 3rd &mdash; not the flat 5th.
+        <span class="sum-ex-label">What changed</span>
+        Under the old rules a waiver pickup cost a flat 5th (or one round earlier if he
+        went in the top four). Now he simply isn't keepable. If you didn't draft him or
+        trade for him, you can't keep him.
       </div>
     </div>
 
@@ -2142,414 +2209,6 @@
 
     <div id="rs-status" class="news-status">Loading rosters&hellip;</div>
     <div id="rs-grid" class="rs-grid"></div>
-  </section>
-
-  <section class="panel" id="board">
-    <h2 class="panel-title">Board</h2>
-    <p class="panel-sub">League chatter &middot; posts clear themselves after 6 months</p>
-
-    <div class="bd-compose">
-      <div class="bd-row">
-        <input id="bd-name" class="bd-input" type="text" maxlength="40" placeholder="Your name" autocomplete="nickname">
-        <input id="bd-pass" class="bd-input bd-pass" type="password" maxlength="60" placeholder="League password" hidden>
-      </div>
-      <textarea id="bd-body" class="bd-textarea" maxlength="2000" rows="3" placeholder="Say something&hellip;"></textarea>
-      <div class="bd-actions">
-        <span id="bd-replying" class="bd-replying" hidden></span>
-        <span id="bd-msg" class="bd-msg"></span>
-        <button id="bd-post" class="bd-post">Post</button>
-      </div>
-    </div>
-
-    <div id="bd-status" class="news-status" hidden></div>
-    <div id="bd-list" class="bd-list"></div>
-  </section>
-
-  <section class="panel" id="activity">
-    <h2 class="panel-title">Activity</h2>
-    <p class="panel-sub">Every add, drop and trade &mdash; logged automatically</p>
-
-    <div class="act-bar">
-      <div class="act-filters">
-        <button class="act-f active" data-type="">All</button>
-        <button class="act-f" data-type="add">Adds</button>
-        <button class="act-f" data-type="drop">Drops</button>
-        <button class="act-f" data-type="trade">Trades</button>
-      </div>
-      <span id="act-sync" class="act-sync"></span>
-    </div>
-
-    <div id="act-status" class="news-status">Loading activity&hellip;</div>
-
-    <div id="act-setup" class="hist-setup" hidden>
-      <div class="hist-setup-title">Logger not connected yet</div>
-      <p>This feed reads from your own server, which polls Yahoo on a timer and archives every transaction to a local database. Set <code>API_BASE</code> at the top of this file once <code>yahoo-proxy.js</code> is running.</p>
-      <p class="hist-setup-sub">Worth starting early: Yahoo only exposes a rolling window of recent transactions, so the archive only contains what the logger was running to catch.</p>
-    </div>
-
-    <div id="act-list" class="act-list"></div>
-  </section>
-
-  <section class="panel" id="news">
-    <h2 class="panel-title">News</h2>
-    <p class="panel-sub">Latest fantasy-relevant NFL headlines</p>
-
-    <div class="news-bar">
-      <button id="news-refresh" class="news-refresh">Refresh</button>
-    </div>
-
-    <div id="news-status" class="news-status">Loading the wire&hellip;</div>
-    <div id="news-list" class="news-list"></div>
-
-    <div class="news-fallback" id="news-fallback" hidden>
-      <div class="news-fallback-title">Couldn't reach a news source</div>
-      <p id="news-error-detail"></p>
-      <div class="news-links">
-        <a href="https://www.nbcsports.com/fantasy/football" target="_blank" rel="noopener">Rotoworld</a>
-        <a href="https://www.rotowire.com/football/" target="_blank" rel="noopener">RotoWire</a>
-        <a href="https://www.espn.com/fantasy/football/" target="_blank" rel="noopener">ESPN Fantasy</a>
-        <a href="https://profootballtalk.nbcsports.com/" target="_blank" rel="noopener">ProFootballTalk</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="vote">
-    <h2 class="panel-title">League Vote</h2>
-    <p class="panel-sub">Proposed rule changes &middot; 7 yes votes carries it</p>
-
-    <div class="vt-who">
-      <label class="vt-who-label" for="vt-owner">Voting as</label>
-      <select id="vt-owner" class="vt-select">
-        <option value="">Pick your name&hellip;</option>
-      </select>
-    </div>
-
-    <div id="vt-status" class="news-status" hidden></div>
-    <div id="vt-list" class="vt-list"></div>
-    <div class="vt-newwrap">
-      <button id="vt-toggle" class="vt-toggle">+ Propose a rule change</button>
-      <div id="vt-form" class="vt-form" hidden>
-        <input id="vt-title" class="bd-input" type="text" maxlength="140" placeholder="The change, in one line">
-        <textarea id="vt-body" class="bd-textarea" maxlength="2000" rows="3" placeholder="Why? Any detail people need before voting."></textarea>
-        <div class="ann-form-row">
-          <input id="vt-author" class="bd-input ann-author" type="text" maxlength="40" placeholder="Your name (optional)">
-          <input id="vt-code" class="bd-input ann-code" type="password" inputmode="numeric" maxlength="12" placeholder="Code">
-        </div>
-        <div class="ann-actions">
-          <span id="vt-msg" class="bd-msg"></span>
-          <button id="vt-cancel" class="ann-cancel">Cancel</button>
-          <button id="vt-submit" class="bd-post">Put it to a vote</button>
-        </div>
-      </div>
-    </div>
-
-  </section>
-
-  <section class="panel" id="keepers">
-    <h2 class="panel-title">Keepers</h2>
-    <p class="panel-sub">Declared keepers for the 2026-2027 season</p>
-
-    <div class="sheet-badge"><span class="dot"></span> Synced from the league Google Sheet &middot; 2026-2027 tab</div>
-    <div class="kk-key">
-      <span class="kk-key-title">Keeper Key</span>
-      <span class="kk-key-item"><span class="kk-dot y1"></span> 1st year kept</span>
-      <span class="kk-key-item"><span class="kk-dot y2"></span> 2nd year kept</span>
-    </div>
-    <div class="kk-grid">
-      <div class="kk-card empty">
-        <div class="kk-owner">Rogan</div>
-        <div class="kk-none">No keepers declared</div>
-      </div>
-      <div class="kk-card">
-        <div class="kk-owner">Marc</div>
-        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Malik Nabers</span><span class="kk-round">2nd</span><span class="kk-year y1">1st yr</span></div>
-      </div>
-      <div class="kk-card">
-        <div class="kk-owner">Palumberi</div>
-        <div class="kk-player y2"><span class="kk-dot y2"></span><span class="kk-name">Jaxon Smith-Njigba</span><span class="kk-round">7th</span><span class="kk-year y2">2nd yr</span></div>
-        <div class="kk-player y2"><span class="kk-dot y2"></span><span class="kk-name">Ladd McConkey</span><span class="kk-round">4th</span><span class="kk-year y2">2nd yr</span></div>
-      </div>
-      <div class="kk-card empty">
-        <div class="kk-owner">Jared</div>
-        <div class="kk-none">No keepers declared</div>
-      </div>
-      <div class="kk-card">
-        <div class="kk-owner">Fito</div>
-        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Quinshon Judkins</span><span class="kk-round">8th</span><span class="kk-year y1">1st yr</span></div>
-      </div>
-      <div class="kk-card">
-        <div class="kk-owner">Post</div>
-        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">George Pickens</span><span class="kk-round">5th</span><span class="kk-year y1">1st yr</span></div>
-      </div>
-      <div class="kk-card empty">
-        <div class="kk-owner">Hexx</div>
-        <div class="kk-none">No keepers declared</div>
-      </div>
-      <div class="kk-card">
-        <div class="kk-owner">Opie</div>
-        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Colston Loveland</span><span class="kk-round">5th</span><span class="kk-year y1">1st yr</span></div>
-      </div>
-      <div class="kk-card empty">
-        <div class="kk-owner">Derek</div>
-        <div class="kk-none">No keepers declared</div>
-      </div>
-      <div class="kk-card">
-        <div class="kk-owner">Rebel</div>
-        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Cam Skattebo</span><span class="kk-round">7th</span><span class="kk-year y1">1st yr</span></div>
-      </div>
-      <div class="kk-card">
-        <div class="kk-owner">Gregg</div>
-        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Drake Maye</span><span class="kk-round">7th (now 6th)</span><span class="kk-year y1">1st yr</span></div>
-        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Chris Olave</span><span class="kk-round">8th (now 7th)</span><span class="kk-year y1">1st yr</span></div>
-      </div>
-      <div class="kk-card empty">
-        <div class="kk-owner">Garett</div>
-        <div class="kk-none">No keepers declared</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="keepercosts">
-    <h2 class="panel-title">Keeper Costs</h2>
-    <p class="panel-sub">Every rostered player's assigned keeper round for 2026 &middot; sourced from the 2025-2026 draft, trades, and ending rosters</p>
-
-    <div class="sheet-badge"><span class="dot"></span> Synced from the league Google Sheet &middot; 2025-2026 draft + rosters</div>
-    <div class="kc-legend">Cost = round required to keep. <strong>Back to pool</strong> = not keepable &mdash; either a 1st-round pick, or already kept two years.</div>
-    <div class="kc-owner-grid">
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Derek</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Kyren Williams</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Mike Evans</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Travis Kelce</span><span class="kc-cost-val">4th</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Chris Godwin Jr.</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Courtland Sutton</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Wan&#x27;Dale Robinson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jacoby Brissett</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Jason Myers</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Rams- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Stefon Diggs</span><span class="kc-cost-val">6th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jayden Daniels</span><span class="kc-cost-val">8th</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Kirk Cousins</span><span class="kc-cost-val">10th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Derrick Henry<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">BN</span><span class="kc-name">Amon-Ra St. Brown<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Fito</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Marvin Harrison Jr.</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">TreVeyon Henderson</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jacory Croskey-Merritt</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">RJ Harvey</span><span class="kc-cost-val">4th</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Bo Nix</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Michael Wilson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Tyrone Tracy Jr.</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Oronde Gadsden</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Woody Marks</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Ka&#x27;imi Fairbairn</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Seahawks- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Xavier Worthy</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Patrick Mahomes</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Quinshon Judkins</span><span class="kc-cost-val">8th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Michael Pittman Jr.</span><span class="kc-cost-val">9th</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Garett</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Joe Burrow</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Trey McBride</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Tee Higgins</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Tony Pollard</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Bucky Irving</span><span class="kc-cost-val">4th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Darius Slayton</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tre Tucker</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Devaughn Vele</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Brian Robinson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Saints- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Khalil Shakir</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Chase McLaughlin</span><span class="kc-cost-val">10th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Rico Dowdle</span><span class="kc-cost-val">13th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Christian McCaffrey<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Gregg</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Ashton Jeanty</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Aaron Jones Sr.</span><span class="kc-cost-val">4th</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Darren Waller</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Emeka Egbuka</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Isaiah Likely</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Ricky Pearsall</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Andy Borregales</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">49ers- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Javonte Williams</span><span class="kc-cost-val">6th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Brian Thomas Jr.</span><span class="kc-cost-val">6th</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Drake Maye</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Chris Olave</span><span class="kc-cost-val">8th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Ja&#x27;Marr Chase<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">W/R/T</span><span class="kc-name">Jonathan Taylor<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Hexx</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Josh Allen</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Kenneth Walker III</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">DeVonta Smith</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Isiah Pacheco</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jameson Williams</span><span class="kc-cost-val">4th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">DJ Moore</span><span class="kc-cost-val">4th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Kenny Gainwell</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jake Bates</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Jaguars- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Browns- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Deebo Samuel Sr.</span><span class="kc-cost-val">6th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Dallas Goedert</span><span class="kc-cost-val">8th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Jake Elliott</span><span class="kc-cost-val">10th</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Kyle Pitts Sr.</span><span class="kc-cost-val">13th</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Jared</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Alvin Kamara</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Zay Flowers</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Breece Hall</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Jordan Love</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Jaylen Warren</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Quentin Johnston</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tez Johnson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Michael Carter</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Colby Parkinson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Colts- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Tucker Kraft</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Justin Herbert</span><span class="kc-cost-val">9th</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Dalton Kincaid</span><span class="kc-cost-val">11th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Cameron Dicker</span><span class="kc-cost-val">12th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Justin Jefferson<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Marc</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Omarion Hampton</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Malik Nabers</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Baker Mayfield</span><span class="kc-cost-val">4th</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Rashid Shaheed</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Taysom Hill</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jaxson Dart</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Romeo Doubs</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Kareem Hunt</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Broncos- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Eagles- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Cooper Kupp</span><span class="kc-cost-val">6th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Travis Etienne Jr.</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Chris Boswell</span><span class="kc-cost-val">13th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Puka Nacua<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Saquon Barkley<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Opie</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">James Cook III</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Chuba Hubbard</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">C.J. Stroud</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Audric Estime</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Jake Ferguson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Jauan Jennings</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Kyle Monangai</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Colston Loveland</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jayden Reed</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Evan McPherson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Dolphins- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jayden Higgins</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Nico Collins<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">CeeDee Lamb<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Palumberi</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">DK Metcalf</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">George Kittle</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Ladd McConkey</span><span class="kc-cost-val">4th</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Trevor Lawrence</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Christian Watson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Harold Fannin Jr.</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tyler Allgeier</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Trey Benson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Chris Rodriguez Jr.</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Cam Little</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Giants- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Zach Charbonnet</span><span class="kc-cost-val">6th</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jaxon Smith-Njigba</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Bijan Robinson<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Post</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Tetairoa McMillan</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Garrett Wilson</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">George Pickens</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Blake Corum</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Rhamondre Stevenson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Devin Neal</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tyjae Spears</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Texans- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jordan Mason</span><span class="kc-cost-val">6th</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Tyler Warren</span><span class="kc-cost-val">9th</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Dak Prescott</span><span class="kc-cost-val">10th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Brock Bowers</span><span class="kc-cost-val">11th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Brandon Aubrey</span><span class="kc-cost-val">13th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">W/R/T</span><span class="kc-name">Drake London<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">BN</span><span class="kc-name">Lamar Jackson<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Rebel</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jalen Hurts</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Terry McLaurin</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">D&#x27;Andre Swift</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Davante Adams</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Matthew Stafford</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jakobi Meyers</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Alec Pierce</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Devin Singletary</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Brenton Strange</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Rome Odunze</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Riley Patterson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Bills- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Cam Skattebo</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">De&#x27;Von Achane<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">BN</span><span class="kc-name">Jahmyr Gibbs<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-      <div class="kc-owner-block">
-        <div class="kc-owner-name">Rogan</div>
-        <div class="kc-owner-list">
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Josh Jacobs</span><span class="kc-cost-val">1st</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">David Montgomery</span><span class="kc-cost-val">2nd</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Rashee Rice</span><span class="kc-cost-val">3rd</span></div>
-          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jaylen Waddle</span><span class="kc-cost-val">4th</span></div>
-          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Hunter Henry</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jared Goff</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Juwan Johnson</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Tyler Loop</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Steelers- DEF</span><span class="kc-cost-val">5th</span></div>
-          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Chase Brown</span><span class="kc-cost-val">7th</span></div>
-          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Brock Purdy</span><span class="kc-cost-val">8th</span></div>
-          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Jordan Addison</span><span class="kc-cost-val">9th</span></div>
-          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Keon Coleman</span><span class="kc-cost-val">10th</span></div>
-          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">A.J. Brown<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <section class="panel" id="draftboard">
@@ -2792,6 +2451,393 @@
     </div>
   </section>
 
+  <section class="panel" id="keepercosts">
+    <h2 class="panel-title">Keeper Costs</h2>
+    <p class="panel-sub">Every rostered player's assigned keeper round for 2026 &middot; sourced from the 2025-2026 draft, trades, and ending rosters</p>
+
+    <div class="sheet-badge"><span class="dot"></span> Synced from the league Google Sheet &middot; 2025-2026 draft + rosters</div>
+    <div class="kc-legend">Cost = round required to keep. <strong>Back to pool</strong> = not keepable &mdash; a waiver pickup, a 1st-round pick, or already kept two years.</div>
+    <div class="kc-owner-grid">
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Derek</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Kyren Williams</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Mike Evans</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Travis Kelce</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Chris Godwin Jr.</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Courtland Sutton</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Wan&#x27;Dale Robinson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jacoby Brissett</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Jason Myers</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Rams- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Stefon Diggs</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jayden Daniels</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Kirk Cousins</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Derrick Henry<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">BN</span><span class="kc-name">Amon-Ra St. Brown<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Fito</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Marvin Harrison Jr.</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">TreVeyon Henderson</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jacory Croskey-Merritt</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">RJ Harvey</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Bo Nix</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Michael Wilson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Tyrone Tracy Jr.</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Oronde Gadsden</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Woody Marks</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Ka&#x27;imi Fairbairn</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Seahawks- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Xavier Worthy</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Patrick Mahomes</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Quinshon Judkins</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Michael Pittman Jr.</span><span class="kc-cost-val">9th</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Garett</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Joe Burrow</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Trey McBride</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Tee Higgins</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Tony Pollard</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Bucky Irving</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Darius Slayton</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tre Tucker</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Devaughn Vele</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Brian Robinson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Saints- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Khalil Shakir</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Chase McLaughlin</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Rico Dowdle</span><span class="kc-cost-val">13th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Christian McCaffrey<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Gregg</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Ashton Jeanty</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Aaron Jones Sr.</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Darren Waller</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Emeka Egbuka</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Isaiah Likely</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Ricky Pearsall</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Andy Borregales</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">49ers- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Javonte Williams</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Brian Thomas Jr.</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Drake Maye</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Chris Olave</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Ja&#x27;Marr Chase<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">W/R/T</span><span class="kc-name">Jonathan Taylor<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Hexx</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Josh Allen</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Kenneth Walker III</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">DeVonta Smith</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Isiah Pacheco</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jameson Williams</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">DJ Moore</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Kenny Gainwell</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jake Bates</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Jaguars- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Browns- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Deebo Samuel Sr.</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Dallas Goedert</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Jake Elliott</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Kyle Pitts Sr.</span><span class="kc-cost-val">13th</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Jared</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Alvin Kamara</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Zay Flowers</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Breece Hall</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Jordan Love</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Jaylen Warren</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Quentin Johnston</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tez Johnson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Michael Carter</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Colby Parkinson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Colts- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Tucker Kraft</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Justin Herbert</span><span class="kc-cost-val">9th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Dalton Kincaid</span><span class="kc-cost-val">11th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Cameron Dicker</span><span class="kc-cost-val">12th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Justin Jefferson<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Marc</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Omarion Hampton</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Malik Nabers</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Baker Mayfield</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Rashid Shaheed</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Taysom Hill</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jaxson Dart</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Romeo Doubs</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Kareem Hunt</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Broncos- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Eagles- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Cooper Kupp</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Travis Etienne Jr.</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Chris Boswell</span><span class="kc-cost-val">13th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Puka Nacua<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Saquon Barkley<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Opie</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">James Cook III</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Chuba Hubbard</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">C.J. Stroud</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Audric Estime</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Jake Ferguson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Jauan Jennings</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Kyle Monangai</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Colston Loveland</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jayden Reed</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Evan McPherson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Dolphins- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jayden Higgins</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">Nico Collins<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">CeeDee Lamb<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Palumberi</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">DK Metcalf</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">George Kittle</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Ladd McConkey</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Trevor Lawrence</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Christian Watson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Harold Fannin Jr.</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tyler Allgeier</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Trey Benson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Chris Rodriguez Jr.</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Cam Little</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Giants- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Zach Charbonnet</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jaxon Smith-Njigba</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">Bijan Robinson<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Post</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Tetairoa McMillan</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Garrett Wilson</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">George Pickens</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Blake Corum</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Rhamondre Stevenson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Devin Neal</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Tyjae Spears</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Texans- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jordan Mason</span><span class="kc-cost-val">6th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Tyler Warren</span><span class="kc-cost-val">9th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Dak Prescott</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Brock Bowers</span><span class="kc-cost-val">11th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Brandon Aubrey</span><span class="kc-cost-val">13th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">W/R/T</span><span class="kc-name">Drake London<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">BN</span><span class="kc-name">Lamar Jackson<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Rebel</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jalen Hurts</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Terry McLaurin</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">D&#x27;Andre Swift</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Davante Adams</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Matthew Stafford</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jakobi Meyers</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Alec Pierce</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Devin Singletary</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Brenton Strange</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Rome Odunze</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Riley Patterson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Bills- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">IR</span><span class="kc-name">Cam Skattebo</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">RB</span><span class="kc-name">De&#x27;Von Achane<span class="kc-reason">kept twice</span></span><span class="kc-cost-val none">Back to pool</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">BN</span><span class="kc-name">Jahmyr Gibbs<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+      <div class="kc-owner-block">
+        <div class="kc-owner-name">Rogan</div>
+        <div class="kc-owner-list">
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Josh Jacobs</span><span class="kc-cost-val">1st</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">David Montgomery</span><span class="kc-cost-val">2nd</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Rashee Rice</span><span class="kc-cost-val">3rd</span></div>
+          <div class="kc-row"><span class="kc-pos">WR</span><span class="kc-name">Jaylen Waddle</span><span class="kc-cost-val">4th</span></div>
+          <div class="kc-row"><span class="kc-pos">TE</span><span class="kc-name">Hunter Henry</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Jared Goff</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Juwan Johnson</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">K</span><span class="kc-name">Tyler Loop</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">DEF</span><span class="kc-name">Steelers- DEF</span><span class="kc-cost-val">5th</span></div>
+          <div class="kc-row"><span class="kc-pos">RB</span><span class="kc-name">Chase Brown</span><span class="kc-cost-val">7th</span></div>
+          <div class="kc-row"><span class="kc-pos">QB</span><span class="kc-name">Brock Purdy</span><span class="kc-cost-val">8th</span></div>
+          <div class="kc-row"><span class="kc-pos">W/R/T</span><span class="kc-name">Jordan Addison</span><span class="kc-cost-val">9th</span></div>
+          <div class="kc-row"><span class="kc-pos">BN</span><span class="kc-name">Keon Coleman</span><span class="kc-cost-val">10th</span></div>
+          <div class="kc-row not-keepable"><span class="kc-pos">WR</span><span class="kc-name">A.J. Brown<span class="kc-reason">1st rounder</span></span><span class="kc-cost-val none">Back to pool</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="keepers">
+    <h2 class="panel-title">Keepers</h2>
+    <p class="panel-sub">Declared keepers for the 2026-2027 season</p>
+
+    <div class="sheet-badge"><span class="dot"></span> Synced from the league Google Sheet &middot; 2026-2027 tab</div>
+    <div class="kk-key">
+      <span class="kk-key-title">Keeper Key</span>
+      <span class="kk-key-item"><span class="kk-dot y1"></span> 1st year kept</span>
+      <span class="kk-key-item"><span class="kk-dot y2"></span> 2nd year kept</span>
+    </div>
+    <div class="kk-grid">
+      <div class="kk-card empty">
+        <div class="kk-owner">Rogan</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Marc</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Malik Nabers</span><span class="kk-round">2nd</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Palumberi</div>
+        <div class="kk-player y2"><span class="kk-dot y2"></span><span class="kk-name">Jaxon Smith-Njigba</span><span class="kk-round">7th</span><span class="kk-year y2">2nd yr</span></div>
+        <div class="kk-player y2"><span class="kk-dot y2"></span><span class="kk-name">Ladd McConkey</span><span class="kk-round">4th</span><span class="kk-year y2">2nd yr</span></div>
+      </div>
+      <div class="kk-card empty">
+        <div class="kk-owner">Jared</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Fito</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Quinshon Judkins</span><span class="kk-round">8th</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Post</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">George Pickens</span><span class="kk-round">5th</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card empty">
+        <div class="kk-owner">Hexx</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Opie</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Colston Loveland</span><span class="kk-round">5th</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card empty">
+        <div class="kk-owner">Derek</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Rebel</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Cam Skattebo</span><span class="kk-round">7th</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card">
+        <div class="kk-owner">Gregg</div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Drake Maye</span><span class="kk-round">7th (now 6th)</span><span class="kk-year y1">1st yr</span></div>
+        <div class="kk-player y1"><span class="kk-dot y1"></span><span class="kk-name">Chris Olave</span><span class="kk-round">8th (now 7th)</span><span class="kk-year y1">1st yr</span></div>
+      </div>
+      <div class="kk-card empty">
+        <div class="kk-owner">Garett</div>
+        <div class="kk-none">No keepers declared</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="activity">
+    <h2 class="panel-title">Activity</h2>
+    <p class="panel-sub">Every add, drop and trade &mdash; logged automatically</p>
+
+    <div class="act-bar">
+      <div class="act-filters">
+        <button class="act-f active" data-type="">All</button>
+        <button class="act-f" data-type="add">Adds</button>
+        <button class="act-f" data-type="drop">Drops</button>
+        <button class="act-f" data-type="trade">Trades</button>
+      </div>
+      <span id="act-sync" class="act-sync"></span>
+    </div>
+
+    <div id="act-status" class="news-status">Loading activity&hellip;</div>
+
+    <div id="act-setup" class="hist-setup" hidden>
+      <div class="hist-setup-title">Logger not connected yet</div>
+      <p>This feed reads from your own server, which polls Yahoo on a timer and archives every transaction to a local database. Set <code>API_BASE</code> at the top of this file once <code>yahoo-proxy.js</code> is running.</p>
+      <p class="hist-setup-sub">Worth starting early: Yahoo only exposes a rolling window of recent transactions, so the archive only contains what the logger was running to catch.</p>
+    </div>
+
+    <div id="act-list" class="act-list"></div>
+  </section>
+
+  <section class="panel" id="news">
+    <h2 class="panel-title">News</h2>
+    <p class="panel-sub">Latest fantasy-relevant NFL headlines</p>
+
+    <div class="news-bar">
+      <button id="news-refresh" class="news-refresh">Refresh</button>
+    </div>
+
+    <div id="news-status" class="news-status">Loading the wire&hellip;</div>
+    <div id="news-list" class="news-list"></div>
+
+    <div class="news-fallback" id="news-fallback" hidden>
+      <div class="news-fallback-title">Couldn't reach a news source</div>
+      <p id="news-error-detail"></p>
+      <div class="news-links">
+        <a href="https://www.nbcsports.com/fantasy/football" target="_blank" rel="noopener">Rotoworld</a>
+        <a href="https://www.rotowire.com/football/" target="_blank" rel="noopener">RotoWire</a>
+        <a href="https://www.espn.com/fantasy/football/" target="_blank" rel="noopener">ESPN Fantasy</a>
+        <a href="https://profootballtalk.nbcsports.com/" target="_blank" rel="noopener">ProFootballTalk</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="vote">
+    <h2 class="panel-title">League Vote</h2>
+    <p class="panel-sub">Proposed rule changes &middot; 7 yes votes carries it</p>
+
+    <div class="vt-who">
+      <label class="vt-who-label" for="vt-owner">Voting as</label>
+      <select id="vt-owner" class="vt-select">
+        <option value="">Pick your name&hellip;</option>
+      </select>
+    </div>
+
+    <div id="vt-status" class="news-status" hidden></div>
+    <div id="vt-list" class="vt-list"></div>
+    <div class="vt-newwrap">
+      <button id="vt-toggle" class="vt-toggle">+ Propose a rule change</button>
+      <div id="vt-form" class="vt-form" hidden>
+        <input id="vt-title" class="bd-input" type="text" maxlength="140" placeholder="The change, in one line">
+        <textarea id="vt-body" class="bd-textarea" maxlength="2000" rows="3" placeholder="Why? Any detail people need before voting."></textarea>
+        <div class="ann-form-row">
+          <input id="vt-author" class="bd-input ann-author" type="text" maxlength="40" placeholder="Your name (optional)">
+          <input id="vt-code" class="bd-input ann-code" type="password" inputmode="numeric" maxlength="12" placeholder="Code">
+        </div>
+        <div class="ann-actions">
+          <span id="vt-msg" class="bd-msg"></span>
+          <button id="vt-cancel" class="ann-cancel">Cancel</button>
+          <button id="vt-submit" class="bd-post">Put it to a vote</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
   <section class="panel" id="picktrades">
     <h2 class="panel-title">Pick Trades</h2>
     <p class="panel-sub">Every pick and player swap on record</p>
@@ -2916,7 +2962,6 @@
 
 
 
-
   <footer>All data on this page is placeholder — Standings will sync live from Yahoo Fantasy once the API key is approved. Keepers pulls from the league Google Sheet.</footer>
 
 </div>
@@ -3037,7 +3082,6 @@
   document.querySelector('nav.tabs button[data-tab="history"]').addEventListener('click', () => {
     if (!histLoaded) { histLoaded = true; loadHistory(); }
   });
-
 
 
   // ---- Live data from the league Google Sheet ----
@@ -3271,6 +3315,10 @@
         powerFetched = true;
         loadPower();
       }
+      if (b.dataset.view === 'marc' && !marcLoaded) {
+        marcLoaded = true;
+        loadMarc();
+      }
     });
   });
 
@@ -3305,8 +3353,6 @@
   }
 
 
-
-
   // ---- Preview storage ----
   // With no server, the board, announcements and votes are held in memory for
   // the session so the features can be exercised. Deliberately plain: no
@@ -3322,6 +3368,118 @@
     async set(key, value) { pvMemory.set(key, value); },
     async remove(key) { pvMemory.delete(key); }
   };
+
+
+  // ---- Marc's Power Rankings ----
+  // Images, posted with the same code as announcements. Stored on the server
+  // so the whole league sees them.
+  const marcList = document.getElementById('marc-list');
+  const marcForm = document.getElementById('marc-form');
+  const marcFile = document.getElementById('marc-file');
+  const marcMsg = document.getElementById('marc-msg');
+  let marcLoaded = false;
+
+  function marcSay(t, kind) {
+    marcMsg.textContent = t || '';
+    marcMsg.className = 'bd-msg' + (kind ? ' ' + kind : '');
+    if (t) setTimeout(() => { if (marcMsg.textContent === t) marcSay(''); }, 5000);
+  }
+
+  function openLightbox(src) {
+    const box = document.createElement('div');
+    box.className = 'marc-lightbox';
+    box.innerHTML = '<img src="' + src + '" alt="">';
+    box.addEventListener('click', () => box.remove());
+    document.body.appendChild(box);
+  }
+
+  async function loadMarc() {
+    await serverReady;
+    if (API_BASE === null) {
+      marcList.innerHTML = '<div class="marc-empty">Rankings live on the league server.</div>';
+      return;
+    }
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/marc-rankings');
+      if (!res.ok) throw new Error('server ' + res.status);
+      const d = await res.json();
+      const items = d.items || [];
+
+      if (!items.length) {
+        marcList.innerHTML = '<div class="marc-empty">Nothing posted yet.</div>';
+        return;
+      }
+
+      marcList.innerHTML = items.map(i => {
+        const when = new Date(i.createdAt * 1000)
+          .toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        return '<div class="marc-item">'
+          + '<img src="' + esc(API_BASE + i.url) + '" alt="' + esc(i.caption || 'Power rankings') + '" loading="lazy">'
+          + '<div class="marc-meta">'
+          + (i.week ? '<span class="marc-week-tag">Week ' + i.week + '</span>' : '')
+          + (i.caption ? '<span class="marc-cap">' + esc(i.caption) + '</span>' : '')
+          + '<span>' + when + '</span>'
+          + '</div></div>';
+      }).join('');
+
+      marcList.querySelectorAll('.marc-item img').forEach(img => {
+        img.addEventListener('click', () => openLightbox(img.src));
+      });
+    } catch (e) {
+      marcList.innerHTML = '<div class="marc-empty">Could not load rankings ('
+        + esc(e.message) + ').</div>';
+    }
+  }
+
+  document.getElementById('marc-toggle').addEventListener('click', () => {
+    marcForm.hidden = !marcForm.hidden;
+  });
+  document.getElementById('marc-cancel').addEventListener('click', () => {
+    marcForm.hidden = true;
+  });
+
+  document.getElementById('marc-save').addEventListener('click', async () => {
+    const file = marcFile.files && marcFile.files[0];
+    const code = document.getElementById('marc-code').value.trim();
+    if (!file) { marcSay('Choose an image.', 'err'); return; }
+    if (!code) { marcSay('Enter the code.', 'err'); return; }
+
+    await serverReady;
+    if (API_BASE === null) { marcSay('Needs the live server.', 'err'); return; }
+
+    marcSay('Uploading\u2026');
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(',')[1]);
+        r.onerror = () => reject(new Error('Could not read that file'));
+        r.readAsDataURL(file);
+      });
+
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/marc-rankings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: base64,
+          mime: file.type,
+          week: document.getElementById('marc-week').value,
+          caption: document.getElementById('marc-caption').value,
+          code
+        })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'server ' + res.status);
+
+      marcFile.value = '';
+      document.getElementById('marc-caption').value = '';
+      document.getElementById('marc-code').value = '';
+      marcForm.hidden = true;
+      marcSay('Posted.', 'ok');
+      loadMarc();
+    } catch (e) {
+      marcSay(e.message || 'Upload failed.', 'err');
+    }
+  });
 
   // ---- Announcement ----
   // One pinned message. Saving overwrites it; there's no history kept.
@@ -3681,8 +3839,6 @@
   // load once at start so passed rules land in Summary without visiting the tab
 
 
-
-
   // ---- Rosters ----
   // One team at a time, chosen from a dropdown. Shares the same feed as the
   // parlay picker: live Yahoo rosters when available, the sheet's ending
@@ -3974,190 +4130,6 @@
 
   document.querySelector('nav.tabs button[data-tab="parlay"]').addEventListener('click', () => {
     if (!plLoaded) { plLoaded = true; loadRosters(); loadParlay(); }
-  });
-
-  // ---- Message board ----
-  // Real board lives on the server (all 12 owners see the same posts).
-  // In a preview sandbox there's no server, so posts are kept locally just so
-  // the thing can be tried out — that's clearly labelled in the UI.
-  const RETENTION_DAYS = 180;   // 6 months
-
-  const bdName = document.getElementById('bd-name');
-  const bdPass = document.getElementById('bd-pass');
-  const bdBody = document.getElementById('bd-body');
-  const bdPostBtn = document.getElementById('bd-post');
-  const bdList = document.getElementById('bd-list');
-  const bdMsg = document.getElementById('bd-msg');
-  const bdReplying = document.getElementById('bd-replying');
-  let bdReplyTo = null;
-  let bdLoaded = false;
-  let bdLocalMode = false;
-
-  const bdServer = () => API_BASE !== null;
-
-  function bdSay(text, kind) {
-    bdMsg.textContent = text || '';
-    bdMsg.className = 'bd-msg' + (kind ? ' ' + kind : '');
-    if (text) setTimeout(() => { if (bdMsg.textContent === text) bdSay(''); }, 4000);
-  }
-
-  function timeAgo(sec) {
-    const mins = Math.floor((Date.now() / 1000 - sec) / 60);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return mins + 'm ago';
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return hrs + 'h ago';
-    const days = Math.floor(hrs / 24);
-    if (days < 30) return days + 'd ago';
-    return Math.floor(days / 30) + 'mo ago';
-  }
-
-  function daysLeft(sec) {
-    return RETENTION_DAYS - Math.floor((Date.now() / 1000 - sec) / 86400);
-  }
-
-  /* --- local fallback storage (preview only) --- */
-  async function localGet() {
-    return (await pvStore.get('board:posts')) || [];
-  }
-  async function localSet(posts) {
-    await pvStore.set('board:posts', posts);   // throws if it can't save
-  }
-
-  function purgeLocal(posts) {
-    const cutoff = Math.floor(Date.now() / 1000) - RETENTION_DAYS * 86400;
-    const kept = posts.filter(p => p.createdAt >= cutoff);
-    const ids = new Set(kept.map(p => p.id));
-    return kept.filter(p => p.replyTo == null || ids.has(p.replyTo));
-  }
-
-  /* --- rendering --- */
-  function renderBoard(posts, opts = {}) {
-    if (!posts.length) {
-      bdList.innerHTML = '<div class="bd-empty">Nothing here yet. Somebody start something.</div>';
-      return;
-    }
-
-    const tops = posts.filter(p => p.replyTo == null)
-      .sort((a, b) => b.createdAt - a.createdAt);
-    const repliesFor = id => posts.filter(p => p.replyTo === id)
-      .sort((a, b) => a.createdAt - b.createdAt);
-
-    const card = (p, isReply) => {
-      const left = daysLeft(p.createdAt);
-      const ageCls = left <= 14 ? 'bd-age expiring' : 'bd-age';
-      const ageTxt = left <= 30 ? 'clears in ' + Math.max(left, 0) + 'd' : '';
-      return '<div class="' + (isReply ? 'bd-reply' : 'bd-post-card') + '">'
-        + '<div class="bd-head">'
-        + '<span class="bd-author">' + esc(p.author) + '</span>'
-        + '<span class="bd-when">' + timeAgo(p.createdAt) + '</span>'
-        + (ageTxt ? '<span class="' + ageCls + '">' + ageTxt + '</span>' : '')
-        + '</div>'
-        + '<div class="bd-body">' + esc(p.body) + '</div>'
-        + (isReply ? '' :
-            '<div class="bd-foot"><button class="bd-reply-btn" data-reply="' + p.id
-            + '" data-author="' + esc(p.author) + '">Reply</button></div>')
-        + '</div>';
-    };
-
-    bdList.innerHTML = tops.map(p => {
-      const kids = repliesFor(p.id);
-      const inner = kids.length
-        ? '<div class="bd-replies">' + kids.map(k => card(k, true)).join('') + '</div>'
-        : '';
-      return card(p, false).replace(/<\/div>$/, inner + '</div>');
-    }).join('');
-
-    bdList.querySelectorAll('.bd-reply-btn').forEach(b => {
-      b.addEventListener('click', () => {
-        bdReplyTo = Number(b.dataset.reply);
-        bdReplying.hidden = false;
-        bdReplying.textContent = 'replying to ' + b.dataset.author + ' \u00d7';
-        bdBody.focus();
-      });
-    });
-  }
-
-  bdReplying.addEventListener('click', () => {
-    bdReplyTo = null;
-    bdReplying.hidden = true;
-  });
-
-  /* --- load + post --- */
-  async function loadBoard() {
-    await serverReady;
-    if (bdServer()) {
-      try {
-        const res = await fetch(API_BASE.replace(/\/$/, '') + '/board');
-        if (!res.ok) throw new Error('server ' + res.status);
-        const d = await res.json();
-        bdPass.hidden = !d.passwordRequired;
-        renderBoard(d.posts || []);
-        return;
-      } catch (e) {
-        bdSay('Could not reach the board (' + e.message + ')', 'err');
-        return;
-      }
-    }
-
-    // no server — local preview mode
-    bdLocalMode = true;
-    if (!document.getElementById('bd-local-note')) {
-      bdList.insertAdjacentHTML('beforebegin',
-        '<div class="bd-note" id="bd-local-note"><strong>Preview mode.</strong> '
-        + 'There\'s no server here, so these posts are stored on this device only '
-        + '&mdash; nobody else can see them. Once the site is on Railway, the board '
-        + 'is shared across the whole league and the 6-month cleanup runs on the server.</div>');
-    }
-    renderBoard(purgeLocal(await localGet()));
-  }
-
-  async function submitPost() {
-    const author = bdName.value.trim();
-    const body = bdBody.value.trim();
-    if (!author) { bdSay('Add your name first.', 'err'); bdName.focus(); return; }
-    if (!body) { bdSay('Nothing to post.', 'err'); bdBody.focus(); return; }
-
-    bdPostBtn.disabled = true;
-    try {
-      if (bdServer()) {
-        const res = await fetch(API_BASE.replace(/\/$/, '') + '/board', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ author, body, replyTo: bdReplyTo, password: bdPass.value })
-        });
-        const d = await res.json();
-        if (!res.ok) throw new Error(d.error || 'server ' + res.status);
-      } else {
-        const posts = purgeLocal(await localGet());
-        posts.push({
-          id: Date.now(),
-          author, body,
-          replyTo: bdReplyTo,
-          createdAt: Math.floor(Date.now() / 1000)
-        });
-        await localSet(posts);
-      }
-
-      bdBody.value = '';
-      bdReplyTo = null;
-      bdReplying.hidden = true;
-      bdSay('Posted.', 'ok');
-      await loadBoard();
-    } catch (e) {
-      bdSay(e.message || 'Could not post.', 'err');
-    } finally {
-      bdPostBtn.disabled = false;
-    }
-  }
-
-  bdPostBtn.addEventListener('click', submitPost);
-  bdBody.addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submitPost();
-  });
-
-  document.querySelector('nav.tabs button[data-tab="board"]').addEventListener('click', () => {
-    if (!bdLoaded) { bdLoaded = true; loadBoard(); }
   });
 
   // ---- Activity feed (reads the logged archive from your proxy) ----

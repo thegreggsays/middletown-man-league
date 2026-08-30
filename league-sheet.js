@@ -376,17 +376,21 @@ function readTrades(grid, startCol, width) {
 /* ---------------------------------------------------------------- */
 
 /**
- * 1. Base cost = one round earlier than where he was drafted
- * 2. Drafted in round 1 -> not keepable (beats everything below)
- * 3. Already kept two years -> not keepable
- * 4. Acquired by trade -> still one round earlier than the original draft slot
- * 5. Picked up off waivers -> flat 5th, unless originally drafted in rounds 1-4,
- *    in which case rule 1 applies instead
+ * SIMPLIFIED KEEPER COSTS (adopted by league vote)
+ *
+ * You may only keep a player you drafted yourself, or acquired by trade.
+ * Anyone picked up off waivers or free agency goes back into the pool.
+ *
+ * 1. Cost = one round earlier than where he was originally drafted
+ * 2. Drafted in round 1 -> not keepable (overrides everything below)
+ * 3. Already kept two seasons -> not keepable
+ * 4. Acquired by trade -> keepable, priced off the ORIGINAL draft round
+ * 5. Picked up off waivers, or never drafted at all -> not keepable
  */
 function computeKeeperCosts({ rosters, draft, inSeasonTrades, exhausted }) {
   const draftIndex = draft.map(d => ({ ...d, n: norm(d.player) }));
 
-  // players named in the in-season trade log moved by trade, not waivers
+  // players named in the in-season trade log changed hands by trade, not waivers
   const tradedNames = [];
   for (const t of inSeasonTrades) {
     for (const side of [t.a, t.b]) {
@@ -409,22 +413,24 @@ function computeKeeperCosts({ rosters, draft, inSeasonTrades, exhausted }) {
     let cost, status, reason = null;
 
     if (!hit) {
-      cost = 5;
+      // never drafted by anyone — a free-agent add
+      cost = 0;
       status = 'Undrafted';
+      reason = 'waiver pickup';
     } else if (hit.owner === r.owner) {
       cost = Math.max(1, hit.round - 1);
       status = 'Same team';
     } else if (wasTraded) {
       cost = Math.max(1, hit.round - 1);
       status = `Traded (orig. Rd${hit.round} by ${hit.owner})`;
-    } else if (hit.round < 5) {
-      cost = Math.max(1, hit.round - 1);
-      status = `Waiver (orig. Rd${hit.round} by ${hit.owner})`;
     } else {
-      cost = 5;
+      // drafted by someone else and not traded — so he came off waivers
+      cost = 0;
       status = `Waiver (orig. Rd${hit.round} by ${hit.owner})`;
+      reason = 'waiver pickup';
     }
 
+    // these two override anything above
     if (hit && hit.round === 1) { cost = 0; reason = '1st rounder'; }
     else if (isExhausted) { cost = 0; reason = 'kept twice'; }
 

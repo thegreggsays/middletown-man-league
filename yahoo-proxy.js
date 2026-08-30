@@ -36,6 +36,8 @@
  *   GET  /news                                   fantasy news, merged + fetched server-side
  *   GET  /announcement                           the pinned announcement
  *   POST /announcement                           overwrite it (needs the code)
+ *   GET  /marc-rankings                          Marc's ranking images
+ *   POST /marc-rankings                          upload one (needs the code)
  *   GET  /rosters                                rosters for the parlay dropdown
  *   GET  /parlay?week=N                          weekly TD picks + who has scored
  *   POST /parlay                                 submit or change a pick
@@ -62,7 +64,7 @@ const { loadLeagueData } = require('./league-sheet');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '8mb' }));   // Marc's rankings are images
 
 // Serve the website itself. Because the site and the data live on the same
 // server, the browser treats them as one thing — no cross-origin setup needed.
@@ -148,6 +150,17 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_parlay ON parlay_picks(season, week);
+
+  CREATE TABLE IF NOT EXISTS marc_rankings (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    week       INTEGER,
+    caption    TEXT,
+    mime       TEXT NOT NULL,
+    data       TEXT NOT NULL,        -- base64 image
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_marc ON marc_rankings(created_at DESC);
 
   CREATE INDEX IF NOT EXISTS idx_posts_time ON posts(created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_posts_reply ON posts(reply_to);
@@ -1089,6 +1102,76 @@ function canonOwnerName(name) {
 
 let rosterCache = { at: 0, data: null };
 
+
+/* ----------------------------------------------------------------
+   MARC'S POWER RANKINGS
+   Marc posts these as images. Stored as base64 in the same database
+   as everything else — no file hosting to set up, and they survive
+   redeploys along with the rest of the data.
+
+   Posting needs ANNOUNCE_CODE (6699). Viewing is open.
+   ---------------------------------------------------------------- */
+
+const MARC_MAX_BYTES = Number(process.env.MARC_MAX_BYTES || 4 * 1024 * 1024);
+
+app.get('/marc-rankings', (_req, res) => {
+  const rows = db.prepare(`
+    SELECT id, week, caption, created_at FROM marc_rankings
+    ORDER BY created_at DESC LIMIT 60
+  `).all();
+  res.json({
+    items: rows.map(r => ({
+      id: r.id, week: r.week, caption: r.caption, createdAt: r.created_at,
+      url: '/marc-rankings/' + r.id + '/image'
+    }))
+  });
+});
+
+app.get('/marc-rankings/:id/image', (req, res) => {
+  const row = db.prepare('SELECT mime, data FROM marc_rankings WHERE id = ?')
+    .get(Number(req.params.id));
+  if (!row) return res.status(404).send('Not found');
+  const buf = Buffer.from(row.data, 'base64');
+  res.set('Content-Type', row.mime);
+  res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  res.send(buf);
+});
+
+app.post('/marc-rankings', (req, res) => {
+  const { image, mime, week, caption, code } = req.body || {};
+
+  if (String(code || '') !== ANNOUNCE_CODE) {
+    return res.status(401).json({ error: 'Wrong code.' });
+  }
+  if (!image || !mime) return res.status(400).json({ error: 'No image received.' });
+  if (!/^image\/(png|jpe?g|gif|webp)$/i.test(mime)) {
+    return res.status(400).json({ error: 'Images only (png, jpg, gif, webp).' });
+  }
+
+  const bytes = Buffer.byteLength(image, 'base64');
+  if (bytes > MARC_MAX_BYTES) {
+    return res.status(413).json({
+      error: `That image is ${(bytes / 1048576).toFixed(1)}MB — the limit is ${(MARC_MAX_BYTES / 1048576).toFixed(0)}MB.`
+    });
+  }
+
+  const info = db.prepare(`
+    INSERT INTO marc_rankings (week, caption, mime, data, created_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(Number(week) || null, String(caption || '').trim().slice(0, 200),
+         mime, image, Math.floor(Date.now() / 1000));
+
+  res.json({ ok: true, id: info.lastInsertRowid });
+});
+
+app.delete('/marc-rankings/:id', (req, res) => {
+  if (String(req.query.code || '') !== ANNOUNCE_CODE) {
+    return res.status(401).json({ error: 'Wrong code.' });
+  }
+  db.prepare('DELETE FROM marc_rankings WHERE id = ?').run(Number(req.params.id));
+  res.json({ ok: true });
+});
+
 app.get('/rosters', async (_req, res) => {
   if (rosterCache.data && Date.now() - rosterCache.at < 10 * 60 * 1000) {
     return res.json(rosterCache.data);
@@ -1350,7 +1433,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/auth') || req.path.startsWith('/activity') ||
       req.path.startsWith('/history') || req.path.startsWith('/power') ||
       req.path.startsWith('/standings') || req.path.startsWith('/health') ||
-      req.path.startsWith('/league-data') || req.path.startsWith('/board') || req.path.startsWith('/announcement') || req.path.startsWith('/votes') || req.path.startsWith('/news') || req.path.startsWith('/parlay') || req.path.startsWith('/rosters')) {
+      req.path.startsWith('/league-data') || req.path.startsWith('/board') || req.path.startsWith('/announcement') || req.path.startsWith('/votes') || req.path.startsWith('/news') || req.path.startsWith('/parlay') || req.path.startsWith('/rosters') || req.path.startsWith('/marc-rankings')) {
     return next();
   }
   res.sendFile(path.join(__dirname, 'index.html'));
