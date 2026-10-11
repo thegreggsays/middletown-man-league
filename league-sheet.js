@@ -529,37 +529,91 @@ function readTeamKey(grid) {
   return map;
 }
 
+/* ----------------------------------------------------------------
+   A WORD ON WHAT GOOGLE ACTUALLY SENDS
+
+   The CSV feed types each column by majority vote. In a column that is
+   mostly numbers — Rank, PF, PA — any text cell comes back EMPTY. So the
+   headings "Standings" and "Rank" never arrive, and a reader that looks
+   for them finds nothing and quietly shows the placeholder instead.
+
+   Both readers below therefore locate their block by the shape of the
+   data itself, which no amount of column typing can hide: a run of
+   W-L-T records for the standings, a column of position codes for the
+   rosters. Headings are used only as an optional hint.
+   ---------------------------------------------------------------- */
+
+const RECORD_RE = /^\d{1,2}-\d{1,2}(-\d{1,2})?$/;
+
+/** The column holding the longest run of W-L-T records, and where it starts. */
+function findRecordColumn(grid) {
+  const width = grid.reduce((m, r) => Math.max(m, (r || []).length), 0);
+  let best = null;
+
+  for (let c = 0; c < width; c++) {
+    let run = 0, start = -1;
+    for (let r = 0; r < grid.length; r++) {
+      if (RECORD_RE.test(cell(grid, r, c))) {
+        if (run === 0) start = r;
+        run++;
+        if (!best || run > best.run) best = { col: c, start, run };
+      } else if (run) {
+        run = 0;
+      }
+    }
+  }
+  // Six is the floor: fewer than that is a trade note or a stray score,
+  // not a league table.
+  return best && best.run >= 6 ? best : null;
+}
+
 /**
- * Standings block, pasted from Yahoo. Found by its "Rank" heading, then read
- * by the headings sitting beside it, so the column letters don't matter.
+ * Standings block, pasted from Yahoo. Yahoo's layout is fixed —
+ *   Rank | Team | W-L-T | PF | PA | Streak | Waiver | Moves
+ * — so once the record column is found the rest are known by offset. Any
+ * headings that did survive the feed are honoured over the offsets, in case
+ * the block was ever rearranged.
  */
 function readStandings(grid, teamKey) {
-  const anchor = findAnchor(grid, ['rank']);
-  if (!anchor) return [];
+  const found = findRecordColumn(grid);
+  if (!found) return [];
 
-  const headerRow = grid[anchor.row] || [];
-  const col = {};
-  for (let c = anchor.col; c < Math.min(anchor.col + 12, headerRow.length); c++) {
-    const h = String(headerRow[c] || '').trim().toLowerCase();
-    if (h === 'rank') col.rank = c;
-    else if (h === 'team') col.team = c;
-    else if (h === 'w-l-t' || h === 'record' || h === 'w-l') col.record = c;
-    else if (h === 'pf' || h === 'points for') col.pf = c;
-    else if (h === 'pa' || h === 'points against') col.pa = c;
-    else if (h === 'streak') col.streak = c;
-    else if (h === 'waiver') col.waiver = c;
-    else if (h === 'moves') col.moves = c;
+  const col = {
+    rank:   found.col - 2,
+    team:   found.col - 1,
+    record: found.col,
+    pf:     found.col + 1,
+    pa:     found.col + 2,
+    streak: found.col + 3,
+    waiver: found.col + 4,
+    moves:  found.col + 5
+  };
+
+  // Headings, where they made it through, take precedence.
+  for (let r = Math.max(0, found.start - 3); r < found.start; r++) {
+    const row = grid[r] || [];
+    for (let c = Math.max(0, found.col - 3); c < Math.min(row.length, found.col + 9); c++) {
+      const h = String(row[c] || '').trim().toLowerCase();
+      if (h === 'rank') col.rank = c;
+      else if (h === 'team') col.team = c;
+      else if (h === 'w-l-t' || h === 'record' || h === 'w-l') col.record = c;
+      else if (h === 'pf' || h === 'points for') col.pf = c;
+      else if (h === 'pa' || h === 'points against') col.pa = c;
+      else if (h === 'streak') col.streak = c;
+      else if (h === 'waiver') col.waiver = c;
+      else if (h === 'moves') col.moves = c;
+    }
   }
-  if (col.team === undefined || col.record === undefined) return [];
 
   const out = [];
-  for (let r = anchor.row + 1; r < grid.length; r++) {
-    const teamName = cell(grid, r, col.team);
-    if (!teamName) {
+  for (let r = found.start; r < grid.length; r++) {
+    const rec = cell(grid, r, col.record);
+    if (!RECORD_RE.test(rec)) {
       if (out.length) break;        // block has ended
       continue;
     }
-    const rec = cell(grid, r, col.record);
+    const teamName = cell(grid, r, col.team);
+    if (!teamName) continue;
     const [w, l, t] = rec.split('-').map(n => Number(n) || 0);
 
     out.push({
@@ -585,18 +639,52 @@ function readStandings(grid, teamKey) {
  * from the players in it — see attributeRosterBlocks. An owner name typed
  * into the blank row above a block is honoured first.
  */
-function readRosterBlocks(grid) {
-  const anchor = findAnchor(grid, ['rosters'], 4);
-  if (!anchor) return [];
+const POSITION_CODES = new Set([
+  'QB', 'RB', 'WR', 'TE', 'K', 'DEF', 'D/ST', 'DST', 'BN', 'IR', 'IR+',
+  'W/R/T', 'W/R', 'R/W/T', 'FLEX', 'Q/W/R/T', 'OP', 'SUPERFLEX'
+]);
 
-  const posCol = anchor.col;
-  const nameCol = anchor.col + 1;
+/**
+ * The column that is mostly position codes, and the first row one appears
+ * in. A roster paste has well over a hundred of them; nothing else on the
+ * tab comes close.
+ */
+function findPositionColumn(grid) {
+  const width = grid.reduce((m, r) => Math.max(m, (r || []).length), 0);
+  let best = null;
+
+  for (let c = 0; c < width; c++) {
+    let hits = 0, nonEmpty = 0, first = -1;
+    for (let r = 0; r < grid.length; r++) {
+      const v = cell(grid, r, c).toUpperCase();
+      if (!v) continue;
+      nonEmpty++;
+      if (POSITION_CODES.has(v)) {
+        hits++;
+        if (first === -1) first = r;
+      }
+    }
+    if (hits >= 40 && hits >= nonEmpty * 0.6 && (!best || hits > best.hits)) {
+      best = { col: c, first, hits };
+    }
+  }
+  return best;
+}
+
+function readRosterBlocks(grid) {
+  const found = findPositionColumn(grid);
+  if (!found) return [];
+
+  const posCol = found.col;
+  const nameCol = found.col + 1;
 
   const blocks = [];
   let current = null;
   let pendingLabel = '';
 
-  for (let r = anchor.row + 1; r < grid.length; r++) {
+  // Start one row above the first position code so a hand-typed owner label
+  // sitting directly over the first block is still picked up.
+  for (let r = Math.max(0, found.first - 1); r < grid.length; r++) {
     const pos = cell(grid, r, posCol);
     const raw = cell(grid, r, nameCol);
 
@@ -606,17 +694,41 @@ function readRosterBlocks(grid) {
       continue;
     }
 
-    // a lone cell in the position column is a hand-typed owner label
+    // a lone cell in the position column is a hand-typed owner label —
+    // unless it's the block's own heading, or a stray position code
     if (pos && !raw) {
-      pendingLabel = pos;
+      const p = pos.toUpperCase();
+      pendingLabel = (p === 'ROSTERS' || p === 'ROSTER' || p === 'POS' || POSITION_CODES.has(p))
+        ? '' : pos;
       continue;
     }
 
     const player = stripStatusSuffix(stripYahooChrome(raw));
     if (!player) continue;
 
+    // The cell's first line ends "<NFL team> - <position>", e.g. "Buf - RB".
+    // That's the player's real position, as opposed to the roster slot he's
+    // sitting in (BN, IR, W/R/T), which is what the position column holds.
+    // No word boundary before the team code: Yahoo glues it straight onto
+    // the preceding label ("Player NoteNE - QB"), so look for a capital
+    // letter starting a 2-3 letter code right before the dash instead.
+    const tail = String(raw).split('\n')[0]
+      .match(/([A-Z][A-Za-z]{1,2})\s*-\s*(QB|RB|WR|TE|K|DEF|D\/ST|DST)(?![A-Za-z])/);
+    const position = tail ? tail[2].toUpperCase().replace('D/ST', 'DEF').replace('DST', 'DEF') : null;
+    const nflTeam = tail ? tail[1].toUpperCase() : null;
+
+    // Yahoo lists each team starting at its QB slot, and a team has exactly
+    // one. So a second QB slot means the next team has begun — which is the
+    // only reliable boundary when two rosters are pasted with no blank row
+    // between them, as Google's copy of the sheet turned out to have.
+    const slot = pos.toUpperCase();
+    if (current && slot === 'QB' && current.players.some(p => p.pos === 'QB')) {
+      blocks.push(current);
+      current = null;
+    }
+
     if (!current) { current = { label: pendingLabel, players: [] }; pendingLabel = ''; }
-    current.players.push({ pos: pos.toUpperCase(), player });
+    current.players.push({ pos: slot, player, position, nflTeam });
   }
   if (current && current.players.length) blocks.push(current);
 
@@ -1095,7 +1207,10 @@ async function loadLeagueData(sheetId, opts = {}) {
     for (const b of attribution.blocks) {
       if (!b.owner) continue;
       for (const p of b.players) {
-        sheetRosters.push({ owner: b.owner, pos: p.pos, player: p.player });
+        sheetRosters.push({
+          owner: b.owner, pos: p.pos, player: p.player,
+          position: p.position || null, nflTeam: p.nflTeam || null
+        });
       }
     }
   }
@@ -1203,12 +1318,109 @@ async function loadLeagueData(sheetId, opts = {}) {
       { season: '2026-2027', label: '2027 In-Season Trades', trades: inSeasonCur },
       { season: '2025-2026', label: 'Preseason Trades', trades: preseasonPrev },
       { season: '2025-2026', label: '2026 In-Season Trades', trades: inSeasonPrev }
-    ]
+    ],
+    outstandingPicks: outstandingPicks(
+      [preseasonCur, inSeasonCur, preseasonPrev, inSeasonPrev].flat(),
+      pickTradesFromActivity,
+      2027
+    )
   };
 
   cache = { at: Date.now(), data };
   return data;
 }
 
+/* ----------------------------------------------------------------
+   OUTSTANDING PICKS
+
+   What everyone actually wants to know from the trade log: whose picks
+   does each owner hold going into the next drafts, and which of their
+   own are gone. Only picks for drafts that haven't happened yet count —
+   anything from a draft already held is history.
+
+   The sheet re-lists a running trade on each new season's tab, so the
+   same 2027 pick can appear twice. Everything is reduced to single
+   (year, round, from, to) facts first, which collapses the repeats.
+   ---------------------------------------------------------------- */
+
+function roundNumber(item) {
+  const m = String(item || '').match(/(\d{1,2})/);
+  return m ? Number(m[1]) : null;
+}
+
+function outstandingPicks(trades, activityPicks, fromYear) {
+  const facts = new Map();     // key -> { year, round, from, to }
+
+  const add = (year, round, from, to) => {
+    if (!year || !round || !from || !to || from === to) return;
+    if (Number(year) < fromYear) return;
+    const key = `${year}|${round}|${from}|${to}`;
+    if (!facts.has(key)) facts.set(key, { year: Number(year), round, from, to });
+  };
+
+  // Sheet trade blocks: "<owner> Get" lists what that side receives, and in
+  // a two-party trade it comes from the other side.
+  for (const t of trades) {
+    if (!t || !t.a || !t.b) continue;
+    for (const asset of t.a.assets || []) {
+      const round = roundNumber(asset.item);
+      if (round && !/[A-Za-z]{3,}/.test(String(asset.item).replace(/^(rd|round)\s*/i, ''))) {
+        add(asset.year, round, t.b.owner, t.a.owner);
+      }
+    }
+    for (const asset of t.b.assets || []) {
+      const round = roundNumber(asset.item);
+      if (round && !/[A-Za-z]{3,}/.test(String(asset.item).replace(/^(rd|round)\s*/i, ''))) {
+        add(asset.year, round, t.a.owner, t.b.owner);
+      }
+    }
+  }
+
+  // Yahoo's log says who received a pick but not who sent it. Pair the two
+  // legs of each trade by timestamp: everyone else in the same trade is the
+  // counterparty. A pick traded during the season is for the next draft.
+  const byDate = new Map();
+  for (const p of activityPicks || []) {
+    if (!byDate.has(p.date)) byDate.set(p.date, []);
+    byDate.get(p.date).push(p);
+  }
+  for (const legs of byDate.values()) {
+    const owners = [...new Set(legs.map(l => l.owner))];
+    if (owners.length !== 2) continue;       // can't tell who sent what
+    for (const leg of legs) {
+      const from = owners.find(o => o !== leg.owner);
+      add(fromYear, roundNumber(leg.player), from, leg.owner);
+    }
+  }
+
+  // Shape it per owner per year.
+  const owners = new Map();
+  const bucket = (owner, year) => {
+    if (!owners.has(owner)) owners.set(owner, new Map());
+    const byYear = owners.get(owner);
+    if (!byYear.has(year)) byYear.set(year, { gets: [], gives: [] });
+    return byYear.get(year);
+  };
+  for (const f of facts.values()) {
+    bucket(f.to, f.year).gets.push({ round: f.round, from: f.from });
+    bucket(f.from, f.year).gives.push({ round: f.round, to: f.to });
+  }
+
+  const byRound = (a, b) => a.round - b.round;
+  return [...owners.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([owner, byYear]) => ({
+      owner,
+      years: [...byYear.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([year, v]) => ({
+          year,
+          gets: v.gets.sort(byRound),
+          gives: v.gives.sort(byRound),
+          net: v.gets.length - v.gives.length
+        }))
+    }));
+}
+
 module.exports = { loadLeagueData, parseCSV, samePlayer, ordinal, canonOwner,
-                   OWNER_ALIASES, editDistanceAtMost };
+                   OWNER_ALIASES, editDistanceAtMost, outstandingPicks };

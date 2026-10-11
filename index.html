@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Middletown Man League</title>
+<script>
+  // Phones get the phone version. Two ways to stay on the full site from a
+  // phone: open it with ?full=1 (the "Full site" link does that), after which
+  // this remembers the choice. Opened straight off a desktop as a file there's
+  // no server to redirect to, so it does nothing.
+  (function () {
+    if (!/^https?:/.test(location.protocol)) return;
+    try {
+      if (/[?&]full\b/.test(location.search)) { localStorage.setItem('mmlfl-full', '1'); return; }
+      if (localStorage.getItem('mmlfl-full') === '1') return;
+    } catch (e) { /* storage blocked: fall through on screen size alone */ }
+    var small = Math.min(screen.width, window.innerWidth || 9999) <= 700;
+    var phone = /Mobi|Android|iPhone|iPod/i.test(navigator.userAgent);
+    if (small && phone) location.replace('/m' + (location.hash || ''));
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -374,6 +390,8 @@
   .rule-block li span:last-child { color: var(--text-dim); font-family: 'Roboto Mono', monospace; font-size: 13px; }
 
 
+  footer a.phone-link { color: var(--gold-1); text-decoration: none; }
+  footer a.phone-link:hover { text-decoration: underline; }
   footer {
     margin-top: 64px;
     padding-top: 22px;
@@ -1533,6 +1551,59 @@
   .marc-week-tag { color: var(--gold-1); font-weight: 700; }
   .marc-cap { font-family: 'Barlow', sans-serif; font-size: 12.5px; color: var(--text); }
 
+  /* One week at a time, with arrows to step back through the season. */
+  .marc-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .marc-nav-mid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    text-align: center;
+  }
+  .marc-nav-week {
+    font-family: 'Barlow Condensed', 'Barlow', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 0.5px;
+    color: var(--gold-1);
+  }
+  .marc-nav-cap {
+    font-family: 'Barlow', sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+  .marc-nav-count {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .marc-arrow {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    color: var(--text);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .marc-arrow:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+  .marc-arrow:disabled { opacity: 0.25; cursor: default; }
+
   .marc-empty {
     font-family: 'Roboto Mono', monospace;
     font-size: 11px;
@@ -1830,6 +1901,68 @@
     opacity: 0.7;
   }
 
+  /* Outstanding picks ledger */
+  .op-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .op-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .op-owner {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-family: 'Barlow Condensed', 'Barlow', sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+  }
+  .op-net {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .op-net.up { color: #7fd48a; }
+  .op-net.down { color: #e07b72; }
+  .op-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .op-col-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .op-pick {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    font-family: 'Barlow Condensed', 'Barlow', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.1;
+  }
+  .op-pick small {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .op-pick.in  { border-left: 3px solid #7fd48a; }
+  .op-pick.out { border-left: 3px solid #e07b72; opacity: 0.85; }
+  .op-none { color: var(--text-dim); opacity: 0.5; font-size: 14px; }
+
   .tr-card {
     background: var(--glass);
     border: 1px solid var(--border);
@@ -2070,7 +2203,7 @@
       <div class="ss-switch">
         <button class="ss-sw active" data-view="standings">Standings</button>
         <button class="ss-sw" data-view="marc">Marc's Rankings</button>
-        <button class="ss-sw" data-view="power">Unofficial Projections</button>
+        <button class="ss-sw" data-view="power">Gregg's Projections</button>
       </div>
     </div>
 
@@ -2112,7 +2245,7 @@
     </div>
 
     <div class="ss-view" id="ss-view-power">
-      <div class="ss-tag" id="ss-tag-power">unofficial &mdash; draft capital for now, switches to averaged ESPN + Sleeper projections once connected</div>
+      <div class="ss-tag" id="ss-tag-power">best starting lineup, priced by season projections &mdash; loads when opened</div>
       <div class="ss-list" id="ss-list-power">
         <div class="ss-row lead"><span class="ss-rank">1</span><span class="ss-owner">Gregg</span><span class="ss-rec">484.9</span></div>
         <div class="ss-row"><span class="ss-rank">2</span><span class="ss-owner">Derek</span><span class="ss-rec">484.9</span></div>
@@ -2897,103 +3030,12 @@
 
   <section class="panel" id="picktrades">
     <h2 class="panel-title">Pick Trades</h2>
-    <p class="panel-sub">Every pick and player swap on record</p>
+    <p class="panel-sub">Picks that have changed hands for drafts still to come</p>
 
     <div class="sheet-badge"><span class="dot"></span> Tracked in the league Google Sheet &middot; not in Yahoo</div>
-    <div class="tr-section">
-      <div class="tr-section-head"><span class="tr-season">2026-2027</span><span class="tr-label">Preseason Trades</span><span class="tr-count">3</span></div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 1</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>10th</span><span class="tr-asset"><span class="tr-yr">2027</span>10th</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Fito</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>2nd</span><span class="tr-asset"><span class="tr-yr">2027</span>1st</span></div></div>
-        </div>
-      </div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 2</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>14th</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Fito</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>1st</span></div></div>
-        </div>
-      </div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 3</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>Rd 2</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 8</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Gregg</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>Rd 10</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 11</span></div></div>
-        </div>
-      </div>
+    <div id="op-list" class="op-list">
+      <div class="tr-empty">Loading pick trades&hellip;</div>
     </div>
-    <div class="tr-section">
-      <div class="tr-section-head"><span class="tr-season">2026-2027</span><span class="tr-label">2027 In-Season Trades</span><span class="tr-count">0</span></div>
-      <div class="tr-empty">No trades logged yet</div>
-    </div>
-    <div class="tr-section">
-      <div class="tr-section-head"><span class="tr-season">2025-2026</span><span class="tr-label">Preseason Trades</span><span class="tr-count">6</span></div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 1</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>1st</span><span class="tr-asset"><span class="tr-yr">2026</span>10th</span><span class="tr-asset"><span class="tr-yr">2027</span>10th</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Fito</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>8th</span><span class="tr-asset"><span class="tr-yr">2026</span>2nd</span><span class="tr-asset"><span class="tr-yr">2027</span>1st</span></div></div>
-        </div>
-      </div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 2</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>4th</span><span class="tr-asset"><span class="tr-yr">2026</span>14th</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Fito</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>14th</span><span class="tr-asset"><span class="tr-yr">2026</span>1st</span></div></div>
-        </div>
-      </div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 3</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>13th</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Derek</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>1st</span></div></div>
-        </div>
-      </div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 4</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>14th</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Derek</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>6th</span></div></div>
-        </div>
-      </div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 5</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Gregg</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>14th</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Rebel</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>3rd</span></div></div>
-        </div>
-      </div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 6</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Gregg</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>7th</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Jared</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2025</span>4th</span></div></div>
-        </div>
-      </div>
-    </div>
-    <div class="tr-section">
-      <div class="tr-section-head"><span class="tr-season">2025-2026</span><span class="tr-label">2026 In-Season Trades</span><span class="tr-count">1</span></div>
-      <div class="tr-card">
-        <div class="tr-num">Trade 1</div>
-        <div class="tr-sides">
-          <div class="tr-side"><div class="tr-owner">Hexx</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>DJ Moore</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 2</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 8</span></div></div>
-          <div class="tr-swap">&#8646;</div>
-          <div class="tr-side"><div class="tr-owner">Gregg</div><div class="tr-assets"><span class="tr-asset"><span class="tr-yr">2026</span>Ja&#x27;Marr Chase</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 10</span><span class="tr-asset"><span class="tr-yr">2026</span>Rd 11</span></div></div>
-        </div>
-      </div>
-    </div>
-
   </section>
 
   <section class="panel shelved" id="history">
@@ -3018,7 +3060,8 @@
   </section>
 
 
-  <footer>All data on this page is placeholder — Standings will sync live from Yahoo Fantasy once the API key is approved. Keepers pulls from the league Google Sheet.</footer>
+  <footer>Standings, rosters, keepers and pick trades come from the league Google Sheet. The parlay, announcements and Marc's rankings live on the league server.
+    &nbsp;&middot;&nbsp; <a href="/m" class="phone-link" onclick="try{localStorage.removeItem('mmlfl-full')}catch(e){}">Phone version</a></footer>
 
 </div>
 
@@ -3253,37 +3296,48 @@
     table.innerHTML = head + body;
   }
 
-  function renderTrades(sections) {
-    const panel = document.getElementById('picktrades');
-    if (!panel) return;
-    const old = panel.querySelectorAll('.tr-section');
-    if (!old.length) return;
-    const anchor = old[0].parentNode;
-    old.forEach(n => n.remove());
+  // Picks owed and picks owned, for drafts that haven't happened yet. The
+  // server has already folded every trade down to single facts and dropped
+  // anything from a draft already held.
+  function renderOutstandingPicks(owners) {
+    const list = document.getElementById('op-list');
+    if (!list) return;
+    owners = owners || [];
+    if (!owners.length) {
+      list.innerHTML = '<div class="tr-empty">No future picks have been traded.</div>';
+      return;
+    }
+    const years = [...new Set(owners.flatMap(o => o.years.map(y => y.year)))].sort();
 
-    const html = sections.map(sec => {
-      const body = sec.trades.length
-        ? sec.trades.map((t, i) => {
-            const side = s => s
-              ? '<div class="tr-side"><div class="tr-owner">' + esc(s.owner) + '</div>'
-                + '<div class="tr-assets">' + s.assets.map(a =>
-                    '<span class="tr-asset"><span class="tr-yr">' + esc(a.year) + '</span>'
-                    + esc(a.item) + '</span>').join('') + '</div></div>'
-              : '<div class="tr-side"><div class="tr-owner">&mdash;</div></div>';
-            return '<div class="tr-card"><div class="tr-num">Trade ' + (i + 1) + '</div>'
-              + '<div class="tr-sides">' + side(t.a)
-              + '<div class="tr-swap">&#8646;</div>' + side(t.b) + '</div></div>';
-          }).join('')
-        : '<div class="tr-empty">No trades logged yet</div>';
+    list.innerHTML = years.map(year => {
+      const rows = owners
+        .map(o => ({ owner: o.owner, y: o.years.find(y => y.year === year) }))
+        .filter(r => r.y && (r.y.gets.length || r.y.gives.length));
+      if (!rows.length) return '';
+
+      const cards = rows.map(r => {
+        const gets = r.y.gets.map(g =>
+          '<span class="op-pick in">' + ord(g.round) + '<small>from ' + esc(g.from) + '</small></span>').join('');
+        const gives = r.y.gives.map(g =>
+          '<span class="op-pick out">' + ord(g.round) + '<small>to ' + esc(g.to) + '</small></span>').join('');
+        const net = r.y.net;
+        return '<div class="op-card">'
+          + '<div class="op-owner">' + esc(r.owner)
+          +   '<span class="op-net ' + (net > 0 ? 'up' : net < 0 ? 'down' : '') + '">'
+          +   (net > 0 ? '+' + net : net) + ' pick' + (Math.abs(net) === 1 ? '' : 's') + '</span></div>'
+          + '<div class="op-cols">'
+          +   '<div class="op-col"><div class="op-col-title">Gets</div>' + (gets || '<span class="op-none">&mdash;</span>') + '</div>'
+          +   '<div class="op-col"><div class="op-col-title">Gives up</div>' + (gives || '<span class="op-none">&mdash;</span>') + '</div>'
+          + '</div></div>';
+      }).join('');
 
       return '<div class="tr-section"><div class="tr-section-head">'
-        + '<span class="tr-season">' + esc(sec.season) + '</span>'
-        + '<span class="tr-label">' + esc(sec.label) + '</span>'
-        + '<span class="tr-count">' + sec.trades.length + '</span></div>' + body + '</div>';
+        + '<span class="tr-season">' + year + ' Draft</span>'
+        + '<span class="tr-label">' + rows.length + ' owner' + (rows.length === 1 ? '' : 's') + ' involved</span></div>'
+        + '<div class="op-grid">' + cards + '</div></div>';
     }).join('');
-
-    anchor.insertAdjacentHTML('beforeend', html);
   }
+
 
 
   // Flags things in the sheet that quietly make keeper costs wrong — an empty
@@ -3365,12 +3419,15 @@
       if (d.keepers) renderKeepers(d.keepers);
       if (d.keeperCosts) renderKeeperCosts(d.keeperCosts);
       if (d.draft) { renderDraft(d.draft); labelDraftSeason(d); }
-      if (d.tradeSections) renderTrades(d.tradeSections);
+      renderOutstandingPicks(d.outstandingPicks);
       markLive(d.fetchedAt);
       showSheetWarnings(d.dataQuality);
       labelKeeperBasis(d);
       renderStandings(d);
-      if (renderPowerFromScores(d)) powerFetched = true;   // real points beat the stand-in
+      lastLeague = d;
+      // Points scored stands in on the projections view only until the real
+      // projections arrive, or if they can't be fetched at all.
+      if (!powerFetched) renderPowerFromScores(d);
     } catch (e) {
       // keep the built-in snapshot
     }
@@ -3387,6 +3444,7 @@
   });
 
   let powerFetched = false;
+  let lastLeague = null;
 
   document.querySelectorAll('.ss-sw').forEach(b => {
     b.addEventListener('click', () => {
@@ -3429,10 +3487,17 @@
           + '</div>';
       }).join('');
 
-      tag.textContent = 'projected points \u00b7 averaged across ' +
-        (data.sources || []).join(', ');
+      tag.textContent = 'best starting lineup \u00b7 season projections from ' +
+        (data.sources || []).join(' + ') +
+        (data.basis ? ' \u00b7 ' + data.basis : '');
     } catch (e) {
-      tag.textContent = 'live projections unavailable (' + (e.message || 'error') + ') \u2014 showing draft capital';
+      // Let the view be retried next time it's opened.
+      powerFetched = false;
+      if (lastLeague && renderPowerFromScores(lastLeague)) {
+        tag.textContent = 'projections unavailable right now (' + (e.message || 'error') + ') \u2014 showing points scored instead';
+      } else {
+        tag.textContent = 'projections unavailable right now (' + (e.message || 'error') + ')';
+      }
     }
   }
 
@@ -3540,30 +3605,59 @@
         return;
       }
 
-      marcList.innerHTML = items.map(i => {
-        // Ones kept as files in the repo have no upload date, and without
-        // this guard the empty value formats as Jan 1 1970.
-        const when = i.createdAt
-          ? new Date(i.createdAt * 1000)
-              .toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-          : '';
-        return '<div class="marc-item">'
-          + '<img src="' + esc(API_BASE + i.url) + '" alt="' + esc(i.caption || 'Power rankings') + '" loading="lazy">'
-          + '<div class="marc-meta">'
-          + (i.week ? '<span class="marc-week-tag">Week ' + i.week + '</span>' : '')
-          + (i.caption ? '<span class="marc-cap">' + esc(i.caption) + '</span>' : '')
-          + (when ? '<span>' + when + '</span>' : '')
-          + '</div></div>';
-      }).join('');
-
-      marcList.querySelectorAll('.marc-item img').forEach(img => {
-        img.addEventListener('click', () => openLightbox(img.src));
-      });
+      // Newest week first; the server already orders them, but don't rely on it.
+      marcItems = items.slice().sort((a, b) => (b.week || 0) - (a.week || 0));
+      marcIdx = 0;
+      showMarc();
     } catch (e) {
       marcList.innerHTML = '<div class="marc-empty">Could not load rankings ('
         + esc(e.message) + ').</div>';
     }
   }
+
+  // One ranking on screen at a time, opening on the latest. The arrows step
+  // back through the season; ‹ is older, › is newer.
+  let marcItems = [];
+  let marcIdx = 0;
+
+  function showMarc() {
+    const i = marcItems[marcIdx];
+    if (!i) return;
+    const older = marcIdx < marcItems.length - 1;
+    const newer = marcIdx > 0;
+
+    marcList.innerHTML =
+        '<div class="marc-item">'
+      +   '<div class="marc-nav">'
+      +     '<button class="marc-arrow" id="marc-older" aria-label="Earlier week"' + (older ? '' : ' disabled') + '>&#8249;</button>'
+      +     '<div class="marc-nav-mid">'
+      +       '<span class="marc-nav-week">' + (i.week ? 'Week ' + i.week : 'Rankings') + '</span>'
+      +       (i.caption ? '<span class="marc-nav-cap">' + esc(i.caption) + '</span>' : '')
+      +       '<span class="marc-nav-count">' + (marcIdx + 1) + ' of ' + marcItems.length + '</span>'
+      +     '</div>'
+      +     '<button class="marc-arrow" id="marc-newer" aria-label="Later week"' + (newer ? '' : ' disabled') + '>&#8250;</button>'
+      +   '</div>'
+      +   '<img src="' + esc(API_BASE + i.url) + '" alt="' + esc(i.caption || 'Power rankings') + '">'
+      + '</div>';
+
+    document.getElementById('marc-older').addEventListener('click', () => { marcIdx++; showMarc(); });
+    document.getElementById('marc-newer').addEventListener('click', () => { marcIdx--; showMarc(); });
+    marcList.querySelector('img').addEventListener('click', function () { openLightbox(this.src); });
+  }
+
+  // Swipe on a phone does the same as the arrows.
+  (function () {
+    let x0 = null;
+    marcList.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+    marcList.addEventListener('touchend', e => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      x0 = null;
+      if (Math.abs(dx) < 40) return;
+      if (dx < 0 && marcIdx < marcItems.length - 1) { marcIdx++; showMarc(); }
+      if (dx > 0 && marcIdx > 0) { marcIdx--; showMarc(); }
+    }, { passive: true });
+  })();
 
   document.getElementById('marc-toggle').addEventListener('click', () => {
     marcForm.hidden = !marcForm.hidden;
@@ -4430,7 +4524,7 @@
     const skipPos = /^(K|DEF|D\/ST)$/i;
     const looksLikeDefense = /\b(def|d\/st|defense)\b/i;
     const players = team.players
-      .filter(p => !skipPos.test(p.pos || '') && !looksLikeDefense.test(p.name))
+      .filter(p => !skipPos.test(p.position || p.pos || '') && !looksLikeDefense.test(p.name))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     plPick.innerHTML = '<option value="">Select an anytime TD player\u2026</option>'

@@ -77,6 +77,10 @@ app.use(express.json({ limit: '8mb' }));   // Marc's rankings are images
 app.get(['/', '/index.html'], (_req, res) =>
   res.sendFile(path.join(__dirname, 'index.html')));
 
+// The phone version — same server, same data, laid out for a thumb.
+app.get(['/m', '/mobile', '/mobile.html'], (_req, res) =>
+  res.sendFile(path.join(__dirname, 'mobile.html')));
+
 const BASE = 'https://fantasysports.yahooapis.com/fantasy/v2';
 
 /* ================================================================
@@ -108,17 +112,44 @@ const POLL_MINUTES = Number(process.env.POLL_MINUTES || 15);
 
 const DB_FILE = path.join(DATA_DIR, 'league.db');
 
-// One-time rescue: if the database is still sitting in the app folder from
-// before DATA_DIR existed, move it across on first boot so Marc's rankings,
-// the votes and the dues carry over instead of starting empty.
+// If a database was committed to the repo, or left in the app folder from
+// before DATA_DIR existed, take it over to the volume on first boot.
+//
+// Worth being clear about what this does NOT cover: a host that rebuilds the
+// container from the repo throws the old container's disk away, so a database
+// that only ever lived there is already gone by the time this runs. Carrying
+// data across a move onto a volume means /backup first and /restore after.
 try {
   const legacy = path.join(__dirname, 'league.db');
   if (DATA_DIR !== __dirname && fs.existsSync(legacy) && !fs.existsSync(DB_FILE)) {
     fs.copyFileSync(legacy, DB_FILE);
-    console.log('[data] carried the existing database over to ' + DB_FILE);
+    console.log('[data] carried a database found in the app folder over to ' + DB_FILE);
   }
 } catch (e) {
   console.error('[data] could not carry the old database over: ' + e.message);
+}
+
+// A restore staged by the previous boot is swapped in here, before anything
+// opens the database — doing it at startup avoids replacing a file that has
+// live connections against it.
+try {
+  const staged = DB_FILE + '.restore';
+  if (fs.existsSync(staged)) {
+    // Drop the live database's journal files first: they describe the old
+    // database and must not be read against the incoming one.
+    for (const suffix of ['-wal', '-shm']) {
+      try { fs.unlinkSync(DB_FILE + suffix); } catch (e) { /* not there */ }
+    }
+    fs.renameSync(staged, DB_FILE);
+    // The staged copy picks up journals of its own when it gets checked on
+    // upload, and those are stale the moment it is renamed.
+    for (const suffix of ['-wal', '-shm']) {
+      try { fs.unlinkSync(staged + suffix); } catch (e) { /* not there */ }
+    }
+    console.log('[data] restored the database from an uploaded backup');
+  }
+} catch (e) {
+  console.error('[data] could not apply the staged restore: ' + e.message);
 }
 
 const db = new Database(DB_FILE);
@@ -759,13 +790,121 @@ async function currentRosters() {
   return teams;
 }
 
-app.get('/power', async (_req, res) => {
+/* ----------------------------------------------------------------
+   GREGG'S PROJECTIONS
+
+   Each team's roster, priced by public season projections. The sources
+   are averaged per player, then the best legal starting lineup is
+   picked and totalled. Starters only: a stacked bench doesn't win a
+   week, and ranking whole rosters would reward hoarding.
+
+   Rosters come from the league sheet, which is the truth now that the
+   Yahoo connection never happened (Yahoo is still tried first if it is
+   ever authorised). The lineup shape is read off the pasted roster —
+   every slot that isn't bench or IR — so a rule change in Yahoo flows
+   through on the next paste with nothing to edit here.
+   ---------------------------------------------------------------- */
+
+const FLEX_ELIGIBLE = {
+  'W/R/T': ['WR', 'RB', 'TE'], 'W/R': ['WR', 'RB'], 'R/W/T': ['WR', 'RB', 'TE'],
+  'FLEX': ['WR', 'RB', 'TE'], 'Q/W/R/T': ['QB', 'WR', 'RB', 'TE'],
+  'OP': ['QB', 'WR', 'RB', 'TE'], 'SUPERFLEX': ['QB', 'WR', 'RB', 'TE']
+};
+const BENCH_SLOTS = new Set(['BN', 'IR', 'IR+', 'NA']);
+const DEFAULT_LINEUP = ['QB', 'RB', 'RB', 'WR', 'WR', 'TE', 'W/R/T', 'K', 'DEF'];
+
+/** Projection lookup that copes with how each source names a defense. */
+function lookupProjection(maps, player) {
+  const tries = [nameKey(player.name)];
+  if (player.position === 'DEF') {
+    const n = nameKey(player.name).replace(/\s*(d\/st|dst|defense)$/, '');
+    tries.push(n + ' d/st', n + ' dst', n + ' defense', n);
+    if (player.nflTeam) tries.push(nameKey(player.nflTeam));
+  }
+  for (const k of tries) {
+    const vals = maps.map(m => m.get(k)).filter(Number.isFinite);
+    if (vals.length) return vals.reduce((a, b) => a + b, 0) / vals.length;
+  }
+  return null;
+}
+
+const IR_SLOTS = new Set(['IR', 'IR+', 'NA']);
+
+/** Best legal lineup for one team: fixed slots first, flex from what's left.
+ *  A player parked on IR can't be started, so he never enters the pool. */
+function bestLineup(players, slots) {
+  const pool = players
+    .filter(p => Number.isFinite(p.pts) && !IR_SLOTS.has(String(p.slot || '').toUpperCase()))
+    .sort((a, b) => b.pts - a.pts);
+  const used = new Set();
+  const starters = [];
+
+  const take = (slot, eligible) => {
+    const pick = pool.find(p => !used.has(p) && eligible.includes(p.position));
+    if (pick) { used.add(pick); starters.push({ ...pick, slot }); }
+  };
+
+  for (const slot of slots) if (!FLEX_ELIGIBLE[slot]) take(slot, [slot]);
+  for (const slot of slots) if (FLEX_ELIGIBLE[slot]) take(slot, FLEX_ELIGIBLE[slot]);
+  return starters;
+}
+
+/** The lineup shape, read off whichever pasted roster is fullest. */
+function lineupFromRosters(teams) {
+  let best = [];
+  for (const t of teams) {
+    const slots = t.players.map(p => String(p.slot || '').toUpperCase())
+      .filter(s => s && !BENCH_SLOTS.has(s));
+    if (slots.length > best.length) best = slots;
+  }
+  return best.length >= 5 ? best : DEFAULT_LINEUP;
+}
+
+async function rostersForProjections() {
+  // Yahoo, only if it was ever authorised
+  if (readTokens() && LEAGUE_KEYS.length) {
+    try {
+      const teams = await currentRosters();
+      return {
+        basis: 'live Yahoo rosters',
+        teams: teams.map(t => ({
+          owner: canonOwnerName(t.owner),
+          players: t.players.map(p => ({ name: p.name, position: p.position, slot: null, nflTeam: null }))
+        }))
+      };
+    } catch (e) { /* fall through */ }
+  }
+
+  if (!process.env.SHEET_ID) throw new Error('SHEET_ID not set');
+  const league = await loadLeagueData(process.env.SHEET_ID);
+  const byOwner = new Map();
+  for (const r of league.rosters || []) {
+    if (!byOwner.has(r.owner)) byOwner.set(r.owner, []);
+    // "position" is the player's real position off the paste; "pos" is the
+    // slot he's in. Older roster sources only have the slot.
+    const slot = String(r.pos || '').toUpperCase();
+    const position = String(r.position || (BENCH_SLOTS.has(slot) || FLEX_ELIGIBLE[slot] ? '' : slot) || '').toUpperCase();
+    byOwner.get(r.owner).push({ name: r.player, position, slot, nflTeam: r.nflTeam || null });
+  }
+  return {
+    basis: league.rosterBasis === 'pasted Yahoo rosters'
+      ? 'current rosters from the league sheet'
+      : (league.rosterSeason || '') + ' rosters from the league sheet',
+    teams: [...byOwner.entries()].map(([owner, players]) => ({ owner, players }))
+  };
+}
+
+let powerCache = { at: 0, data: null };
+
+app.get('/power', async (req, res) => {
   try {
+    const fresh = Date.now() - powerCache.at < 30 * 60 * 1000;
+    if (fresh && powerCache.data && !req.query.refresh) return res.json(powerCache.data);
+
     const season = new Date().getFullYear();
 
-    // gather whichever sources are configured and responding
-    // keyless sources first — these work with no setup at all.
-    // the two key-based ones simply return null when no key is present.
+    // keyless sources first — ESPN and Sleeper work with no setup at all.
+    // The two key-based ones return null when no key is present.
     const attempts = [
       ['ESPN', projEspn],
       ['Sleeper', projSleeper],
@@ -794,34 +933,37 @@ app.get('/power', async (_req, res) => {
       });
     }
 
-    const rosters = await currentRosters();
+    const { basis, teams: rosters } = await rostersForProjections();
+    const lineup = lineupFromRosters(rosters);
 
     const teams = rosters.map(t => {
-      let total = 0;
-      let matched = 0;
-      const missing = [];
-
-      for (const p of t.players) {
-        const k = nameKey(p.name);
-        const vals = maps.map(m => m.get(k)).filter(Number.isFinite);
-        if (vals.length) {
-          total += vals.reduce((a, b) => a + b, 0) / vals.length;  // average the sources
-          matched++;
-        } else {
-          missing.push(p.name);
-        }
-      }
+      const priced = t.players.map(p => ({ ...p, pts: lookupProjection(maps, p) }));
+      const starters = bestLineup(priced, lineup);
+      const total = starters.reduce((s, p) => s + p.pts, 0);
+      const bench = priced.filter(p => Number.isFinite(p.pts) && !starters.includes(p))
+        .reduce((s, p) => s + p.pts, 0);
 
       return {
         owner: t.owner,
         projected: Math.round(total * 10) / 10,
-        playersMatched: matched,
+        benchProjected: Math.round(bench * 10) / 10,
+        starters: starters.map(p => ({
+          slot: p.slot, name: p.name, position: p.position, pts: Math.round(p.pts * 10) / 10
+        })),
+        playersMatched: priced.filter(p => Number.isFinite(p.pts)).length,
         playersTotal: t.players.length,
-        unmatched: missing
+        unmatched: priced.filter(p => !Number.isFinite(p.pts)).map(p => p.name)
       };
     }).sort((a, b) => b.projected - a.projected);
 
-    res.json({ season, scoring: SCORING, sources: used, failed, teams });
+    const data = {
+      season, scoring: SCORING, sources: used, failed,
+      basis, lineup, method: 'best starting lineup, season projections averaged across sources',
+      fetchedAt: new Date().toISOString(),
+      teams
+    };
+    powerCache = { at: Date.now(), data };
+    res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -1464,6 +1606,157 @@ app.delete('/marc-rankings/:id', (req, res) => {
    the most recent writes. db.backup() takes a consistent snapshot.
    ---------------------------------------------------------------- */
 
+/* ----------------------------------------------------------------
+   RESTORE
+
+   Put a file from /backup back. Needed whenever the database moves
+   house — onto a volume, or to a new host — because the old disk is
+   gone by the time the new one starts.
+
+   The upload is staged next to the database and swapped in on the
+   next boot, so nothing is replaced while connections are open
+   against it. The server exits once the file is staged; the host
+   restarts it, and the swap happens on the way up.
+   ---------------------------------------------------------------- */
+
+const SQLITE_MAGIC = 'SQLite format 3\0';
+
+app.get('/restore', (_req, res) => {
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restore</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+         background:#15171c; color:#e9ecf1; margin:0;
+         display:flex; min-height:100vh; align-items:center; justify-content:center; }
+  .card { width:min(520px, 92vw); background:#1e2128; border:1px solid #2c303a;
+          border-radius:14px; padding:28px; }
+  h1 { margin:0 0 6px; font-size:1.3rem; }
+  p  { color:#9aa3b2; line-height:1.5; font-size:.94rem; }
+  label { display:block; margin:18px 0 6px; font-weight:600; font-size:.9rem; }
+  input { width:100%; padding:11px 12px; border-radius:9px; border:1px solid #39404e;
+          background:#15171c; color:#e9ecf1; font-size:1rem; box-sizing:border-box; }
+  button { margin-top:20px; width:100%; padding:13px; border:0; border-radius:9px;
+           background:#c8362f; color:#fff; font-size:1rem; font-weight:700; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  .msg { margin-top:16px; padding:12px; border-radius:9px; display:none; font-size:.92rem; line-height:1.45; }
+  .ok  { background:#17351f; color:#a7e3b4; display:block; }
+  .bad { background:#3a1c1c; color:#f0b4b0; display:block; }
+  .warn{ background:#3a3119; color:#f0d9a8; font-size:.88rem; }
+</style></head><body>
+<div class="card">
+  <h1>Restore the league database</h1>
+  <p>Upload a file you got from <code>/backup</code>. It replaces everything
+     currently stored — dues, parlay picks, board posts, votes.</p>
+  <div class="msg warn" style="display:block">The site restarts itself after
+     this. Give it about a minute, then reload the main page.</div>
+  <label for="code">Code</label>
+  <input id="code" type="password" placeholder="the same code you use to post">
+  <label for="file">Backup file</label>
+  <input id="file" type="file" accept=".db,application/octet-stream">
+  <button id="go">Restore</button>
+  <div id="msg" class="msg"></div>
+</div>
+<script>
+  const msg = document.getElementById('msg');
+  const go  = document.getElementById('go');
+  function say(text, cls) { msg.className = 'msg ' + cls; msg.textContent = text; }
+
+  go.addEventListener('click', async () => {
+    const code = document.getElementById('code').value.trim();
+    const file = document.getElementById('file').files[0];
+    if (!code) return say('Enter the code.', 'bad');
+    if (!file) return say('Pick a backup file.', 'bad');
+
+    go.disabled = true;
+    say('Uploading ' + Math.round(file.size / 1024) + ' KB...', 'ok');
+
+    try {
+      const buf = await file.arrayBuffer();
+      let bin = '';
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i += 8192) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+      }
+      const res = await fetch('/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, data: btoa(bin) })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || ('server ' + res.status));
+      say(d.message, 'ok');
+    } catch (e) {
+      say(e.message || 'Something went wrong.', 'bad');
+      go.disabled = false;
+    }
+  });
+</script>
+</body></html>`);
+});
+
+app.post('/restore', express.json({ limit: '128mb' }), (req, res) => {
+  const { code, data } = req.body || {};
+
+  if (String(code || '') !== ANNOUNCE_CODE) {
+    return res.status(401).json({ error: 'Wrong code.' });
+  }
+  if (!data) {
+    return res.status(400).json({ error: 'No file came through.' });
+  }
+
+  let buf;
+  try {
+    buf = Buffer.from(String(data), 'base64');
+  } catch (e) {
+    return res.status(400).json({ error: 'That file could not be read.' });
+  }
+
+  // Check it really is a SQLite database before letting it near the real one.
+  if (buf.length < 100 || buf.subarray(0, 16).toString('latin1') !== SQLITE_MAGIC) {
+    return res.status(400).json({
+      error: 'That is not a database file. Use the file you got from /backup.'
+    });
+  }
+
+  const staged = DB_FILE + '.restore';
+
+  try {
+    fs.writeFileSync(staged, buf);
+
+    // Open the staged copy on its own and confirm it has the league's tables,
+    // so a valid-but-unrelated SQLite file can't quietly wipe everything.
+    const probe = new Database(staged, { readonly: true });
+    const names = probe.prepare(
+      "SELECT name FROM sqlite_master WHERE type = 'table'"
+    ).all().map(r => r.name);
+    probe.close();
+
+    if (!names.includes('dues') && !names.includes('parlay_picks')) {
+      fs.unlinkSync(staged);
+      return res.status(400).json({
+        error: 'That database is not from this site.'
+      });
+    }
+
+    res.json({
+      ok: true,
+      tables: names.length,
+      message: 'Restored ' + names.length + ' tables. Restarting now — ' +
+               'wait about a minute, then reload the main page.'
+    });
+
+    // Leave once the reply is on its way. The host restarts the service and
+    // the staged file is swapped in during startup.
+    setTimeout(() => process.exit(0), 400);
+  } catch (e) {
+    try { fs.unlinkSync(staged); } catch (e2) { /* nothing staged */ }
+    res.status(500).json({ error: 'Could not stage the restore: ' + e.message });
+  }
+});
+
 app.get('/backup', async (req, res) => {
   if (String(req.query.code || '') !== ANNOUNCE_CODE) {
     return res.status(401).json({ error: 'Wrong code.' });
@@ -1512,7 +1805,9 @@ app.get('/rosters', async (_req, res) => {
     for (const r of league.rosters || []) {
       if (!byOwner.has(r.owner)) byOwner.set(r.owner, []);
       byOwner.get(r.owner).push({
-        name: r.player, pos: r.pos, round: r.round, pick: r.pick
+        name: r.player, pos: r.pos, round: r.round, pick: r.pick,
+        // real position off the Yahoo paste, where the slot is BN / IR / flex
+        position: r.position || null, nflTeam: r.nflTeam || null
       });
     }
     const season = league.rosterSeason || 'the sheet';

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07080A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MMLFL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* ==================================================================
+     MIDDLETOWN MAN LEAGUE — PHONE VERSION
+
+     A lean page for the things the league actually opens on a phone:
+     the announcement, standings, the parlay, Marc's rankings, keeper
+     costs. It reads from the same server as the full site, so there's
+     nothing separate to keep up to date — it's a second window onto
+     the same data.
+
+     Everything lives in one file on purpose. Phones go here on their
+     own; the "Full site" link in the header switches back.
+     ================================================================== */
+
+  :root {
+    --bg: #07080A;
+    --bg-2: #0E1013;
+    --glass: rgba(255,255,255,0.035);
+    --border: rgba(255,255,255,0.09);
+    --gold-1: #FFE29B;
+    --gold-2: #E3A83C;
+    --text: #F6F2EA;
+    --text-dim: #8D8A83;
+    --win: #4CFFB0;
+    --loss: #FF5C4D;
+    --nav-h: 62px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); }
+  body {
+    font-family: 'Barlow', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    min-height: 100vh;
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+    -webkit-font-smoothing: antialiased;
+  }
+  button, select, input { font: inherit; color: inherit; }
+  a { color: var(--gold-1); }
+
+  /* ---- Header ---- */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    background: rgba(7,8,10,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700; font-size: 15px; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap;
+    background: linear-gradient(90deg, var(--gold-1), var(--gold-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .brand small { display: block; font: 500 9.5px 'Roboto Mono', monospace; letter-spacing: 2px; color: var(--text-dim); -webkit-text-fill-color: var(--text-dim); }
+  .full-link {
+    font: 500 11px 'Roboto Mono', monospace; letter-spacing: 0.5px;
+    color: var(--text-dim); text-decoration: none; white-space: nowrap;
+    border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px;
+  }
+
+  /* ---- Pages ---- */
+  main { padding: 14px 16px 24px; }
+  .page { display: none; }
+  .page.active { display: block; animation: fade .2s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  h2 {
+    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim);
+    margin: 18px 0 8px;
+  }
+  h2:first-child { margin-top: 2px; }
+  .sub { font: 500 10.5px 'Roboto Mono', monospace; color: var(--text-dim); margin: -4px 0 10px; }
+
+  .card {
+    background: var(--glass); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px; margin-bottom: 12px;
+  }
+  .empty { font: 500 12px 'Roboto Mono', monospace; color: var(--text-dim); padding: 10px 0; opacity: .8; }
+  .err { color: var(--loss); }
+
+  /* ---- Announcement ---- */
+  .ann { border-color: rgba(227,168,60,0.35); background: linear-gradient(135deg, rgba(227,168,60,0.10), rgba(255,255,255,0.02)); }
+  .ann-body { font-size: 16px; white-space: pre-wrap; }
+  .ann-by { font: 500 10.5px 'Roboto Mono', monospace; color: var(--text-dim); margin-top: 8px; }
+
+  /* ---- Standings ---- */
+  .row {
+    display: grid; grid-template-columns: 26px 1fr auto auto; gap: 10px; align-items: center;
+    padding: 10px 4px; border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: 0; }
+  .row.me { background: rgba(255,226,155,0.06); border-radius: 8px; padding-left: 8px; padding-right: 8px; }
+  .rk { font: 700 12px 'Roboto Mono', monospace; color: var(--text-dim); text-align: center; }
+  .row:first-child .rk { color: var(--gold-2); }
+  .nm { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rec { font: 700 14px 'Roboto Mono', monospace; }
+  .pf { font: 500 11px 'Roboto Mono', monospace; color: var(--text-dim); min-width: 48px; text-align: right; }
+  .row.three { grid-template-columns: 26px 1fr auto; }
+
+  /* ---- Segmented control ---- */
+  .seg { display: flex; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; margin-bottom: 12px; }
+  .seg button {
+    flex: 1; border: 0; background: transparent; color: var(--text-dim);
+    font: 600 13px 'Barlow', sans-serif; padding: 9px 4px; border-radius: 8px;
+  }
+  .seg button.on { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  /* ---- Owner picker ---- */
+  .pick {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    background: var(--bg-2) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238D8A83' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 14px center;
+    border: 1px solid var(--border); border-radius: 12px; padding: 13px 40px 13px 14px;
+    font-size: 16px; font-weight: 600; margin-bottom: 10px;
+  }
+  .pick:disabled { opacity: .5; }
+
+  /* ---- Parlay ---- */
+  .wk { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .wk button {
+    width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--glass); font-size: 24px; line-height: 1;
+  }
+  .wk button:disabled { opacity: .25; }
+  .wk-mid { text-align: center; }
+  .wk-label { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 20px; letter-spacing: 1px; }
+  .wk-games { font: 500 10.5px 'Roboto Mono', monospace; color: var(--text-dim); }
+  .btn {
+    width: 100%; border: 0; border-radius: 12px; padding: 14px;
+    background: linear-gradient(90deg, var(--gold-2), #c98f2c); color: #1a1205;
+    font-weight: 700; font-size: 16px; letter-spacing: .3px;
+  }
+  .btn:disabled { opacity: .45; }
+  .msg { font: 500 12px 'Roboto Mono', monospace; min-height: 18px; margin-top: 8px; }
+  .msg.ok { color: var(--win); }
+  .msg.err { color: var(--loss); }
+  .plrow { display: grid; grid-template-columns: 1fr 1fr 14px; gap: 10px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--border); }
+  .plrow:last-child { border-bottom: 0; }
+  .plrow .who { font-weight: 600; }
+  .plrow .ply { color: var(--text); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.12); justify-self: end; }
+  .dot.hit { background: var(--win); box-shadow: 0 0 10px var(--win); }
+  .plrow.hit .ply { color: var(--win); font-weight: 600; }
+  .note { font: 500 10.5px 'Roboto Mono', monospace; color: var(--text-dim); margin-top: 10px; }
+  .mine { font: 500 11px 'Roboto Mono', monospace; color: var(--gold-1); margin: -2px 0 10px; }
+
+  /* ---- Rankings ---- */
+  .rk-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .rk-nav button { width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--border); background: var(--glass); font-size: 24px; line-height: 1; }
+  .rk-nav button:disabled { opacity: .25; }
+  .rk-week { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 20px; letter-spacing: 1px; color: var(--gold-1); text-align: center; }
+  .rk-cap { font-size: 12.5px; text-align: center; color: var(--text); }
+  .rk-count { font: 500 10px 'Roboto Mono', monospace; color: var(--text-dim); text-align: center; }
+  .rk-img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border); }
+  .rk-hint { font: 500 10.5px 'Roboto Mono', monospace; color: var(--text-dim); text-align: center; margin-top: 8px; }
+
+  /* ---- Keepers ---- */
+  .kc { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; padding: 9px 4px; border-bottom: 1px solid var(--border); }
+  .kc:last-child { border-bottom: 0; }
+  .kc .pos { font: 700 10px 'Roboto Mono', monospace; color: var(--text-dim); }
+  .kc .ply { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kc .why { display: block; font: 500 10px 'Roboto Mono', monospace; color: var(--text-dim); font-weight: 400; }
+  .kc .cost { font: 700 14px 'Roboto Mono', monospace; color: var(--gold-1); }
+  .kc.pool .cost { color: var(--text-dim); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+  .kc.pool .ply { color: var(--text-dim); }
+  .kc-sum { display: flex; gap: 14px; font: 500 11px 'Roboto Mono', monospace; color: var(--text-dim); margin-bottom: 8px; }
+  .kc-sum b { color: var(--text); }
+
+  /* ---- Picks ledger ---- */
+  .op { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .op-t { font: 500 9.5px 'Roboto Mono', monospace; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; }
+  .op-p { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 8px; margin-bottom: 5px; border-radius: 7px; border: 1px solid var(--border); font-weight: 700; font-size: 15px; }
+  .op-p small { font: 500 9.5px 'Roboto Mono', monospace; color: var(--text-dim); }
+  .op-p.in { border-left: 3px solid var(--win); }
+  .op-p.out { border-left: 3px solid var(--loss); opacity: .85; }
+  .op-owner { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 17px; letter-spacing: .5px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .op-owner span { font: 500 10.5px 'Roboto Mono', monospace; color: var(--text-dim); }
+
+  /* ---- Bottom nav ---- */
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    display: flex; height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(10,11,14,0.96); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+  }
+  nav button {
+    flex: 1; border: 0; background: transparent; color: var(--text-dim);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font: 600 10.5px 'Barlow', sans-serif; letter-spacing: .3px;
+  }
+  nav button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  nav button.on { color: var(--gold-1); }
+
+  .stamp { font: 500 10px 'Roboto Mono', monospace; color: var(--text-dim); text-align: center; margin-top: 18px; opacity: .7; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Middletown Man League<small>everything the league complains about</small></div>
+  <a class="full-link" id="full-link" href="/?full=1">Full site</a>
+</header>
+
+<main>
+
+  <!-- ================= HOME ================= -->
+  <section class="page active" id="pg-home">
+    <div id="ann-wrap"></div>
+
+    <h2>Standings</h2>
+    <div class="card" id="standings"><div class="empty">Loading…</div></div>
+
+    <h2>Pick trades still out there</h2>
+    <div class="sub">future drafts only</div>
+    <div id="picks-wrap"><div class="empty">Loading…</div></div>
+
+    <div class="stamp" id="stamp"></div>
+  </section>
+
+  <!-- ================= PARLAY ================= -->
+  <section class="page" id="pg-parlay">
+    <div class="wk">
+      <button id="wk-prev" aria-label="Previous week">&#8249;</button>
+      <div class="wk-mid"><div class="wk-label" id="wk-label">Week</div><div class="wk-games" id="wk-games"></div></div>
+      <button id="wk-next" aria-label="Next week">&#8250;</button>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Your pick</h2>
+      <select class="pick" id="pl-owner"><option value="">Who are you?</option></select>
+      <select class="pick" id="pl-player" disabled><option value="">Pick your anytime TD guy…</option></select>
+      <button class="btn" id="pl-save">Lock it in</button>
+      <div class="msg" id="pl-msg"></div>
+      <div class="mine" id="pl-mine"></div>
+    </div>
+
+    <h2>This week's picks</h2>
+    <div class="card" id="pl-list"><div class="empty">Loading…</div></div>
+  </section>
+
+  <!-- ================= RANKINGS ================= -->
+  <section class="page" id="pg-rank">
+    <div class="seg">
+      <button class="on" data-rk="marc">Marc's Rankings</button>
+      <button data-rk="power">Gregg's Projections</button>
+    </div>
+
+    <div id="rk-marc">
+      <div class="rk-nav">
+        <button id="rk-older" aria-label="Earlier week">&#8249;</button>
+        <div><div class="rk-week" id="rk-week">—</div><div class="rk-cap" id="rk-cap"></div><div class="rk-count" id="rk-count"></div></div>
+        <button id="rk-newer" aria-label="Later week">&#8250;</button>
+      </div>
+      <div id="rk-img-wrap"><div class="empty">Loading…</div></div>
+      <div class="rk-hint">swipe for other weeks · tap the image to zoom</div>
+    </div>
+
+    <div id="rk-power" hidden>
+      <div class="sub" id="pw-sub">best starting lineup, season projections</div>
+      <div class="card" id="pw-list"><div class="empty">Loading…</div></div>
+    </div>
+  </section>
+
+  <!-- ================= KEEPERS ================= -->
+  <section class="page" id="pg-keep">
+    <select class="pick" id="kc-owner"><option value="">Whose team?</option></select>
+    <div class="kc-sum" id="kc-sum"></div>
+    <div class="card" id="kc-list"><div class="empty">Pick a team above.</div></div>
+    <div class="note">Simplified rule: on your roster + you drafted him or traded for him = keeper, one round earlier than drafted. 1st rounders and two-time keepers go back to the pool. Waiver pickups go back to the pool.</div>
+  </section>
+
+</main>
+
+<nav>
+  <button class="on" data-pg="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z"/></svg>Home</button>
+  <button data-pg="parlay"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Parlay</button>
+  <button data-pg="rank"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Rankings</button>
+  <button data-pg="keep"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 1-4.5 4.3L17.5 20 12 16.8 6.5 20l1-6.7L3 9l6-1z"/></svg>Keepers</button>
+</nav>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---- tiny helpers ---- */
+  const $ = id => document.getElementById(id);
+  function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function ord(n) { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+  async function getJSON(url) {
+    const r = await fetch(url, { headers: { Accept: 'application/json' } });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || ('server ' + r.status));
+    return d;
+  }
+
+  // Which owner this phone belongs to. A per-phone convenience only, and the
+  // page works the same if the browser refuses to remember it.
+  const ME_KEY = 'mmlfl-me';
+  function getMe() { try { return localStorage.getItem(ME_KEY) || ''; } catch (e) { return ''; } }
+  function setMe(v) { try { v ? localStorage.setItem(ME_KEY, v) : localStorage.removeItem(ME_KEY); } catch (e) { /* fine */ } }
+
+  // "Full site" must also stop the phone bouncing straight back here.
+  $('full-link').addEventListener('click', () => { try { localStorage.setItem('mmlfl-full', '1'); } catch (e) {} });
+
+  /* ---- navigation ---- */
+  const loaded = {};
+  function show(pg) {
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'pg-' + pg));
+    document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.pg === pg));
+    window.scrollTo(0, 0);
+    if (!loaded[pg]) { loaded[pg] = true; ({ home: loadHome, parlay: loadParlayPage, rank: loadMarc, keep: loadKeepers })[pg](); }
+    try { history.replaceState(null, '', '#' + pg); } catch (e) {}
+  }
+  document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => show(b.dataset.pg)));
+
+  /* ---- league data, shared by several pages ---- */
+  let league = null;
+  let leaguePromise = null;
+  function leagueData() {
+    if (!leaguePromise) {
+      leaguePromise = getJSON('/league-data').then(d => { league = d; return d; })
+        .catch(e => { leaguePromise = null; throw e; });
+    }
+    return leaguePromise;
+  }
+
+  /* ================= HOME ================= */
+  async function loadHome() {
+    // announcement
+    try {
+      const a = await getJSON('/announcement');
+      $('ann-wrap').innerHTML = a.body
+        ? '<div class="card ann"><div class="ann-body">' + esc(a.body) + '</div>'
+          + '<div class="ann-by">' + (a.author ? esc(a.author) + ' · ' : '')
+          + (a.updatedAt ? new Date(a.updatedAt * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '')
+          + '</div></div>'
+        : '';
+    } catch (e) { $('ann-wrap').innerHTML = ''; }
+
+    // standings + picks
+    try {
+      const d = await leagueData();
+      const me = getMe();
+      const rows = d.standings || [];
+      $('standings').innerHTML = rows.length
+        ? rows.map((t, i) =>
+            '<div class="row' + (t.owner === me ? ' me' : '') + '">'
+            + '<span class="rk">' + (i + 1) + '</span>'
+            + '<span class="nm">' + esc(t.owner) + '</span>'
+            + '<span class="rec">' + esc(t.record) + '</span>'
+            + '<span class="pf">' + Math.round(t.pointsFor) + ' pf</span>'
+            + '</div>').join('')
+        : '<div class="empty">Standings haven’t been pasted into the sheet yet.</div>';
+
+      const owners = d.outstandingPicks || [];
+      $('picks-wrap').innerHTML = owners.length
+        ? owners.map(o => o.years.map(y =>
+            '<div class="card">'
+            + '<div class="op-owner">' + esc(o.owner) + '<span>' + y.year + ' draft</span></div>'
+            + '<div class="op"><div><div class="op-t">Gets</div>'
+            + (y.gets.map(g => '<div class="op-p in">' + ord(g.round) + '<small>from ' + esc(g.from) + '</small></div>').join('') || '<div class="empty">—</div>')
+            + '</div><div><div class="op-t">Gives up</div>'
+            + (y.gives.map(g => '<div class="op-p out">' + ord(g.round) + '<small>to ' + esc(g.to) + '</small></div>').join('') || '<div class="empty">—</div>')
+            + '</div></div></div>').join('')).join('')
+        : '<div class="empty">No future picks have been traded.</div>';
+
+      $('stamp').textContent = d.fetchedAt
+        ? 'sheet read ' + new Date(d.fetchedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+        : '';
+    } catch (e) {
+      $('standings').innerHTML = '<div class="empty err">Could not reach the league server (' + esc(e.message) + ').</div>';
+      $('picks-wrap').innerHTML = '';
+    }
+  }
+
+  /* ================= PARLAY ================= */
+  // Which week the page opens on: the week being PLAYED, which flips on
+  // Tuesday — same rule as the full site.
+  function currentWeek(today) {
+    const now = today || new Date();
+    const year = now.getMonth() <= 1 ? now.getFullYear() - 1 : now.getFullYear();
+    const labor = new Date(year, 8, 1);
+    while (labor.getDay() !== 1) labor.setDate(labor.getDate() + 1);
+    const anchor = new Date(year, 8, labor.getDate() + 1);
+    anchor.setHours(0, 0, 0, 0);
+    return Math.min(Math.max(Math.floor((now - anchor) / (7 * 864e5)) + 1, 1), 18);
+  }
+  let week = currentWeek();
+  let rosters = null;
+  let owners = [];
+
+  function plSay(t, k) { const m = $('pl-msg'); m.textContent = t || ''; m.className = 'msg' + (k ? ' ' + k : ''); if (t) setTimeout(() => { if (m.textContent === t) plSay(''); }, 4000); }
+
+  async function loadParlayPage() {
+    $('wk-label').textContent = 'Week ' + week;
+    await Promise.all([loadRosters(), loadPicks()]);
+  }
+
+  async function loadRosters() {
+    try {
+      const d = await getJSON('/rosters');
+      rosters = d;
+      owners = (d.teams || []).map(t => t.owner).sort();
+      fillOwners();
+    } catch (e) { /* owners come from /parlay instead */ }
+  }
+
+  function fillOwners() {
+    const me = getMe();
+    const sel = $('pl-owner');
+    sel.innerHTML = '<option value="">Who are you?</option>'
+      + owners.map(o => '<option value="' + esc(o) + '"' + (o === me ? ' selected' : '') + '>' + esc(o) + '</option>').join('');
+    const ks = $('kc-owner');
+    ks.innerHTML = '<option value="">Whose team?</option>'
+      + owners.map(o => '<option value="' + esc(o) + '"' + (o === me ? ' selected' : '') + '>' + esc(o) + '</option>').join('');
+    fillPlayers();
+  }
+
+  function fillPlayers() {
+    const owner = $('pl-owner').value;
+    const sel = $('pl-player');
+    sel.innerHTML = '';
+    const team = rosters && (rosters.teams || []).find(t => t.owner === owner);
+    if (!owner || !team || !team.players.length) {
+      sel.disabled = true;
+      sel.innerHTML = '<option value="">' + (owner ? 'No roster found for ' + esc(owner) : 'Pick your anytime TD guy…') + '</option>';
+      return;
+    }
+    // Kickers and defenses can't score the kind of TD we're tracking.
+    const skip = /^(K|DEF|D\/ST)$/i;
+    const players = team.players
+      .filter(p => !skip.test(p.position || p.pos || '') && !/\b(def|d\/st|defense)\b/i.test(p.name))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    sel.disabled = false;
+    sel.innerHTML = '<option value="">Pick your anytime TD guy…</option>'
+      + players.map(p => '<option value="' + esc(p.name) + '">' + esc(p.name) + (p.position || p.pos ? ' · ' + esc(p.position || p.pos) : '') + '</option>').join('');
+  }
+
+  async function loadPicks() {
+    $('wk-label').textContent = 'Week ' + week;
+    $('wk-prev').disabled = week <= 1;
+    $('wk-next').disabled = week >= 18;
+    try {
+      const d = await getJSON('/parlay?week=' + week);
+      if (!owners.length && d.owners) { owners = d.owners.slice().sort(); fillOwners(); }
+      $('wk-games').textContent = d.gamesTotal ? d.gamesStarted + ' of ' + d.gamesTotal + ' games started' : '';
+      const picks = d.picks || [];
+      $('pl-list').innerHTML = picks.length
+        ? picks.map(p => {
+            const hit = p.scored === true;
+            const unk = p.scored === null || p.scored === undefined;
+            return '<div class="plrow' + (hit ? ' hit' : '') + '">'
+              + '<span class="who">' + esc(p.owner) + '</span>'
+              + '<span class="ply">' + esc(p.player) + '</span>'
+              + '<span class="dot' + (hit ? ' hit' : '') + '"' + (unk ? ' style="opacity:.4"' : '') + '></span></div>';
+          }).join('') + (d.note ? '<div class="note">' + esc(d.note) + '</div>' : '')
+        : '<div class="empty">No picks in for week ' + week + ' yet.</div>';
+      const mine = picks.find(p => p.owner === getMe());
+      $('pl-mine').textContent = mine ? 'Your week ' + week + ' pick: ' + mine.player : '';
+    } catch (e) {
+      $('pl-list').innerHTML = '<div class="empty err">Could not load picks (' + esc(e.message) + ').</div>';
+    }
+  }
+
+  $('wk-prev').addEventListener('click', () => { if (week > 1) { week--; loadPicks(); } });
+  $('wk-next').addEventListener('click', () => { if (week < 18) { week++; loadPicks(); } });
+  $('pl-owner').addEventListener('change', () => { setMe($('pl-owner').value); fillPlayers(); $('kc-owner').value = $('pl-owner').value; });
+
+  $('pl-save').addEventListener('click', async () => {
+    const owner = $('pl-owner').value, player = $('pl-player').value;
+    if (!owner) return plSay('Pick your name first.', 'err');
+    if (!player) return plSay('Pick a player.', 'err');
+    $('pl-save').disabled = true;
+    try {
+      const r = await fetch('/parlay', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner, player, week }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'server ' + r.status);
+      plSay('Locked in: ' + player + ' for week ' + week + '.', 'ok');
+      loadPicks();
+    } catch (e) {
+      plSay(e.message || 'Could not save.', 'err');
+    } finally {
+      $('pl-save').disabled = false;
+    }
+  });
+
+  /* ================= RANKINGS ================= */
+  let marcItems = [], marcIdx = 0, powerLoaded = false;
+
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(x => x.classList.toggle('on', x === b));
+    const marc = b.dataset.rk === 'marc';
+    $('rk-marc').hidden = !marc;
+    $('rk-power').hidden = marc;
+    if (!marc && !powerLoaded) { powerLoaded = true; loadPower(); }
+  }));
+
+  async function loadMarc() {
+    try {
+      const d = await getJSON('/marc-rankings');
+      marcItems = (d.items || []).slice().sort((a, b) => (b.week || 0) - (a.week || 0));
+      marcIdx = 0;
+      showMarc();
+    } catch (e) {
+      $('rk-img-wrap').innerHTML = '<div class="empty err">Could not load rankings (' + esc(e.message) + ').</div>';
+    }
+  }
+
+  function showMarc() {
+    const i = marcItems[marcIdx];
+    if (!i) { $('rk-img-wrap').innerHTML = '<div class="empty">Nothing posted yet.</div>'; $('rk-week').textContent = '—'; return; }
+    $('rk-week').textContent = i.week ? 'Week ' + i.week : 'Rankings';
+    $('rk-cap').textContent = i.caption || '';
+    $('rk-count').textContent = (marcIdx + 1) + ' of ' + marcItems.length;
+    $('rk-older').disabled = marcIdx >= marcItems.length - 1;
+    $('rk-newer').disabled = marcIdx <= 0;
+    // Opening the image itself in a new tab gives free pinch-zoom.
+    $('rk-img-wrap').innerHTML = '<a href="' + esc(i.url) + '" target="_blank" rel="noopener">'
+      + '<img class="rk-img" src="' + esc(i.url) + '" alt="' + esc(i.caption || 'Power rankings') + '"></a>';
+  }
+  $('rk-older').addEventListener('click', () => { if (marcIdx < marcItems.length - 1) { marcIdx++; showMarc(); } });
+  $('rk-newer').addEventListener('click', () => { if (marcIdx > 0) { marcIdx--; showMarc(); } });
+  (function () {
+    let x0 = null;
+    const el = $('rk-marc');
+    el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+    el.addEventListener('touchend', e => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) < 40) return;
+      if (dx < 0 && marcIdx < marcItems.length - 1) { marcIdx++; showMarc(); }
+      if (dx > 0 && marcIdx > 0) { marcIdx--; showMarc(); }
+    }, { passive: true });
+  })();
+
+  async function loadPower() {
+    const list = $('pw-list');
+    try {
+      const d = await getJSON('/power');
+      const me = getMe();
+      list.innerHTML = (d.teams || []).map((t, i) =>
+        '<div class="row three' + (t.owner === me ? ' me' : '') + '">'
+        + '<span class="rk">' + (i + 1) + '</span>'
+        + '<span class="nm">' + esc(t.owner) + '</span>'
+        + '<span class="rec">' + Math.round(t.projected) + '</span></div>').join('');
+      $('pw-sub').textContent = 'best starting lineup · projections from ' + (d.sources || []).join(' + ');
+    } catch (e) {
+      // fall back to points scored so the tab is never blank
+      try {
+        const d = await leagueData();
+        const me = getMe();
+        const rows = (d.standings || []).slice().sort((a, b) => b.pointsFor - a.pointsFor);
+        list.innerHTML = rows.map((t, i) =>
+          '<div class="row three' + (t.owner === me ? ' me' : '') + '">'
+          + '<span class="rk">' + (i + 1) + '</span><span class="nm">' + esc(t.owner) + '</span>'
+          + '<span class="rec">' + Math.round(t.pointsFor) + '</span></div>').join('');
+        $('pw-sub').textContent = 'projections unavailable right now — showing points scored';
+      } catch (e2) {
+        list.innerHTML = '<div class="empty err">Projections unavailable (' + esc(e.message) + ').</div>';
+      }
+      powerLoaded = false;
+    }
+  }
+
+  /* ================= KEEPERS ================= */
+  async function loadKeepers() {
+    try {
+      await leagueData();
+      if (!owners.length) {
+        owners = [...new Set((league.keeperCosts || []).map(k => k.owner))].sort();
+        fillOwners();
+      }
+      renderKeepers();
+    } catch (e) {
+      $('kc-list').innerHTML = '<div class="empty err">Could not load keeper costs (' + esc(e.message) + ').</div>';
+    }
+  }
+
+  function renderKeepers() {
+    const owner = $('kc-owner').value;
+    const list = $('kc-list');
+    if (!owner) { list.innerHTML = '<div class="empty">Pick a team above.</div>'; $('kc-sum').innerHTML = ''; return; }
+    const rows = (league && league.keeperCosts || []).filter(k => k.owner === owner)
+      .sort((a, b) => (a.costRound === 0) - (b.costRound === 0) || a.costRound - b.costRound);
+    if (!rows.length) { list.innerHTML = '<div class="empty">No roster found for ' + esc(owner) + '.</div>'; return; }
+    const eligible = rows.filter(r => r.costRound > 0).length;
+    $('kc-sum').innerHTML = '<span><b>' + eligible + '</b> keepable</span><span><b>' + (rows.length - eligible) + '</b> back to pool</span>';
+    list.innerHTML = rows.map(r => {
+      const pool = r.costRound === 0;
+      return '<div class="kc' + (pool ? ' pool' : '') + '">'
+        + '<span class="pos">' + esc(r.pos || '') + '</span>'
+        + '<span class="ply">' + esc(r.player)
+        + (pool && r.reason ? '<span class="why">' + esc(r.reason) + '</span>'
+           : (/traded|re-added/i.test(r.status || '') ? '<span class="why">' + esc(r.status) + '</span>' : ''))
+        + '</span>'
+        + '<span class="cost">' + (pool ? 'pool' : esc(r.costLabel)) + '</span></div>';
+    }).join('');
+  }
+  $('kc-owner').addEventListener('change', () => { setMe($('kc-owner').value); $('pl-owner').value = $('kc-owner').value; fillPlayers(); renderKeepers(); });
+
+  /* ---- start ---- */
+  const start = (location.hash || '#home').slice(1);
+  show(['home', 'parlay', 'rank', 'keep'].includes(start) ? start : 'home');
+})();
+</script>
+</body>
+</html>

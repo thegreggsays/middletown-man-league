@@ -40,9 +40,13 @@ website. Cloudflare points your domain at it. Yahoo access comes last.
 > one — taking the votes, the dues, the parlay picks and any rankings you
 > uploaded through the site with it.
 >
-> **Part 2.5 moves it somewhere deploys don't reach.** Do it before you push
-> again, and back up first: visit your site's address with
-> `/backup?code=YOURCODE` on the end and keep the file it downloads.
+> **Part 2.5 moves it somewhere deploys don't reach.** Back up *before* you
+> push — visit your site's address with `/backup?code=YOURCODE` on the end and
+> keep the file. The data that's live right now exists nowhere else, and the
+> push is what destroys it. After the push you upload that file at `/restore`.
+>
+> Marc's rankings are the exception: those are image files in GitHub now, so
+> they come back on their own.
 
 **Steps 1–3.5 get you a fully working site today**, including live keeper data
 straight from your spreadsheet. Steps 4–5 add the Yahoo features later.
@@ -210,7 +214,7 @@ Set the mount path to:
 
 It has to match what you typed in Step B exactly. Save.
 
-## Step D. Check it worked
+## Step D. Check the volume took
 
 Railway restarts the service. Open the **Deployments** tab and look at the log.
 Near the top you want:
@@ -219,22 +223,47 @@ Near the top you want:
 [data] database: /data/league.db
 ```
 
-If this is your first deploy after switching, you should also see:
+If it says `[data] database:` followed by any path that isn't `/data/`, the
+variable or the volume didn't take. Go back and check both before continuing.
+
+**The database will be empty at this point, and that's expected.** Railway
+throws the old container's disk away when it builds a new one, so the database
+that was running before this change is already gone — it only ever existed
+inside the running container, never in GitHub. That's what the backup in Step A
+was for. Step E puts it back.
+
+## Step E. Put your data back
+
+Go to your site's address with this on the end:
 
 ```
-[data] carried the existing database over to /data/league.db
+/restore
 ```
 
-That line means it found the old database and moved it across — nothing lost.
-It only appears once, which is correct; after that there's nothing left to
-carry.
+So: `https://middletownmanleague.com/restore`. It's a plain page with two
+boxes — it isn't linked from the site, you have to type the address.
 
-If the log says `[data] database:` followed by any path that isn't `/data/`,
-the variable or the volume didn't take. Go back and check both.
+1. Enter your code (the same one you use to post)
+2. Choose the file you downloaded in Step A
+3. Click **Restore**
 
-> **From now on, `/backup?code=...` is worth doing every month or so.** It
-> costs you ten seconds and it's the only copy of the votes and dues that
-> exists outside Railway.
+It checks the file is really a backup from this site, then restarts. Wait about
+a minute and reload the main page — the dues, parlay picks and board posts are
+back.
+
+To confirm, the deploy log will show:
+
+```
+[data] restored the database from an uploaded backup
+[data] database: /data/league.db
+```
+
+**This is a one-time thing.** Once the volume is mounted, deploys stop touching
+the database and you never need to do this again — unless you move hosts.
+
+> **Keep taking backups.** `/backup?code=...` every month or so, ten seconds,
+> and it's the only copy of the dues and board that exists outside Railway.
+> Now that `/restore` exists, a backup is actually worth something.
 
 ---
 
@@ -630,9 +659,23 @@ check that every file from the zip is in your GitHub repository, and that
 `power-rankings` is still a folder with the images inside it.
 
 **The votes, dues or parlay picks emptied out after a deploy**
-The database wasn't on a volume. Do Part 2.5, then restore your most recent
-`/backup` file. If you never took one, that data is gone — do Part 2.5 now so
-it can't happen twice.
+The database wasn't on a volume. Do Part 2.5, then upload your most recent
+backup at `/restore`. If you never took a backup, that data is gone — there is
+no copy anywhere else. Do Part 2.5 now so it can't happen a second time.
+
+**`/restore` says "That is not a database file"**
+You picked the wrong file. It wants the one that came out of `/backup`, which
+downloads with a name like `league-backup-2026-10-10.db`. A CSV, a zip or a
+screenshot won't work.
+
+**`/restore` says "That database is not from this site"**
+It's a real database but not this site's — wrong file, or one from some other
+project. Find the right backup.
+
+**I clicked Restore and the site won't load**
+Normal for up to a minute. The server exits on purpose so Railway restarts it,
+and the restore is applied as it comes back up. Give it 60 seconds and reload.
+If it's still down after that, check the deploy log for `[data] restored`.
 
 **Marc's rankings don't show up**
 Check the file name. It has to start with the word `week`, then the number:
