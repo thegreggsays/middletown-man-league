@@ -36,6 +36,8 @@
  *   GET  /news                                   fantasy news, merged + fetched server-side
  *   GET  /announcement                           the pinned announcement
  *   POST /announcement                           overwrite it (needs the code)
+ *   GET  /dues                                   who's paid, pot totals, payouts
+ *   POST /dues                                   record a payment (needs the code)
  *   GET  /marc-rankings                          Marc's ranking images
  *   POST /marc-rankings                          upload one (needs the code)
  *   GET  /rosters                                rosters for the parlay dropdown
@@ -68,10 +70,35 @@ app.use(express.json({ limit: '8mb' }));   // Marc's rankings are images
 
 // Serve the website itself. Because the site and the data live on the same
 // server, the browser treats them as one thing — no cross-origin setup needed.
-app.use(express.static(__dirname));
+//
+// Only index.html is served, deliberately. A blanket static mount on this
+// folder would also hand out league.db, the Yahoo token file and the server
+// source to anyone who guessed the filename, since they all sit right here.
+app.get(['/', '/index.html'], (_req, res) =>
+  res.sendFile(path.join(__dirname, 'index.html')));
 
 const BASE = 'https://fantasysports.yahooapis.com/fantasy/v2';
-const TOKEN_FILE = path.join(__dirname, '.tokens.json');
+
+/* ================================================================
+   WHERE DATA LIVES
+
+   Railway rebuilds the container from the repo on every deploy, so
+   anything written inside the app folder is gone the moment new code
+   ships. The database and the Yahoo tokens therefore live in DATA_DIR,
+   which points at a mounted volume in production.
+
+   With DATA_DIR unset this falls back to the app folder, which still
+   works fine for running locally — it just doesn't survive a deploy.
+   ================================================================ */
+
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+try {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+} catch (e) {
+  console.error('[data] could not create ' + DATA_DIR + ': ' + e.message);
+}
+
+const TOKEN_FILE = path.join(DATA_DIR, '.tokens.json');
 const LEAGUE_KEYS = (process.env.LEAGUE_KEYS || '').split(',').map(s => s.trim()).filter(Boolean);
 const POLL_MINUTES = Number(process.env.POLL_MINUTES || 15);
 
@@ -79,8 +106,24 @@ const POLL_MINUTES = Number(process.env.POLL_MINUTES || 15);
    DATABASE
    ================================================================ */
 
-const db = new Database(path.join(__dirname, 'league.db'));
+const DB_FILE = path.join(DATA_DIR, 'league.db');
+
+// One-time rescue: if the database is still sitting in the app folder from
+// before DATA_DIR existed, move it across on first boot so Marc's rankings,
+// the votes and the dues carry over instead of starting empty.
+try {
+  const legacy = path.join(__dirname, 'league.db');
+  if (DATA_DIR !== __dirname && fs.existsSync(legacy) && !fs.existsSync(DB_FILE)) {
+    fs.copyFileSync(legacy, DB_FILE);
+    console.log('[data] carried the existing database over to ' + DB_FILE);
+  }
+} catch (e) {
+  console.error('[data] could not carry the old database over: ' + e.message);
+}
+
+const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
+console.log('[data] database: ' + DB_FILE);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS transactions (
@@ -161,6 +204,23 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_marc ON marc_rankings(created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS dues (
+    season     INTEGER NOT NULL,
+    owner      TEXT NOT NULL,
+    paid       REAL NOT NULL DEFAULT 0,
+    note       TEXT,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (season, owner)
+  );
+
+  CREATE TABLE IF NOT EXISTS weekly_winners (
+    season     INTEGER NOT NULL,
+    week       INTEGER NOT NULL,
+    owner      TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (season, week)
+  );
 
   CREATE INDEX IF NOT EXISTS idx_posts_time ON posts(created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_posts_reply ON posts(reply_to);
@@ -1114,17 +1174,229 @@ let rosterCache = { at: 0, data: null };
 
 const MARC_MAX_BYTES = Number(process.env.MARC_MAX_BYTES || 4 * 1024 * 1024);
 
+
+/* ----------------------------------------------------------------
+   DUES
+   Who has paid, what the pot is worth, and where it goes.
+
+   The payout structure matches the league sheet: a flat buy-in per
+   owner, with the pot split between 1st, 2nd, a league fee, and a
+   weekly high-score prize across the regular season.
+
+   Reading is open to everyone. Recording a payment needs the code —
+   it's the commissioner's job, and everyone else just needs to see
+   whether they still owe.
+   ---------------------------------------------------------------- */
+
+const BUY_IN        = Number(process.env.BUY_IN || 100);
+const PAYOUT_FIRST  = Number(process.env.PAYOUT_FIRST || 350);
+const PAYOUT_SECOND = Number(process.env.PAYOUT_SECOND || 100);
+const LEAGUE_FEE    = Number(process.env.LEAGUE_FEE || 50);
+const WEEKLY_PRIZE  = Number(process.env.WEEKLY_PRIZE || 50);
+const WEEKLY_WEEKS  = Number(process.env.WEEKLY_WEEKS || 14);
+
+function duesSeason(req) {
+  return Number((req.query && req.query.season) || (req.body && req.body.season))
+    || currentNflSeason();
+}
+
+app.get('/dues', (req, res) => {
+  const season = duesSeason(req);
+
+  const paidRows = db.prepare('SELECT owner, paid, note FROM dues WHERE season = ?')
+    .all(season);
+  const paidBy = new Map(paidRows.map(r => [r.owner, r]));
+
+  const owners = LEAGUE_OWNERS.map(o => {
+    const row = paidBy.get(o);
+    const paid = row ? Number(row.paid) : 0;
+    return {
+      owner: o,
+      paid,
+      owes: Math.max(0, BUY_IN - paid),
+      status: paid >= BUY_IN ? 'paid' : paid > 0 ? 'partial' : 'unpaid',
+      note: row ? row.note : null
+    };
+  });
+
+  const collected = owners.reduce((n, o) => n + o.paid, 0);
+  const expected = BUY_IN * LEAGUE_OWNERS.length;
+
+  const winners = db.prepare(
+    'SELECT week, owner FROM weekly_winners WHERE season = ? ORDER BY week'
+  ).all(season);
+
+  const weeklyPaidOut = winners.length * WEEKLY_PRIZE;
+
+  res.json({
+    season,
+    buyIn: BUY_IN,
+    expected,
+    collected,
+    outstanding: expected - collected,
+    owners,
+    payouts: {
+      first: PAYOUT_FIRST,
+      second: PAYOUT_SECOND,
+      leagueFee: LEAGUE_FEE,
+      weeklyPrize: WEEKLY_PRIZE,
+      weeklyWeeks: WEEKLY_WEEKS,
+      weeklyTotal: WEEKLY_PRIZE * WEEKLY_WEEKS,
+      allocated: PAYOUT_FIRST + PAYOUT_SECOND + LEAGUE_FEE + WEEKLY_PRIZE * WEEKLY_WEEKS
+    },
+    weekly: {
+      winners,
+      paidOut: weeklyPaidOut,
+      remaining: WEEKLY_PRIZE * WEEKLY_WEEKS - weeklyPaidOut
+    }
+  });
+});
+
+app.post('/dues', (req, res) => {
+  const { owner, paid, note, code } = req.body || {};
+  if (String(code || '') !== ANNOUNCE_CODE) {
+    return res.status(401).json({ error: 'Wrong code.' });
+  }
+  if (!LEAGUE_OWNERS.includes(owner)) {
+    return res.status(400).json({ error: 'Unknown owner.' });
+  }
+  const amount = Number(paid);
+  if (!Number.isFinite(amount) || amount < 0) {
+    return res.status(400).json({ error: 'Amount must be a number.' });
+  }
+
+  db.prepare(`
+    INSERT INTO dues (season, owner, paid, note, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(season, owner) DO UPDATE SET paid = excluded.paid,
+                                             note = excluded.note,
+                                             updated_at = excluded.updated_at
+  `).run(duesSeason(req), owner, amount,
+         String(note || '').trim().slice(0, 120) || null,
+         Math.floor(Date.now() / 1000));
+
+  res.json({ ok: true });
+});
+
+app.post('/dues/weekly', (req, res) => {
+  const { week, owner, code } = req.body || {};
+  if (String(code || '') !== ANNOUNCE_CODE) {
+    return res.status(401).json({ error: 'Wrong code.' });
+  }
+  const w = Number(week);
+  if (!Number.isFinite(w) || w < 1 || w > WEEKLY_WEEKS) {
+    return res.status(400).json({ error: `Week must be 1-${WEEKLY_WEEKS}.` });
+  }
+  const season = duesSeason(req);
+
+  if (!owner) {
+    db.prepare('DELETE FROM weekly_winners WHERE season = ? AND week = ?').run(season, w);
+    return res.json({ ok: true, cleared: true });
+  }
+  if (!LEAGUE_OWNERS.includes(owner)) {
+    return res.status(400).json({ error: 'Unknown owner.' });
+  }
+
+  db.prepare(`
+    INSERT INTO weekly_winners (season, week, owner, updated_at)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(season, week) DO UPDATE SET owner = excluded.owner,
+                                            updated_at = excluded.updated_at
+  `).run(season, w, owner, Math.floor(Date.now() / 1000));
+
+  res.json({ ok: true });
+});
+
+/* ----------------------------------------------------------------
+   RANKINGS KEPT AS FILES IN THE REPO
+
+   Drop an image into power-rankings/ named for its week and it shows
+   up — week-1.jpg, week-2.png, and so on. Anything after the week
+   number becomes the caption, so
+
+       power-rankings/week-3 Chinese Food Special Edition.jpg
+
+   lists as Week 3, "Chinese Food Special Edition".
+
+   These are committed alongside the code, so unlike an upload they
+   cost nothing to keep and can't be lost with the database.
+   ---------------------------------------------------------------- */
+
+const RANKINGS_DIR = path.join(__dirname, 'power-rankings');
+const RANKING_TYPES = {
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.png': 'image/png',  '.gif': 'image/gif',
+  '.webp': 'image/webp'
+};
+
+function rankingFiles() {
+  let names;
+  try {
+    names = fs.readdirSync(RANKINGS_DIR);
+  } catch (e) {
+    return [];                       // folder isn't there, which is fine
+  }
+
+  return names.map(name => {
+    const ext = path.extname(name).toLowerCase();
+    if (!RANKING_TYPES[ext]) return null;
+
+    const m = path.basename(name, ext).match(/^week[\s_-]*(\d{1,2})(.*)$/i);
+    if (!m) return null;
+
+    const caption = m[2].replace(/[_-]+/g, ' ').trim();
+    return {
+      id: 'file:' + name,
+      week: Number(m[1]),
+      caption: caption || null,
+      createdAt: null,
+      fromFile: true,
+      url: '/power-rankings/' + encodeURIComponent(name)
+    };
+  }).filter(Boolean);
+}
+
 app.get('/marc-rankings', (_req, res) => {
   const rows = db.prepare(`
     SELECT id, week, caption, created_at FROM marc_rankings
     ORDER BY created_at DESC LIMIT 60
   `).all();
-  res.json({
-    items: rows.map(r => ({
-      id: r.id, week: r.week, caption: r.caption, createdAt: r.created_at,
-      url: '/marc-rankings/' + r.id + '/image'
-    }))
-  });
+
+  const uploaded = rows.map(r => ({
+    id: r.id, week: r.week, caption: r.caption, createdAt: r.created_at,
+    fromFile: false,
+    url: '/marc-rankings/' + r.id + '/image'
+  }));
+
+  // A committed file is the deliberate copy, so where both exist for a
+  // week the file wins and the upload is dropped rather than shown twice.
+  const files = rankingFiles();
+  const claimed = new Set(files.map(f => f.week));
+
+  const items = files
+    .concat(uploaded.filter(u => !claimed.has(u.week)))
+    .sort((a, b) => (b.week || 0) - (a.week || 0)
+      || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+
+  res.json({ items });
+});
+
+// Serve the image files themselves. Named explicitly and resolved against
+// the folder so a crafted path can't climb out of it into the app folder.
+app.get('/power-rankings/:name', (req, res) => {
+  const name = path.basename(req.params.name);
+  const ext = path.extname(name).toLowerCase();
+  if (!RANKING_TYPES[ext]) return res.status(404).send('Not found');
+
+  const file = path.join(RANKINGS_DIR, name);
+  if (path.dirname(path.resolve(file)) !== path.resolve(RANKINGS_DIR)) {
+    return res.status(404).send('Not found');
+  }
+  if (!fs.existsSync(file)) return res.status(404).send('Not found');
+
+  res.set('Content-Type', RANKING_TYPES[ext]);
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.sendFile(file);
 });
 
 app.get('/marc-rankings/:id/image', (req, res) => {
@@ -1168,8 +1440,46 @@ app.delete('/marc-rankings/:id', (req, res) => {
   if (String(req.query.code || '') !== ANNOUNCE_CODE) {
     return res.status(401).json({ error: 'Wrong code.' });
   }
+  // A ranking that came from a committed file isn't the server's to delete —
+  // say so plainly instead of running a DELETE that matches nothing.
+  if (/^file:/.test(String(req.params.id))) {
+    return res.status(400).json({
+      error: 'That one is a file in the power-rankings folder. ' +
+             'Delete it from the repo and push to remove it.'
+    });
+  }
+
   db.prepare('DELETE FROM marc_rankings WHERE id = ?').run(Number(req.params.id));
   res.json({ ok: true });
+});
+
+/* ----------------------------------------------------------------
+   BACKUP
+
+   Hand over a copy of the whole database — Marc's rankings, the
+   votes, the dues, the parlay picks. Visit /backup?code=THECODE in a
+   browser and it downloads as a file.
+
+   SQLite is in WAL mode, so the live file on its own can be missing
+   the most recent writes. db.backup() takes a consistent snapshot.
+   ---------------------------------------------------------------- */
+
+app.get('/backup', async (req, res) => {
+  if (String(req.query.code || '') !== ANNOUNCE_CODE) {
+    return res.status(401).json({ error: 'Wrong code.' });
+  }
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  const snapshot = path.join(DATA_DIR, 'backup-' + stamp + '.db');
+
+  try {
+    await db.backup(snapshot);
+    res.download(snapshot, 'league-backup-' + stamp + '.db', () => {
+      try { fs.unlinkSync(snapshot); } catch (e) { /* already gone */ }
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Could not make a backup: ' + e.message });
+  }
 });
 
 app.get('/rosters', async (_req, res) => {
@@ -1433,7 +1743,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/auth') || req.path.startsWith('/activity') ||
       req.path.startsWith('/history') || req.path.startsWith('/power') ||
       req.path.startsWith('/standings') || req.path.startsWith('/health') ||
-      req.path.startsWith('/league-data') || req.path.startsWith('/board') || req.path.startsWith('/announcement') || req.path.startsWith('/votes') || req.path.startsWith('/news') || req.path.startsWith('/parlay') || req.path.startsWith('/rosters') || req.path.startsWith('/marc-rankings')) {
+      req.path.startsWith('/league-data') || req.path.startsWith('/board') || req.path.startsWith('/announcement') || req.path.startsWith('/votes') || req.path.startsWith('/news') || req.path.startsWith('/parlay') || req.path.startsWith('/rosters') || req.path.startsWith('/marc-rankings') || req.path.startsWith('/dues')) {
     return next();
   }
   res.sendFile(path.join(__dirname, 'index.html'));

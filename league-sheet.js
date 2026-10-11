@@ -14,9 +14,41 @@
  */
 
 const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
 
 const CACHE_MINUTES = Number(process.env.SHEET_CACHE_MINUTES || 5);
 let cache = { at: 0, data: null };
+
+/* ----------------------------------------------------------------
+   TWO FILES THAT LIVE IN THE REPO INSTEAD OF THE SHEET
+
+   The team-name mapping and the Yahoo transaction log are pasted in
+   by hand rather than maintained like the rest of the sheet, so they
+   sit next to the code as CSVs. Committing a new one and pushing is
+   the whole update — no tab to keep in sync.
+
+   Either file can still live in the sheet as a tab of the same name;
+   the repo copy simply wins when it's there.
+   ---------------------------------------------------------------- */
+
+const LOCAL_DIR = process.env.LEAGUE_DATA_DIR || __dirname;
+
+function readLocalTab(file) {
+  try {
+    const p = path.join(LOCAL_DIR, file);
+    if (!fs.existsSync(p)) return null;
+    const rows = parseCSV(fs.readFileSync(p, 'utf8'));
+    // An empty or header-only file is treated as absent, so a stray blank
+    // file in the repo can't silently blank out a working sheet tab.
+    return rows.filter(r => r.some(c => String(c || '').trim())).length > 1
+      ? rows
+      : null;
+  } catch (e) {
+    console.error('[league-sheet] could not read ' + file + ': ' + e.message);
+    return null;
+  }
+}
 
 /* ---------------------------------------------------------------- */
 /* CSV                                                              */
@@ -126,6 +158,7 @@ function norm(name) {
  */
 const OWNER_ALIASES = {
   rebeyo: 'Rebel',     // same owner, spelled both ways across tabs
+  dan: 'Rogan',        // Team Key says Dan, the keeper tab says Rogan — same team
   mark: 'Marc',        // spelled both ways across tabs
   prender: 'Marc',     // Marc took over this franchise
   flynn: 'Palumberi'   // Palumberi took over this franchise
@@ -178,7 +211,19 @@ function samePlayer(a, b) {
   const A = norm(a), B = norm(b);
   if (!A || !B) return false;
   if (A === B) return true;
-  if (A.includes(B) || B.includes(A)) return true;
+
+  // One name containing the other is only meaningful at word boundaries:
+  // "Amon Ra" inside "Amon Ra St Brown" is the same player, but "Dan"
+  // inside "Jayden Daniels" is not.
+  const containsAsWords = (hay, needle) => {
+    if (needle.length < 3) return false;
+    const i = hay.indexOf(needle);
+    if (i === -1) return false;
+    const before = i === 0 || hay[i - 1] === ' ';
+    const after = i + needle.length === hay.length || hay[i + needle.length] === ' ';
+    return before && after;
+  };
+  if (containsAsWords(A, B) || containsAsWords(B, A)) return true;
 
   const pa = A.split(' '), pb = B.split(' ');
   const la = pa.pop(), lb = pb.pop();
@@ -238,10 +283,23 @@ function timesKept(text) {
 function readKeepers(grid, cols) {
   const byOwner = new Map();
 
+  // The block is twelve owners deep. Other seasons' leftovers can sit further
+  // down the same columns, so stop at the first gap once the block has begun
+  // rather than scanning to the bottom of the sheet.
+  let started = false;
+  let blanks = 0;
+
   for (let r = cols.firstRow; r < grid.length; r++) {
     const owner = canonOwner(cell(grid, r, cols.owner));
-    if (!owner) continue;
+
+    if (!owner) {
+      if (started && ++blanks >= 1) break;
+      continue;
+    }
+    blanks = 0;
     if (owner.toLowerCase() === 'player' || owner.toLowerCase() === 'team') continue;
+    if (byOwner.size >= 12 && !byOwner.has(owner)) break;
+    started = true;
 
     if (!byOwner.has(owner)) byOwner.set(owner, { owner, keepers: [] });
 
@@ -280,11 +338,30 @@ function readKeepersLegacy(grid) {
  */
 function readDraft(grid, cols) {
   const picks = [];
+  // Stop at the end of the board rather than scanning to the bottom of the
+  // tab. If anything is ever pasted below it — another season's board, a
+  // scratch list — reading on would mix two drafts together and quietly
+  // reprice everyone's keepers off the wrong rounds.
+  let started = false;
+  let blanks = 0;
+
   for (let r = cols.firstRow; r < grid.length; r++) {
     const rnd = cell(grid, r, cols.round);
     const player = cell(grid, r, cols.player);
+
+    if (!rnd && !player) {
+      if (started && ++blanks >= 2) break;
+      continue;
+    }
+    blanks = 0;
+
     if (!rnd || !player) continue;
     if (!/^\d+(\.0+)?$/.test(rnd)) continue;
+
+    // A repeated "Rd / Pick / Team / Player" header means a second block
+    // begins here, so the one we came for has ended.
+    if (started && /^(rd|round)$/i.test(rnd)) break;
+    started = true;
 
     const raw = cell(grid, r, cols.team);
     const from = (raw.match(/\(from ([^)]*)\)/i) || [])[1] || null;
@@ -371,6 +448,339 @@ function readTrades(grid, startCol, width) {
   return trades;
 }
 
+
+/* ================================================================
+   STANDINGS, ROSTERS AND ACTIVITY
+   Yahoo's API application never came back, so the league pastes its
+   own data into the sheet instead:
+
+     * Standings  — a block on the season tab, headed "Rank | Team |
+       W-L-T | PF | PA | Streak", pasted from Yahoo.
+     * Rosters    — a block headed "Rosters", twelve teams of
+       "Pos | Player" separated by blank rows.
+     * Team Key   — a tab mapping Yahoo team names to owner names.
+     * Activity   — a tab holding the Yahoo transaction page pasted
+       straight in, one cell per line.
+
+   Blocks are found by their own section headings rather than fixed
+   column letters, so inserting a column somewhere doesn't break them.
+   ================================================================ */
+
+/** Find a cell matching one of `names` in the first few rows; returns {row, col}. */
+function findAnchor(grid, names, maxRows = 8) {
+  const want = names.map(n => n.toLowerCase());
+  for (let r = 0; r < Math.min(maxRows, grid.length); r++) {
+    const row = grid[r] || [];
+    for (let c = 0; c < row.length; c++) {
+      const v = String(row[c] || '').trim().toLowerCase();
+      if (v && want.includes(v)) return { row: r, col: c };
+    }
+  }
+  return null;
+}
+
+/** Yahoo pastes carry invisible icon glyphs and trailing interface text. */
+function stripYahooChrome(raw) {
+  let s = String(raw || '').split('\n')[0];
+  s = s.replace(/[-]/g, '');
+  s = s.split(/Video Forecast|No new player Notes|New Player Note|Player Note|Notes?\b/)[0];
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * A roster cell reads "Zay FlowersQ" or "Zach CharbonnetPUP-R" — the status
+ * flag is glued to the surname with no separator. Peel the known ones off.
+ */
+function stripStatusSuffix(name) {
+  return String(name || '')
+    // Case-sensitive on purpose. Yahoo writes these flags in capitals, so
+    // demanding capitals is what stops a real name that ends in a lowercase
+    // letter from being eaten: "Sam Darnold" keeps its "d" and "C.J. Stroud"
+    // keeps its "d", while "Zay FlowersQ" still loses its "Q".
+    .replace(/(PUP-R|IR-R|NFI-R|SUSP|GTD|CEL|IR|PUP|NA|O|Q|D)$/, (m, _g, off) => {
+      // Strip only where the flag is glued onto the end of a name, which
+      // means the character before it is a lowercase letter — or a period,
+      // for the suffixed names: "Travis Etienne Jr.IR", "Marvin Harrison Jr.O".
+      const prev = name[off - 1];
+      if (!prev) return m;
+      return /[a-z.]/.test(prev) ? '' : m;
+    })
+    .trim();
+}
+
+/** "Malik Washington Mia - WR" -> "Malik Washington" */
+function stripNflTeamSuffix(raw) {
+  return String(raw || '')
+    .replace(/\s+[A-Za-z]{2,3}\s+-\s+[A-Z/]+\b.*$/, '')
+    .trim();
+}
+
+/** Team Key tab: Yahoo team name -> owner. */
+function readTeamKey(grid) {
+  const map = new Map();
+  for (const row of grid) {
+    const team = String((row || [])[0] || '').trim();
+    const owner = String((row || [])[1] || '').trim();
+    if (!team || !owner) continue;
+    // Skip the header row, whichever wording it uses.
+    if (/^(yahoo )?team( name)?$/i.test(team)) continue;
+    map.set(team.toLowerCase(), canonOwner(owner));
+  }
+  return map;
+}
+
+/**
+ * Standings block, pasted from Yahoo. Found by its "Rank" heading, then read
+ * by the headings sitting beside it, so the column letters don't matter.
+ */
+function readStandings(grid, teamKey) {
+  const anchor = findAnchor(grid, ['rank']);
+  if (!anchor) return [];
+
+  const headerRow = grid[anchor.row] || [];
+  const col = {};
+  for (let c = anchor.col; c < Math.min(anchor.col + 12, headerRow.length); c++) {
+    const h = String(headerRow[c] || '').trim().toLowerCase();
+    if (h === 'rank') col.rank = c;
+    else if (h === 'team') col.team = c;
+    else if (h === 'w-l-t' || h === 'record' || h === 'w-l') col.record = c;
+    else if (h === 'pf' || h === 'points for') col.pf = c;
+    else if (h === 'pa' || h === 'points against') col.pa = c;
+    else if (h === 'streak') col.streak = c;
+    else if (h === 'waiver') col.waiver = c;
+    else if (h === 'moves') col.moves = c;
+  }
+  if (col.team === undefined || col.record === undefined) return [];
+
+  const out = [];
+  for (let r = anchor.row + 1; r < grid.length; r++) {
+    const teamName = cell(grid, r, col.team);
+    if (!teamName) {
+      if (out.length) break;        // block has ended
+      continue;
+    }
+    const rec = cell(grid, r, col.record);
+    const [w, l, t] = rec.split('-').map(n => Number(n) || 0);
+
+    out.push({
+      rank: Number(cell(grid, r, col.rank)) || out.length + 1,
+      teamName,
+      owner: teamKey.get(teamName.toLowerCase()) || teamName,
+      record: rec,
+      wins: w || 0, losses: l || 0, ties: t || 0,
+      pointsFor: Number(cell(grid, r, col.pf)) || 0,
+      pointsAgainst: Number(cell(grid, r, col.pa)) || 0,
+      streak: cell(grid, r, col.streak),
+      waiverPriority: Number(cell(grid, r, col.waiver)) || null,
+      moves: Number(cell(grid, r, col.moves)) || null
+    });
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+
+/**
+ * Rosters block. Twelve teams of "Pos | Player", separated by blank rows.
+ * Yahoo's paste carries no team name, so each block's owner is worked out
+ * from the players in it — see attributeRosterBlocks. An owner name typed
+ * into the blank row above a block is honoured first.
+ */
+function readRosterBlocks(grid) {
+  const anchor = findAnchor(grid, ['rosters'], 4);
+  if (!anchor) return [];
+
+  const posCol = anchor.col;
+  const nameCol = anchor.col + 1;
+
+  const blocks = [];
+  let current = null;
+  let pendingLabel = '';
+
+  for (let r = anchor.row + 1; r < grid.length; r++) {
+    const pos = cell(grid, r, posCol);
+    const raw = cell(grid, r, nameCol);
+
+    if (!pos && !raw) {              // blank row: block boundary
+      if (current && current.players.length) blocks.push(current);
+      current = null;
+      continue;
+    }
+
+    // a lone cell in the position column is a hand-typed owner label
+    if (pos && !raw) {
+      pendingLabel = pos;
+      continue;
+    }
+
+    const player = stripStatusSuffix(stripYahooChrome(raw));
+    if (!player) continue;
+
+    if (!current) { current = { label: pendingLabel, players: [] }; pendingLabel = ''; }
+    current.players.push({ pos: pos.toUpperCase(), player });
+  }
+  if (current && current.players.length) blocks.push(current);
+
+  return blocks;
+}
+
+/**
+ * Work out whose roster each block is. Two independent signals:
+ * the declared keepers, and who added each player in the activity log.
+ * They're cross-checked, and any disagreement is reported rather than
+ * silently resolved.
+ */
+function attributeRosterBlocks(blocks, declaredKeepers, activity) {
+  const addedBy = new Map();
+  for (const t of activity) {
+    if (t.action === 'drop') continue;
+    const k = norm(t.player);
+    if (!addedBy.has(k)) addedBy.set(k, new Map());
+    const m = addedBy.get(k);
+    m.set(t.owner, (m.get(t.owner) || 0) + 1);
+  }
+
+  const conflicts = [];
+  const used = new Set();
+
+  const result = blocks.map((block, i) => {
+    if (block.label) return { ...block, owner: canonOwner(block.label), basis: 'label' };
+
+    const names = block.players.map(p => norm(p.player));
+
+    // signal 1 — declared keepers sitting on this roster
+    const keeperVotes = new Map();
+    for (const row of declaredKeepers) {
+      for (const k of row.keepers) {
+        if (names.some(n => samePlayer(n, k.player))) {
+          keeperVotes.set(row.owner, (keeperVotes.get(row.owner) || 0) + 1);
+        }
+      }
+    }
+
+    // signal 2 — players this owner is logged as having added
+    const activityVotes = new Map();
+    for (const n of names) {
+      const m = addedBy.get(n);
+      if (!m) continue;
+      for (const [owner, count] of m) {
+        activityVotes.set(owner, (activityVotes.get(owner) || 0) + count);
+      }
+    }
+
+    const best = m => [...m.entries()].sort((a, b) => b[1] - a[1])[0];
+    const kTop = best(keeperVotes);
+    const aTop = best(activityVotes);
+
+    if (kTop && aTop && kTop[0] !== aTop[0]) {
+      conflicts.push(`roster block ${i + 1}: keepers say ${kTop[0]}, activity says ${aTop[0]}`);
+    }
+
+    const owner = (kTop && kTop[0]) || (aTop && aTop[0]) || '';
+    return {
+      ...block,
+      owner,
+      basis: kTop ? 'keepers' : aTop ? 'activity' : 'unknown'
+    };
+  });
+
+  result.forEach(b => { if (b.owner) used.add(b.owner); });
+  return { blocks: result, conflicts };
+}
+
+/**
+ * Activity tab — the Yahoo transaction page pasted in, one cell per line.
+ * Each transaction ends with a "logo" line, so that's the delimiter. Within
+ * a block the shape is: icons, then player/source pairs, then the team name,
+ * then the timestamp.
+ */
+function readActivity(grid, teamKey) {
+  const lines = [];
+  for (const row of grid) {
+    for (const v of (row || [])) {
+      const s = String(v || '').trim();
+      if (s) lines.push(s);
+    }
+  }
+  if (!lines.length) return [];
+
+  const isIcon = s => /^[-]+$/.test(s);
+  const isLogo = s => s.toLowerCase() === 'logo';
+  const isDate = s => /^[A-Z][a-z]{2}\s+\d{1,2},/.test(s);
+  const CAME_FROM = new Set(['free agent', 'waiver', 'waivers']);
+  const WENT_TO = new Set(['to waivers', 'to free agent', 'to free agents']);
+
+  const chunks = [];
+  let cur = [];
+  for (const line of lines) {
+    if (isLogo(line)) { if (cur.length) chunks.push(cur); cur = []; }
+    else cur.push(line);
+  }
+  if (cur.length) chunks.push(cur);
+
+  const out = [];
+
+  for (const chunk of chunks) {
+    const teamLine = chunk.find(x => teamKey.has(x.toLowerCase()));
+    const owner = teamLine ? teamKey.get(teamLine.toLowerCase()) : '';
+    const dateLine = chunk.find(isDate) || '';
+    if (!owner) continue;
+
+    const body = chunk.filter(x =>
+      !isIcon(x) && x !== teamLine && x !== dateLine);
+
+    /* A trade lists every asset going one way, THEN "Traded to", then the
+       team receiving them. Yahoo's paste can split one trade across chunks,
+       so each chunk is handled as its own one-way leg. */
+    const tradeAt = body.findIndex(x => x.toLowerCase() === 'traded to');
+    if (tradeAt !== -1) {
+      for (const asset of body.slice(0, tradeAt)) {
+        if (CAME_FROM.has(asset.toLowerCase()) || WENT_TO.has(asset.toLowerCase())) continue;
+        out.push({
+          owner, date: dateLine, action: 'trade',
+          player: stripNflTeamSuffix(asset),
+          source: 'trade', acquisition: 'trade',
+          isPick: /^(round|rd)\s*\d+/i.test(asset)
+        });
+      }
+      continue;
+    }
+
+    for (let i = 0; i < body.length; i++) {
+      const item = body[i];
+      const next = (body[i + 1] || '').toLowerCase();
+
+      if (CAME_FROM.has(item.toLowerCase()) || WENT_TO.has(item.toLowerCase())) continue;
+
+      if (CAME_FROM.has(next)) {
+        out.push({
+          owner, date: dateLine, action: 'add',
+          player: stripNflTeamSuffix(item),
+          source: body[i + 1],
+          acquisition: 'waiver',
+          isPick: false
+        });
+        i++;
+        continue;
+      }
+
+      if (WENT_TO.has(next)) {
+        out.push({
+          owner, date: dateLine, action: 'drop',
+          player: stripNflTeamSuffix(item),
+          source: body[i + 1],
+          acquisition: null,
+          isPick: false
+        });
+        i++;
+        continue;
+      }
+    }
+  }
+
+  // newest first is how Yahoo pastes it; keep that order and add an index
+  return out.map((t, i) => ({ ...t, seq: out.length - i }));
+}
+
 /* ---------------------------------------------------------------- */
 /* The keeper rules                                                 */
 /* ---------------------------------------------------------------- */
@@ -378,17 +788,26 @@ function readTrades(grid, startCol, width) {
 /**
  * SIMPLIFIED KEEPER COSTS (adopted by league vote)
  *
- * You may only keep a player you drafted yourself, or acquired by trade.
- * Anyone picked up off waivers or free agency goes back into the pool.
+ * The whole rule is two questions:
+ *   1. Is he on your roster right now?
+ *   2. Did you draft him, or did you trade for him?
+ * Both yes -> keeper. That's it. Nothing in between counts, so dropping a
+ * player you drafted and picking him back up later does NOT cost you his
+ * keeper rights. Only a player who was never yours by draft or trade — a
+ * straight waiver or free-agent pickup — goes back into the pool.
  *
  * 1. Cost = one round earlier than where he was originally drafted
  * 2. Drafted in round 1 -> not keepable (overrides everything below)
  * 3. Already kept two seasons -> not keepable
  * 4. Acquired by trade -> keepable, priced off the ORIGINAL draft round
- * 5. Picked up off waivers, or never drafted at all -> not keepable
+ * 5. Never drafted by you and never traded for -> not keepable
  */
 function computeKeeperCosts({ rosters, draft, inSeasonTrades, exhausted }) {
   const draftIndex = draft.map(d => ({ ...d, n: norm(d.player) }));
+
+  // Flagged rather than guessed at: a player acquired by trade whom nobody
+  // drafted has no round to price off. Surfaced so it can be ruled on.
+  const noCostBasis = [];
 
   // players named in the in-season trade log changed hands by trade, not waivers
   const tradedNames = [];
@@ -403,26 +822,64 @@ function computeKeeperCosts({ rosters, draft, inSeasonTrades, exhausted }) {
     }
   }
 
-  return rosters.map(r => {
+  // Used only for the odd case of trading for a player nobody drafted, who
+  // therefore has no round to price off. Pricing him at the last round keeps
+  // him keepable without inventing a bargain.
+  const lastRound = draft.reduce((m, d) => Math.max(m, Number(d.round) || 0), 0) || 14;
+
+  const out = rosters.map(r => {
     const hit = draftIndex.find(d => samePlayer(d.player, r.player));
-    const wasTraded = tradedNames.some(n => samePlayer(n, r.player));
+    // The transaction log, where it exists, is the authority on how a player
+    // arrived. It beats inference from the trade blocks, because it records
+    // waiver pickups too — which the trade log never will.
+    const wasTraded = r.acquisition === 'trade'
+      || (!r.acquisition && tradedNames.some(n => samePlayer(n, r.player)));
     const isExhausted = exhausted.some(
       e => e.owner === r.owner && samePlayer(e.player, r.player)
     );
 
+    /* ----------------------------------------------------------------
+       THE SIMPLIFIED KEEPER RULE, as the league voted it.
+
+       Two questions, and nothing else:
+         1. Is he on your roster right now?
+         2. Did you draft him, or did you trade for him?
+
+       Both yes and he's a keeper. Question 1 is answered just by being
+       in this list, since it's built from the current rosters.
+
+       The point of "simplified" is that nothing in between matters. A
+       player you drafted, dropped in October and picked back up in
+       December is still a player you drafted, so question 2 is still
+       yes and he's still keepable at his draft cost. Only a player who
+       was never yours by draft or trade goes back to the pool.
+       ---------------------------------------------------------------- */
+
+    const youDraftedHim  = !!hit && hit.owner === r.owner;
+    const youTradedForHim = !youDraftedHim && wasTraded;
+
     let cost, status, reason = null;
 
-    if (!hit) {
-      // never drafted by anyone — a free-agent add
+    if (youDraftedHim) {
+      cost = Math.max(1, hit.round - 1);
+      // Worth showing on the row that he left and came back, since it looks
+      // like a waiver guy at a glance but prices as a drafted one.
+      status = r.acquisition === 'waiver'
+        ? `Drafted Rd${hit.round}, dropped and re-added`
+        : 'Same team';
+    } else if (youTradedForHim && hit) {
+      cost = Math.max(1, hit.round - 1);
+      status = `Traded (orig. Rd${hit.round} by ${hit.owner})`;
+    } else if (youTradedForHim) {
+      // traded for, but nobody drafted him, so there's no round to price off
+      cost = lastRound;
+      status = 'Traded, undrafted';
+      noCostBasis.push(`${r.owner}: ${r.player} (traded for, never drafted)`);
+    } else if (!hit) {
+      // never drafted by anyone and never traded — a free-agent add
       cost = 0;
       status = 'Undrafted';
       reason = 'waiver pickup';
-    } else if (hit.owner === r.owner) {
-      cost = Math.max(1, hit.round - 1);
-      status = 'Same team';
-    } else if (wasTraded) {
-      cost = Math.max(1, hit.round - 1);
-      status = `Traded (orig. Rd${hit.round} by ${hit.owner})`;
     } else {
       // drafted by someone else and not traded — so he came off waivers
       cost = 0;
@@ -439,12 +896,19 @@ function computeKeeperCosts({ rosters, draft, inSeasonTrades, exhausted }) {
       player: r.player,
       pos: r.pos,
       draftRound: hit ? hit.round : null,
+      acquisition: r.acquisition || null,
+      acquiredFrom: r.acquiredFrom || null,
       status,
       costRound: cost,
       costLabel: cost === 0 ? 'N/A' : ordinal(cost),
       reason
     };
   });
+
+  // Carried along on the array so the caller can report it without the
+  // return shape changing for everything that already reads these rows.
+  out.noCostBasis = noCostBasis;
+  return out;
 }
 
 /* ---------------------------------------------------------------- */
@@ -455,11 +919,22 @@ async function loadLeagueData(sheetId, opts = {}) {
   const fresh = Date.now() - cache.at < CACHE_MINUTES * 60 * 1000;
   if (fresh && cache.data && !opts.force) return cache.data;
 
-  const [cur, prev, prev2] = await Promise.all([
+  // The last two are optional: they're pasted in by hand, and the site
+  // simply does less when they aren't there yet. A CSV committed next to the
+  // code wins over a sheet tab of the same name.
+  const localTeamKey = readLocalTab('team-key.csv');
+  const localActivity = readLocalTab('activity.csv');
+
+  const [cur, prev, prev2, teamKeyTab, activityTab] = await Promise.all([
     fetchTab(sheetId, '2026-2027'),
     fetchTab(sheetId, '2025-2026'),
-    fetchTab(sheetId, '2024-2025').catch(() => [])
+    fetchTab(sheetId, '2024-2025').catch(() => []),
+    localTeamKey || fetchTab(sheetId, 'Team Key').catch(() => []),
+    localActivity || fetchTab(sheetId, 'Activity').catch(() => [])
   ]);
+
+  const teamKeySource = localTeamKey ? 'team-key.csv (repo)' : 'Team Key tab (sheet)';
+  const activitySource = localActivity ? 'activity.csv (repo)' : 'Activity tab (sheet)';
 
   /* --------------------------------------------------------------
      COLUMN MAP (0-based). The two current tabs share a layout, but
@@ -599,8 +1074,68 @@ async function loadLeagueData(sheetId, opts = {}) {
     }
   }
 
+  /* ---- The league's own data, in place of the Yahoo API --------- */
+  const teamKey = readTeamKey(teamKeyTab);
+  const activity = readActivity(activityTab, teamKey);
+
+  // player moves only; traded draft picks are shown but don't change a roster
+  const transactions = activity.filter(t => !t.isPick);
+
+  const standings = readStandings(cur, teamKey);
+  const pickTradesFromActivity = activity.filter(t => t.isPick);
+
+  /* Rosters pasted from Yahoo carry no team name, so each block is attributed
+     from the players in it, cross-checking keepers against the activity log. */
+  const rosterBlocks = readRosterBlocks(cur);
+  let attribution = { blocks: [], conflicts: [] };
+  let sheetRosters = [];
+
+  if (rosterBlocks.length) {
+    attribution = attributeRosterBlocks(rosterBlocks, declared, transactions);
+    for (const b of attribution.blocks) {
+      if (!b.owner) continue;
+      for (const p of b.players) {
+        sheetRosters.push({ owner: b.owner, pos: p.pos, player: p.player });
+      }
+    }
+  }
+
+  /* A pasted roster is today's truth, so it wins over the draft board.
+     Each player still needs to know HOW he arrived, because under Simplified
+     Keeper Costs that decides whether he can be kept at all. */
+  if (sheetRosters.length) {
+    const draftedBy = new Map();
+    for (const p of costDraft) draftedBy.set(norm(p.player), p.owner);
+
+    const tradedTo = new Map();
+    for (const t of transactions) {
+      if (t.action === 'trade') tradedTo.set(norm(t.player), t.owner);
+    }
+
+    displayRosters = sheetRosters.map(r => {
+      const key = norm(r.player);
+      const drafter = [...draftedBy.entries()]
+        .find(([k]) => samePlayer(k, r.player));
+      const tradedHere = [...tradedTo.entries()]
+        .find(([k, owner]) => owner === r.owner && samePlayer(k, r.player));
+
+      let acquisition;
+      if (drafter && drafter[1] === r.owner) acquisition = 'draft';
+      else if (tradedHere) acquisition = 'trade';
+      else if (drafter) acquisition = 'waiver';     // drafted elsewhere, now here
+      else acquisition = 'waiver';                  // never drafted at all
+
+      return { ...r, acquisition, round: null, pick: null };
+    });
+
+    displayRosterSeason = '2026-2027';
+    rosterBasis = 'pasted Yahoo rosters';
+  }
+
+  const costRostersFinal = sheetRosters.length ? displayRosters : costRosters;
+
   const keeperCosts = computeKeeperCosts({
-    rosters: costRosters,
+    rosters: costRostersFinal,
     draft: costDraft,
     inSeasonTrades: costInSeasonTrades,
     exhausted
@@ -622,10 +1157,24 @@ async function loadLeagueData(sheetId, opts = {}) {
       rosterPlayers: displayRosters.length,
       rosterSeasonShown: displayRosterSeason,
       rosterBasis,
+      standingsRows: standings.length,
+      activityRows: activity.length,
+      rosterBlocks: rosterBlocks.length,
+      rosterAttribution: attribution.blocks.map(b =>
+        `${b.owner || '(unidentified)'} — ${b.players.length} players, via ${b.basis}`),
+      rosterConflicts: attribution.conflicts,
+      teamKeyEntries: teamKey.size,
       keeperCostBasis: `${costSeason} draft + current rosters`,
       keeperCostSeason: costSeason,
       inSeasonTradesLogged: inSeasonPrev.length,
       notFoundOnDraftBoard: unmatched,
+      teamKeySource,
+      activitySource,
+      keeperNoCostBasis: keeperCosts.noCostBasis || [],
+      keepersEligible: keeperCosts.filter(k => k.costRound > 0).length,
+      keepersBackToPool: keeperCosts.filter(k => k.costRound === 0).length,
+      keepersDroppedAndReadded:
+        keeperCosts.filter(k => /dropped and re-added/.test(k.status || '')).length,
       timesKeptBlank_lastSeason: missingTimesKept,
       timesKeptBlank_thisSeason: derivedYears
     },
@@ -641,6 +1190,12 @@ async function loadLeagueData(sheetId, opts = {}) {
     rosters: displayRosters,
     rosterSeason: displayRosterSeason,
     rosterBasis,
+
+    // the league's own log, standing in for the Yahoo API
+    standings,
+    transactions,
+    activity,
+    pickTradesFromActivity,
 
     exhausted,
     tradeSections: [

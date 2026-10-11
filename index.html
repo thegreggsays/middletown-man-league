@@ -201,6 +201,11 @@
     outline-offset: 3px;
   }
 
+
+  /* Shelved for the season — the panel and its code stay put, the tab is
+     simply not rendered. Add the button back next year to revive it. */
+  .panel.shelved { display: none !important; }
+
   section.panel { display: none; }
   section.panel.active { display: block; animation: fadeIn 0.3s ease; }
 
@@ -800,7 +805,6 @@
     .hist-owner .hist-stat:nth-last-child(-n+2) { display: none; }
   }
 
-  .news-bar { display: flex; justify-content: flex-end; margin-bottom: 18px; }
   .news-refresh {
     font-family: 'Roboto Mono', monospace;
     font-size: 11px;
@@ -825,66 +829,7 @@
     padding: 10px 0 18px;
   }
 
-  .news-list { display: flex; flex-direction: column; gap: 10px; }
 
-  .news-item {
-    display: block;
-    background: var(--glass);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.2s ease;
-  }
-  .news-item:hover { background: var(--glass-hover); border-color: rgba(227,168,60,0.3); transform: translateX(2px); }
-
-  .news-item-title {
-    font-family: 'Oswald', sans-serif;
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 1.25;
-    color: var(--text);
-    margin-bottom: 7px;
-  }
-  .news-item-desc { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; }
-  .news-item-meta {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 10.5px;
-    color: var(--gold-2);
-    margin-top: 9px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  .news-fallback {
-    background: rgba(255,92,77,0.06);
-    border: 1px solid rgba(255,92,77,0.28);
-    border-radius: 12px;
-    padding: 20px 22px;
-  }
-  .news-fallback-title {
-    font-family: 'Oswald', sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-    text-transform: uppercase;
-    color: var(--loss);
-    margin-bottom: 8px;
-  }
-  .news-fallback p { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 14px; }
-  .news-links { display: flex; flex-wrap: wrap; gap: 9px; }
-  .news-links a {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 12px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--border);
-    color: var(--gold-1);
-    padding: 8px 14px;
-    border-radius: 999px;
-    text-decoration: none;
-    transition: all 0.2s ease;
-  }
-  .news-links a:hover { background: var(--glass-hover); }
 
 
   /* ---- COMPACT STANDINGS STRIP ---- */
@@ -1455,6 +1400,111 @@
   .vt-empty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-dim); opacity: 0.7; padding: 20px 0; text-align: center; }
 
 
+  /* ---- DUES ---- */
+  .du-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .du-stat {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .du-stat-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .du-stat-val {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--gold-1);
+  }
+  .du-stat-val.good { color: var(--win); }
+  .du-stat-val.owed { color: var(--loss); }
+
+  .du-bar-wrap {
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .du-bar { height: 100%; background: linear-gradient(90deg, rgba(76,255,176,0.5), var(--win)); }
+
+  .du-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+
+  .du-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .du-row.paid { border-color: rgba(76,255,176,0.35); }
+  .du-row.unpaid { border-color: rgba(255,92,77,0.28); }
+
+  .du-name { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 15px; text-transform: uppercase; }
+  .du-note { font-family: 'Roboto Mono', monospace; font-size: 9.5px; color: var(--text-dim); opacity: 0.75; margin-top: 3px; }
+  .du-amt { font-family: 'Roboto Mono', monospace; font-size: 13px; font-weight: 700; }
+
+  .du-pill {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .du-pill.paid { background: rgba(76,255,176,0.14); color: var(--win); }
+  .du-pill.partial { background: rgba(227,168,60,0.16); color: var(--gold-1); }
+  .du-pill.unpaid { background: rgba(255,92,77,0.14); color: var(--loss); }
+
+  .du-payouts {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .du-payouts h3 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold-1);
+    margin-bottom: 12px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+  }
+  .du-pay-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13.5px;
+  }
+  .du-pay-row:last-child { border-bottom: none; }
+  .du-pay-row span:last-child { font-family: 'Roboto Mono', monospace; font-weight: 700; color: var(--gold-1); }
+  .du-pay-row.total { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 11px; }
+
+  .du-amount { max-width: 130px; }
+  .du-admin { margin-top: 4px; }
+
   /* ---- MARC'S RANKINGS ---- */
   .marc-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -1941,6 +1991,11 @@
     .pl-addfoot .pl-note { margin-left: 0; text-align: left; }
     .pl-add-row .bd-post { width: 100%; }
 
+    .du-row { grid-template-columns: 1fr auto; row-gap: 6px; padding: 11px 13px; }
+    .du-pill { grid-column: 2; }
+    .du-amount { max-width: none; }
+    .du-stat-val { font-size: 19px; }
+
     .vt-card { padding: 14px 15px; }
     .vt-title { font-size: 15.5px; min-width: 100%; }
     .vt-who { gap: 8px; }
@@ -1960,11 +2015,7 @@
     .act-owner { grid-column: 2 / -1; text-align: left; font-size: 10px; }
 
     /* news */
-    .news-bar { gap: 10px; }
     .news-refresh { min-height: 44px; }
-    .news-item { padding: 14px 16px; }
-    .news-item-title { font-size: 15px; }
-    .news-links a { min-height: 40px; display: inline-flex; align-items: center; }
   }
 
   @media (max-width: 400px) {
@@ -2024,8 +2075,8 @@
     </div>
 
     <div class="ss-view active" id="ss-view-standings">
-      <div class="ss-tag" id="ss-tag-standings">placeholder &mdash; syncs from Yahoo once connected</div>
-      <div class="ss-list">
+      <div class="ss-tag" id="ss-tag-standings">placeholder &mdash; fills in once the Scores tab has results</div>
+      <div class="ss-list" id="ss-list-standings">
         <div class="ss-row lead"><span class="ss-rank">1</span><span class="ss-owner">Gregg</span><span class="ss-rec">9-2</span></div>
         <div class="ss-row"><span class="ss-rank">2</span><span class="ss-owner">Derek</span><span class="ss-rec">8-3</span></div>
         <div class="ss-row"><span class="ss-rank">3</span><span class="ss-owner">Rebel</span><span class="ss-rec">8-3</span></div>
@@ -2090,10 +2141,8 @@
     <button role="tab" aria-selected="false" data-tab="keepercosts">Keeper Costs</button>
     <button role="tab" aria-selected="false" data-tab="keepers">Keepers</button>
     <button role="tab" aria-selected="false" data-tab="activity">Activity</button>
-    <button role="tab" aria-selected="false" data-tab="news">News</button>
-    <button role="tab" aria-selected="false" data-tab="vote">Vote</button>
+    <button role="tab" aria-selected="false" data-tab="dues">Dues</button>
     <button role="tab" aria-selected="false" data-tab="picktrades">Pick Trades</button>
-    <button role="tab" aria-selected="false" data-tab="history">League History</button>
   </nav>
 
   <section class="panel active" id="summary">
@@ -2760,7 +2809,7 @@
 
   <section class="panel" id="activity">
     <h2 class="panel-title">Activity</h2>
-    <p class="panel-sub">Every add, drop and trade &mdash; logged automatically</p>
+    <p class="panel-sub">Every add, drop and trade, from the league sheet</p>
 
     <div class="act-bar">
       <div class="act-filters">
@@ -2775,38 +2824,16 @@
     <div id="act-status" class="news-status">Loading activity&hellip;</div>
 
     <div id="act-setup" class="hist-setup" hidden>
-      <div class="hist-setup-title">Logger not connected yet</div>
-      <p>This feed reads from your own server, which polls Yahoo on a timer and archives every transaction to a local database. Set <code>API_BASE</code> at the top of this file once <code>yahoo-proxy.js</code> is running.</p>
-      <p class="hist-setup-sub">Worth starting early: Yahoo only exposes a rolling window of recent transactions, so the archive only contains what the logger was running to catch.</p>
+      <div class="hist-setup-title">No activity yet</div>
+      <p>Adds, drops and trades come from the <strong>Transactions</strong> tab in the league Google Sheet. Add a row there and it shows up here within a few minutes.</p>
+      <p class="hist-setup-sub">Columns: Week, Date, Team, Action, Player, Source. Action is Add, Drop or Trade; Source is Waivers, FA, or the other owner's name.</p>
     </div>
 
     <div id="act-list" class="act-list"></div>
   </section>
 
-  <section class="panel" id="news">
-    <h2 class="panel-title">News</h2>
-    <p class="panel-sub">Latest fantasy-relevant NFL headlines</p>
 
-    <div class="news-bar">
-      <button id="news-refresh" class="news-refresh">Refresh</button>
-    </div>
-
-    <div id="news-status" class="news-status">Loading the wire&hellip;</div>
-    <div id="news-list" class="news-list"></div>
-
-    <div class="news-fallback" id="news-fallback" hidden>
-      <div class="news-fallback-title">Couldn't reach a news source</div>
-      <p id="news-error-detail"></p>
-      <div class="news-links">
-        <a href="https://www.nbcsports.com/fantasy/football" target="_blank" rel="noopener">Rotoworld</a>
-        <a href="https://www.rotowire.com/football/" target="_blank" rel="noopener">RotoWire</a>
-        <a href="https://www.espn.com/fantasy/football/" target="_blank" rel="noopener">ESPN Fantasy</a>
-        <a href="https://profootballtalk.nbcsports.com/" target="_blank" rel="noopener">ProFootballTalk</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="vote">
+  <section class="panel shelved" id="vote">
     <h2 class="panel-title">League Vote</h2>
     <p class="panel-sub">Proposed rule changes &middot; 7 yes votes carries it</p>
 
@@ -2836,6 +2863,36 @@
       </div>
     </div>
 
+  </section>
+
+  <section class="panel" id="dues">
+    <h2 class="panel-title">Dues</h2>
+    <p class="panel-sub">Who's square, who owes, and where the pot goes</p>
+
+    <div id="dues-summary" class="du-summary"></div>
+    <div id="dues-list" class="du-list"></div>
+    <div id="dues-payouts" class="du-payouts"></div>
+
+    <div class="du-admin">
+      <button id="du-toggle" class="vt-toggle">+ Record a payment</button>
+      <div id="du-form" class="vt-form" hidden>
+        <div class="ann-form-row">
+          <select id="du-owner" class="vt-select">
+            <option value="">Who paid&hellip;</option>
+          </select>
+          <input id="du-amount" class="bd-input du-amount" type="number" min="0" step="5" placeholder="Amount">
+        </div>
+        <input id="du-note" class="bd-input" type="text" maxlength="120" placeholder="Note (Venmo, cash, partial&hellip;)">
+        <div class="ann-form-row">
+          <input id="du-code" class="bd-input ann-code" type="password" inputmode="numeric" maxlength="12" placeholder="Code">
+        </div>
+        <div class="ann-actions">
+          <span id="du-msg" class="bd-msg"></span>
+          <button id="du-cancel" class="ann-cancel">Cancel</button>
+          <button id="du-save" class="bd-post">Save</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="panel" id="picktrades">
@@ -2939,7 +2996,7 @@
 
   </section>
 
-  <section class="panel" id="history">
+  <section class="panel shelved" id="history">
     <h2 class="panel-title">League History</h2>
     <p class="panel-sub">Titles, lifetime records, and every champion since the league started</p>
 
@@ -2959,7 +3016,6 @@
       <div class="hist-owner-list" id="hist-owners"></div>
     </div>
   </section>
-
 
 
   <footer>All data on this page is placeholder — Standings will sync live from Yahoo Fantasy once the API key is approved. Keepers pulls from the league Google Sheet.</footer>
@@ -3006,6 +3062,15 @@
       if (d && d.ok) { API_BASE = ''; return true; }
     } catch (e) { /* no server — stay in preview mode */ }
     return false;
+  }
+
+  // Escapes anything that came from the sheet or the API before it goes into
+  // innerHTML. Team names and player names can contain & " ' < >, so every
+  // render path on this page runs its text through here.
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
   }
 
   // ---- League History ----
@@ -3079,7 +3144,8 @@
     }
   }
 
-  document.querySelector('nav.tabs button[data-tab="history"]').addEventListener('click', () => {
+  const _tab_history = document.querySelector('nav.tabs button[data-tab="history"]');
+  if (_tab_history) _tab_history.addEventListener('click', () => {
     if (!histLoaded) { histLoaded = true; loadHistory(); }
   });
 
@@ -3303,6 +3369,8 @@
       markLive(d.fetchedAt);
       showSheetWarnings(d.dataQuality);
       labelKeeperBasis(d);
+      renderStandings(d);
+      if (renderPowerFromScores(d)) powerFetched = true;   // real points beat the stand-in
     } catch (e) {
       // keep the built-in snapshot
     }
@@ -3386,6 +3454,52 @@
   };
 
 
+  // ---- Standings, from the block pasted into the league sheet ----
+  // Yahoo's API application never came back, so the standings are pasted into
+  // the season tab and mapped from Yahoo team names to owner names via the
+  // Team Key tab.
+  function renderStandings(d) {
+    const rows = d.standings || [];
+    const list = document.getElementById('ss-list-standings');
+    const tag = document.getElementById('ss-tag-standings');
+    if (!list || !rows.length) return;
+
+    list.innerHTML = rows.map((t, i) => {
+      const n = i + 1;
+      return '<div class="ss-row' + (n === 1 ? ' lead' : '') + (n > 5 ? ' extra' : '') + '">'
+        + '<span class="ss-rank">' + n + '</span>'
+        + '<span class="ss-owner">' + esc(t.owner) + '</span>'
+        + '<span class="ss-rec">' + esc(t.record) + '</span>'
+        + '</div>';
+    }).join('');
+
+    if (tag) tag.textContent = 'from the league sheet';
+  }
+
+  // With real points on the board, rank by points scored rather than draft
+  // capital — that was only ever a stand-in until the season started.
+  function renderPowerFromScores(d) {
+    const rows = (d.standings || []).slice();
+    if (!rows.length) return false;
+
+    const list = document.getElementById('ss-list-power');
+    const tag = document.getElementById('ss-tag-power');
+    if (!list) return false;
+
+    rows.sort((a, b) => b.pointsFor - a.pointsFor);
+    list.innerHTML = rows.map((t, i) => {
+      const n = i + 1;
+      return '<div class="ss-row' + (n === 1 ? ' lead' : '') + (n > 5 ? ' extra' : '') + '">'
+        + '<span class="ss-rank">' + n + '</span>'
+        + '<span class="ss-owner">' + esc(t.owner) + '</span>'
+        + '<span class="ss-rec">' + Math.round(t.pointsFor) + '</span>'
+        + '</div>';
+    }).join('');
+
+    if (tag) tag.textContent = 'total points scored';
+    return true;
+  }
+
   // ---- Marc's Power Rankings ----
   // Images, posted with the same code as announcements. Stored on the server
   // so the whole league sees them.
@@ -3427,14 +3541,18 @@
       }
 
       marcList.innerHTML = items.map(i => {
-        const when = new Date(i.createdAt * 1000)
-          .toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        // Ones kept as files in the repo have no upload date, and without
+        // this guard the empty value formats as Jan 1 1970.
+        const when = i.createdAt
+          ? new Date(i.createdAt * 1000)
+              .toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+          : '';
         return '<div class="marc-item">'
           + '<img src="' + esc(API_BASE + i.url) + '" alt="' + esc(i.caption || 'Power rankings') + '" loading="lazy">'
           + '<div class="marc-meta">'
           + (i.week ? '<span class="marc-week-tag">Week ' + i.week + '</span>' : '')
           + (i.caption ? '<span class="marc-cap">' + esc(i.caption) + '</span>' : '')
-          + '<span>' + when + '</span>'
+          + (when ? '<span>' + when + '</span>' : '')
           + '</div></div>';
       }).join('');
 
@@ -3848,7 +3966,8 @@
     }
   });
 
-  document.querySelector('nav.tabs button[data-tab="vote"]').addEventListener('click', () => {
+  const _tab_vote = document.querySelector('nav.tabs button[data-tab="vote"]');
+  if (_tab_vote) _tab_vote.addEventListener('click', () => {
     if (!vtLoaded) { vtLoaded = true; loadVotes(); }
   });
 
@@ -3965,6 +4084,207 @@
     if (!rsLoaded) { rsLoaded = true; loadRosterTab(); }
   });
 
+  // ---- Dues ----
+  // Everyone can see who's square. Only the code lets you record a payment.
+  const duSummary = document.getElementById('dues-summary');
+  const duList = document.getElementById('dues-list');
+  const duPayouts = document.getElementById('dues-payouts');
+  const duOwner = document.getElementById('du-owner');
+  const duMsg = document.getElementById('du-msg');
+  let duLoaded = false;
+  let duData = null;
+
+  DEFAULT_OWNERS.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    duOwner.appendChild(opt);
+  });
+
+  const money = n => '$' + Number(n || 0).toLocaleString(undefined,
+    { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+  function duSay(t, kind) {
+    duMsg.textContent = t || '';
+    duMsg.className = 'bd-msg' + (kind ? ' ' + kind : '');
+    if (t) setTimeout(() => { if (duMsg.textContent === t) duSay(''); }, 4000);
+  }
+
+  function renderDues(d) {
+    duData = d;
+    const pct = d.expected ? Math.round((d.collected / d.expected) * 100) : 0;
+
+    duSummary.innerHTML =
+        '<div class="du-stat"><div class="du-stat-label">Collected</div>'
+      + '<div class="du-stat-val good">' + money(d.collected) + '</div></div>'
+      + '<div class="du-stat"><div class="du-stat-label">Outstanding</div>'
+      + '<div class="du-stat-val' + (d.outstanding ? ' owed' : ' good') + '">'
+      + money(d.outstanding) + '</div></div>'
+      + '<div class="du-stat"><div class="du-stat-label">Pot</div>'
+      + '<div class="du-stat-val">' + money(d.expected) + '</div></div>'
+      + '<div class="du-stat"><div class="du-stat-label">Buy-in</div>'
+      + '<div class="du-stat-val">' + money(d.buyIn) + '</div></div>';
+
+    duSummary.insertAdjacentHTML('afterend',
+      document.getElementById('du-bar') ? '' :
+      '<div class="du-bar-wrap" id="du-bar"><div class="du-bar" style="width:' + pct + '%"></div></div>');
+    const bar = document.querySelector('#du-bar .du-bar');
+    if (bar) bar.style.width = pct + '%';
+
+    const order = { unpaid: 0, partial: 1, paid: 2 };
+    const owners = d.owners.slice().sort((a, b) =>
+      order[a.status] - order[b.status] || a.owner.localeCompare(b.owner));
+
+    duList.innerHTML = owners.map(o => {
+      const label = o.status === 'paid' ? 'Paid'
+        : o.status === 'partial' ? 'Owes ' + money(o.owes) : 'Unpaid';
+      return '<div class="du-row ' + o.status + '">'
+        + '<div><div class="du-name">' + esc(o.owner) + '</div>'
+        + (o.note ? '<div class="du-note">' + esc(o.note) + '</div>' : '')
+        + '</div>'
+        + '<span class="du-amt">' + money(o.paid) + '</span>'
+        + '<span class="du-pill ' + o.status + '">' + label + '</span>'
+        + '</div>';
+    }).join('');
+
+    const p = d.payouts;
+    duPayouts.innerHTML = '<h3>Where the pot goes</h3>'
+      + '<div class="du-pay-row"><span>1st place</span><span>' + money(p.first) + '</span></div>'
+      + '<div class="du-pay-row"><span>2nd place</span><span>' + money(p.second) + '</span></div>'
+      + '<div class="du-pay-row"><span>League fee</span><span>' + money(p.leagueFee) + '</span></div>'
+      + '<div class="du-pay-row"><span>Weekly high score \u00b7 ' + money(p.weeklyPrize)
+      + ' \u00d7 ' + p.weeklyWeeks + ' weeks</span><span>' + money(p.weeklyTotal) + '</span></div>'
+      + '<div class="du-pay-row total"><span>Allocated</span><span>' + money(p.allocated) + '</span></div>'
+      + (p.allocated !== d.expected
+          ? '<div class="du-pay-row"><span style="color:var(--loss)">Doesn\'t match the pot ('
+            + money(d.expected) + ')</span><span style="color:var(--loss)">'
+            + money(p.allocated - d.expected) + '</span></div>'
+          : '')
+      + (d.weekly && d.weekly.winners.length
+          ? '<div class="du-pay-row"><span>Weekly prizes paid so far</span><span>'
+            + money(d.weekly.paidOut) + '</span></div>'
+          : '');
+  }
+
+  // Preview mode: no server, so dues are held in memory for the session just
+  // so the tab can be tried out. The real thing saves to the database.
+  const DU_CONFIG = {
+    buyIn: 100, first: 350, second: 100, leagueFee: 50,
+    weeklyPrize: 50, weeklyWeeks: 14
+  };
+
+  function duBuildPreview(paidMap) {
+    const owners = DEFAULT_OWNERS.map(o => {
+      const row = paidMap[o] || { paid: 0, note: null };
+      const paid = Number(row.paid) || 0;
+      return {
+        owner: o, paid,
+        owes: Math.max(0, DU_CONFIG.buyIn - paid),
+        status: paid >= DU_CONFIG.buyIn ? 'paid' : paid > 0 ? 'partial' : 'unpaid',
+        note: row.note || null
+      };
+    });
+    const collected = owners.reduce((n, o) => n + o.paid, 0);
+    const expected = DU_CONFIG.buyIn * DEFAULT_OWNERS.length;
+    const weeklyTotal = DU_CONFIG.weeklyPrize * DU_CONFIG.weeklyWeeks;
+    return {
+      season: new Date().getFullYear(),
+      buyIn: DU_CONFIG.buyIn,
+      expected, collected, outstanding: expected - collected,
+      owners,
+      payouts: {
+        first: DU_CONFIG.first, second: DU_CONFIG.second,
+        leagueFee: DU_CONFIG.leagueFee, weeklyPrize: DU_CONFIG.weeklyPrize,
+        weeklyWeeks: DU_CONFIG.weeklyWeeks, weeklyTotal,
+        allocated: DU_CONFIG.first + DU_CONFIG.second + DU_CONFIG.leagueFee + weeklyTotal
+      },
+      weekly: { winners: [], paidOut: 0, remaining: weeklyTotal },
+      preview: true
+    };
+  }
+
+  async function loadDues() {
+    await serverReady;
+
+    if (API_BASE === null) {
+      const paidMap = (await pvStore.get('dues:paid')) || {};
+      renderDues(duBuildPreview(paidMap));
+      if (!document.getElementById('du-preview-note')) {
+        duList.insertAdjacentHTML('beforebegin',
+          '<div class="bd-note" id="du-preview-note"><strong>Preview mode.</strong> '
+          + 'No server here, so payments are session-only and clear on refresh. '
+          + 'The code is 6699. On the live site this saves for the whole league.</div>');
+      }
+      return;
+    }
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/dues');
+      if (!res.ok) throw new Error('server ' + res.status);
+      renderDues(await res.json());
+    } catch (e) {
+      duList.innerHTML = '<div class="vt-empty">Could not load dues ('
+        + esc(e.message) + ').</div>';
+    }
+  }
+
+  document.getElementById('du-toggle').addEventListener('click', () => {
+    const f = document.getElementById('du-form');
+    f.hidden = !f.hidden;
+  });
+  document.getElementById('du-cancel').addEventListener('click', () => {
+    document.getElementById('du-form').hidden = true;
+  });
+
+  // pre-fill with what they've already paid, so it's an edit not a guess
+  duOwner.addEventListener('change', () => {
+    if (!duData) return;
+    const row = duData.owners.find(o => o.owner === duOwner.value);
+    document.getElementById('du-amount').value = row ? row.paid : '';
+    document.getElementById('du-note').value = (row && row.note) || '';
+  });
+
+  document.getElementById('du-save').addEventListener('click', async () => {
+    const owner = duOwner.value;
+    const paid = document.getElementById('du-amount').value;
+    const note = document.getElementById('du-note').value;
+    const code = document.getElementById('du-code').value.trim();
+
+    if (!owner) { duSay('Pick who paid.', 'err'); return; }
+    if (paid === '') { duSay('Enter an amount.', 'err'); return; }
+    if (!code) { duSay('Enter the code.', 'err'); return; }
+
+    if (API_BASE === null) {
+      if (code !== PREVIEW_ANN_CODE) { duSay('Wrong code.', 'err'); return; }
+      const paidMap = (await pvStore.get('dues:paid')) || {};
+      paidMap[owner] = { paid: Number(paid), note: note.trim() || null };
+      await pvStore.set('dues:paid', paidMap);
+      document.getElementById('du-code').value = '';
+      document.getElementById('du-form').hidden = true;
+      duSay('Saved.', 'ok');
+      return loadDues();
+    }
+
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/dues', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner, paid, note, code })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'server ' + res.status);
+      document.getElementById('du-code').value = '';
+      document.getElementById('du-form').hidden = true;
+      duSay('Saved.', 'ok');
+      loadDues();
+    } catch (e) {
+      duSay(e.message || 'Could not save.', 'err');
+    }
+  });
+
+  document.querySelector('nav.tabs button[data-tab="dues"]').addEventListener('click', () => {
+    if (!duLoaded) { duLoaded = true; loadDues(); }
+  });
+
+
   // ---- TD parlay ----
   // Everyone picks one player a week; the server checks ESPN's scoring plays.
   // Red dot until he scores, green after. Grey means we can't tell yet
@@ -3990,15 +4310,33 @@
     if (t) setTimeout(() => { if (plMsg.textContent === t) plSay(''); }, 4000);
   }
 
-  // rough guess at the current week so it doesn't always open on Week 1
-  function guessWeek() {
-    const now = new Date();
+  // Which week the page opens on.
+  //
+  // A fantasy week belongs to the week it's being PLAYED, so it has to stay on
+  // the current week right through Monday night and only flip on Tuesday. The
+  // old version counted from a fixed Sept 5 and rolled over mid-weekend, which
+  // is why guys were putting picks into next week by Saturday.
+  //
+  // The NFL opens on the Thursday after Labor Day, so every week starts on the
+  // Tuesday after Labor Day plus a multiple of seven. Anchoring there means
+  // this keeps itself honest every season with nothing to update.
+  function currentWeek(today) {
+    const now = today || new Date();
+    // Jan and Feb still belong to the season that kicked off the prior autumn.
     const year = now.getMonth() <= 1 ? now.getFullYear() - 1 : now.getFullYear();
-    const kickoff = new Date(year, 8, 5);      // early September
-    const weeks = Math.floor((now - kickoff) / (7 * 864e5)) + 1;
-    return Math.min(Math.max(weeks, 1), 18);
+
+    // Labor Day = first Monday in September.
+    const labor = new Date(year, 8, 1);
+    while (labor.getDay() !== 1) labor.setDate(labor.getDate() + 1);
+
+    // Week 1 runs from the Tuesday right after it.
+    const anchor = new Date(year, 8, labor.getDate() + 1);
+    anchor.setHours(0, 0, 0, 0);
+
+    const week = Math.floor((now - anchor) / (7 * 864e5)) + 1;
+    return Math.min(Math.max(week, 1), 18);
   }
-  plWeek = guessWeek();
+  plWeek = currentWeek();
 
   function renderParlay(data) {
     plWeekLabel.textContent = 'Week ' + plWeek;
@@ -4213,31 +4551,79 @@
     actSetup.hidden = true;
   }
 
+  // Renders the league's own Transactions tab. Yahoo's logger was the original
+  // source here; that never got approved, so the sheet is the record now.
+  function renderSheetActivity(transactions, type) {
+    const rows = (transactions || []).filter(t => !type || t.action === type);
+
+    actSync.textContent = 'from the league Transactions tab';
+    actSetup.hidden = true;
+    actStatus.hidden = true;
+
+    if (!rows.length) {
+      actList.innerHTML = '<div class="act-empty">'
+        + (type ? 'No ' + esc(type) + 's logged.' : 'Nothing logged yet.')
+        + '</div>';
+      return;
+    }
+
+    // newest first; the log is kept in week order
+    const ordered = rows.slice().sort((a, b) => (b.week || 0) - (a.week || 0));
+
+    actList.innerHTML = ordered.map(t => {
+      const isAdd = t.action !== 'drop';
+      const arrow = t.action === 'drop' ? 'OUT' : 'IN';
+      const other = t.source ? esc(t.source) : '';
+      const when = t.date ? esc(t.date) : (t.week ? 'Week ' + t.week : '');
+
+      return '<div class="act-card ' + actClass(t.action) + '">'
+        + '<div class="act-head">'
+        + '<span class="act-type ' + actClass(t.action) + '">' + esc(actLabel(t.action)) + '</span>'
+        + (t.week ? '<span class="act-date">Week ' + t.week + '</span>' : '')
+        + (t.date ? '<span class="act-date">' + esc(t.date) + '</span>' : '')
+        + '</div>'
+        + '<div class="act-moves"><div class="act-move">'
+        + '<span class="act-arrow ' + (isAdd ? 'add' : 'drop') + '">' + arrow + '</span>'
+        + '<span><span class="act-player">' + esc(t.player) + '</span>'
+        + (other ? '<span class="act-pos">from ' + other + '</span>' : '')
+        + '</span>'
+        + '<span class="act-owner">' + esc(t.owner) + '</span>'
+        + '</div></div></div>';
+    }).join('');
+  }
+
   async function loadActivity(type) {
     await serverReady;
+
     if (API_BASE === null) {
       actStatus.hidden = true;
       actList.innerHTML = '';
       actSetup.hidden = false;
       return;
     }
+
     actSetup.hidden = true;
     actStatus.hidden = false;
-    actStatus.textContent = 'Loading activity\u2026';
+    actStatus.textContent = 'Loading activity…';
+
     try {
-      const url = API_BASE.replace(/\/$/, '') + '/activity?limit=100' + (type ? '&type=' + encodeURIComponent(type) : '');
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('server returned ' + res.status);
-      renderActivity(await res.json());
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/league-data');
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'server ' + res.status);
+      renderSheetActivity(d.transactions, type);
     } catch (e) {
       actStatus.hidden = true;
       actList.innerHTML = '';
       actSetup.hidden = false;
-      actSetup.querySelector('.hist-setup-title').textContent = 'Could not reach the logger';
+      actSetup.querySelector('.hist-setup-title').textContent = 'Could not load the log';
       actSetup.querySelector('p').textContent =
-        'Tried ' + API_BASE + '/activity and got: ' + (e.message || 'no response') + '.';
+        'Tried the league sheet and got: ' + (e.message || 'no response') + '.';
     }
   }
+
+  document.querySelector('nav.tabs button[data-tab="activity"]').addEventListener('click', () => {
+    if (!actLoaded) { actLoaded = true; loadActivity(''); }
+  });
 
   actFilters.forEach(b => {
     b.addEventListener('click', () => {
@@ -4247,88 +4633,8 @@
     });
   });
 
-  document.querySelector('nav.tabs button[data-tab="activity"]').addEventListener('click', () => {
-    if (!actLoaded) { actLoaded = true; loadActivity(''); }
-  });
-
-  // ---- News feed ----
-  // Fetched through our own server. News sites block direct browser calls from
-  // other domains, so going through the server is the only reliable route.
-  const newsList = document.getElementById('news-list');
-  const newsStatus = document.getElementById('news-status');
-  const newsFallback = document.getElementById('news-fallback');
-  const newsErrDetail = document.getElementById('news-error-detail');
-  const newsRefresh = document.getElementById('news-refresh');
-  let newsLoaded = false;
-
-  function esc(s) {
-    const d = document.createElement('div');
-    d.textContent = s == null ? '' : String(s);
-    return d.innerHTML;
-  }
-
-  function renderNews(items) {
-    newsStatus.hidden = true;
-    newsFallback.hidden = true;
-    newsList.innerHTML = items.map(i => {
-      const d = i.date ? new Date(i.date) : null;
-      const when = (d && !isNaN(d))
-        ? d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-        : '';
-      const open = i.link
-        ? '<a class="news-item" href="' + esc(i.link) + '" target="_blank" rel="noopener">'
-        : '<div class="news-item">';
-      const close = i.link ? '</a>' : '</div>';
-      return open
-        + '<div class="news-item-title">' + esc(i.title) + '</div>'
-        + (i.desc ? '<div class="news-item-desc">' + esc(i.desc) + '</div>' : '')
-        + (when ? '<div class="news-item-meta">' + when + '</div>' : '')
-        + close;
-    }).join('');
-  }
-
-  function showNewsProblem(detail) {
-    newsStatus.hidden = true;
-    newsList.innerHTML = '';
-    newsFallback.hidden = false;
-    newsErrDetail.textContent = detail;
-  }
-
-  async function loadFeed() {
-    await serverReady;
-    newsList.innerHTML = '';
-    newsFallback.hidden = true;
-    newsStatus.hidden = false;
-    newsStatus.textContent = 'Loading the wire\u2026';
-
-    if (API_BASE === null) {
-      showNewsProblem(
-        'The news feed is served by the league server, which isn\'t connected yet. '
-        + 'Once the site is running on Railway this fills in automatically. '
-        + 'In the meantime:');
-      return;
-    }
-
-    try {
-      const res = await fetch(API_BASE.replace(/\/$/, '') + '/news');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'server ' + res.status);
-      if (!data.items || !data.items.length) throw new Error('no headlines came back');
-      renderNews(data.items);
-    } catch (e) {
-      showNewsProblem('Couldn\'t load headlines: ' + (e.message || 'unknown error') + '. Straight to the sources:');
-    }
-  }
-
-  newsRefresh.addEventListener('click', loadFeed);
-
-  document.querySelector('nav.tabs button[data-tab="news"]').addEventListener('click', () => {
-    if (!newsLoaded) { newsLoaded = true; loadFeed(); }
-  });
-
-
   // ---- Startup ----
-  // Find out whether we have a server, then load everything that depends on it.
+  // Work out whether there's a server, then load everything that needs one.
   serverReady = detectServer();
 
   (async () => {
@@ -4337,6 +4643,7 @@
     loadAnnouncement();
     loadVotes().then(() => { vtLoaded = true; });
   })();
+
 
 </script>
 

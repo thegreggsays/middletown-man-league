@@ -1,0 +1,20 @@
+# Installed packages — Railway installs these itself from package.json.
+node_modules/
+
+# The league database. This must NEVER go in GitHub:
+#  - it holds the votes, dues, parlay picks and uploaded rankings
+#  - in production it lives on the Railway volume, not in this folder
+#  - committing it would overwrite the live one on every deploy
+league.db
+league.db-shm
+league.db-wal
+backup-*.db
+league-backup-*.db
+
+# Yahoo login tokens. Secrets — never commit these.
+.tokens.json
+.env
+
+# Mac / Windows junk
+.DS_Store
+Thumbs.db
