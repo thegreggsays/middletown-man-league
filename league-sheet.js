@@ -515,7 +515,19 @@ function stripNflTeamSuffix(raw) {
     .trim();
 }
 
-/** Team Key tab: Yahoo team name -> owner. */
+/**
+ * Team names only have to match on their letters and digits. Yahoo names are
+ * full of emoji and curly quotes, and those don't survive a trip through
+ * Excel: "🚨MMLeague Gate🚨" comes back as "??MMLeague Gate??" and
+ * "“Commissioner”" as "�Commissioner�". Matching on exact text would throw
+ * away every move those teams made. Stripping everything but letters and
+ * digits makes all of those the same name.
+ */
+function teamNameKey(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/** Team Key tab: Yahoo team name -> owner, looked up by teamNameKey. */
 function readTeamKey(grid) {
   const map = new Map();
   for (const row of grid) {
@@ -524,7 +536,8 @@ function readTeamKey(grid) {
     if (!team || !owner) continue;
     // Skip the header row, whichever wording it uses.
     if (/^(yahoo )?team( name)?$/i.test(team)) continue;
-    map.set(team.toLowerCase(), canonOwner(owner));
+    const key = teamNameKey(team);
+    if (key) map.set(key, canonOwner(owner));
   }
   return map;
 }
@@ -543,7 +556,29 @@ function readTeamKey(grid) {
    rosters. Headings are used only as an optional hint.
    ---------------------------------------------------------------- */
 
-const RECORD_RE = /^\d{1,2}-\d{1,2}(-\d{1,2})?$/;
+/**
+ * A W-L-T record, allowing for what Google Sheets does to it. Type "4-1-0"
+ * into a cell and Sheets decides it's April 1st, 2000, so the feed carries
+ * "4-1-2000" (or "4/1/2000", or "2000-04-01", depending on the column's
+ * format). Only records that aren't valid dates — "5-0-0", "0-5-0" —
+ * arrive untouched. The year gives the ties back: 2000 + T.
+ */
+function parseRecord(s) {
+  const v = String(s || '').trim();
+  let m;
+  if ((m = v.match(/^(\d{1,2})-(\d{1,2})(?:-(\d{1,2}))?$/))) {
+    return { w: +m[1], l: +m[2], t: +(m[3] || 0) };
+  }
+  if ((m = v.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/))) {
+    const t = +m[3] - 2000;
+    if (t >= 0 && t <= 20) return { w: +m[1], l: +m[2], t };
+  }
+  if ((m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) {
+    const t = +m[1] - 2000;
+    if (t >= 0 && t <= 20) return { w: +m[2], l: +m[3], t };
+  }
+  return null;
+}
 
 /** The column holding the longest run of W-L-T records, and where it starts. */
 function findRecordColumn(grid) {
@@ -553,7 +588,7 @@ function findRecordColumn(grid) {
   for (let c = 0; c < width; c++) {
     let run = 0, start = -1;
     for (let r = 0; r < grid.length; r++) {
-      if (RECORD_RE.test(cell(grid, r, c))) {
+      if (parseRecord(cell(grid, r, c))) {
         if (run === 0) start = r;
         run++;
         if (!best || run > best.run) best = { col: c, start, run };
@@ -607,19 +642,20 @@ function readStandings(grid, teamKey) {
 
   const out = [];
   for (let r = found.start; r < grid.length; r++) {
-    const rec = cell(grid, r, col.record);
-    if (!RECORD_RE.test(rec)) {
+    const parsed = parseRecord(cell(grid, r, col.record));
+    if (!parsed) {
       if (out.length) break;        // block has ended
       continue;
     }
     const teamName = cell(grid, r, col.team);
     if (!teamName) continue;
-    const [w, l, t] = rec.split('-').map(n => Number(n) || 0);
+    const { w, l, t } = parsed;
+    const rec = w + '-' + l + '-' + t;
 
     out.push({
       rank: Number(cell(grid, r, col.rank)) || out.length + 1,
       teamName,
-      owner: teamKey.get(teamName.toLowerCase()) || teamName,
+      owner: teamKey.get(teamNameKey(teamName)) || teamName,
       record: rec,
       wins: w || 0, losses: l || 0, ties: t || 0,
       pointsFor: Number(cell(grid, r, col.pf)) || 0,
@@ -671,37 +707,75 @@ function findPositionColumn(grid) {
   return best;
 }
 
+const SECTION_HEADERS = new Set([
+  'offense', 'kickers', 'defense/special teams', 'defense', 'special teams',
+  'bench', 'injured reserve', 'pos', 'owner', 'player', 'rosters', 'roster'
+]);
+
+/**
+ * Rosters, pasted from Yahoo. Two layouts have shown up and both work:
+ *   - twelve blocks separated by blank rows
+ *   - Yahoo's full page, with "Pos | Offense / Kickers / Defense" section
+ *     headers inside each team and blank rows between the sections
+ * The one thing that holds in both: every team starts at its QB slot, and
+ * has exactly one. So a QB row starts a new team, and nothing else does —
+ * blank rows and section headers are simply skipped.
+ *
+ * If the column to the right of the player holds an owner name on each row,
+ * that's taken as the answer. Otherwise the owner is worked out from the
+ * players (see attributeRosterBlocks). A name typed into the position
+ * column on its own line, above a block, still works too.
+ */
 function readRosterBlocks(grid) {
   const found = findPositionColumn(grid);
   if (!found) return [];
 
   const posCol = found.col;
   const nameCol = found.col + 1;
+  const ownerCol = found.col + 2;
 
   const blocks = [];
   let current = null;
   let pendingLabel = '';
+
+  const finish = () => {
+    if (!current || !current.players.length) { current = null; return; }
+    // A per-row owner column wins outright: take the name most rows carry.
+    if (current.owners.size) {
+      let best = '', bestN = 0;
+      for (const [o, n] of current.owners) if (n > bestN) { best = o; bestN = n; }
+      current.label = best;
+    }
+    delete current.owners;
+    blocks.push(current);
+    current = null;
+  };
 
   // Start one row above the first position code so a hand-typed owner label
   // sitting directly over the first block is still picked up.
   for (let r = Math.max(0, found.first - 1); r < grid.length; r++) {
     const pos = cell(grid, r, posCol);
     const raw = cell(grid, r, nameCol);
+    if (!pos && !raw) continue;                       // blank: means nothing now
 
-    if (!pos && !raw) {              // blank row: block boundary
-      if (current && current.players.length) blocks.push(current);
-      current = null;
-      continue;
-    }
+    const slot = pos.toUpperCase();
 
     // a lone cell in the position column is a hand-typed owner label —
-    // unless it's the block's own heading, or a stray position code
+    // unless it's a heading or a stray position code
     if (pos && !raw) {
-      const p = pos.toUpperCase();
-      pendingLabel = (p === 'ROSTERS' || p === 'ROSTER' || p === 'POS' || POSITION_CODES.has(p))
-        ? '' : pos;
+      pendingLabel = (SECTION_HEADERS.has(pos.toLowerCase()) || POSITION_CODES.has(slot)) ? '' : pos;
       continue;
     }
+
+    // Yahoo's own section headers: "Pos | Offense", "Pos | Kickers", ...
+    if (SECTION_HEADERS.has(pos.toLowerCase()) || SECTION_HEADERS.has(raw.toLowerCase())) continue;
+
+    // A second QB slot is the next team.
+    if (slot === 'QB' && current && current.players.some(p => p.pos === 'QB')) finish();
+    if (!current) { current = { label: pendingLabel, players: [], owners: new Map() }; pendingLabel = ''; }
+
+    // An empty slot still counts as the team's QB row above; it just adds nobody.
+    if (/^\(empty\)$/i.test(raw)) { if (slot === 'QB') current.players.push({ pos: 'QB', player: '', position: 'QB', nflTeam: null, empty: true }); continue; }
 
     const player = stripStatusSuffix(stripYahooChrome(raw));
     if (!player) continue;
@@ -717,22 +791,20 @@ function readRosterBlocks(grid) {
     const position = tail ? tail[2].toUpperCase().replace('D/ST', 'DEF').replace('DST', 'DEF') : null;
     const nflTeam = tail ? tail[1].toUpperCase() : null;
 
-    // Yahoo lists each team starting at its QB slot, and a team has exactly
-    // one. So a second QB slot means the next team has begun — which is the
-    // only reliable boundary when two rosters are pasted with no blank row
-    // between them, as Google's copy of the sheet turned out to have.
-    const slot = pos.toUpperCase();
-    if (current && slot === 'QB' && current.players.some(p => p.pos === 'QB')) {
-      blocks.push(current);
-      current = null;
+    // Owner written on the row itself, if there is one.
+    const ownerCell = cell(grid, r, ownerCol);
+    if (ownerCell && !SECTION_HEADERS.has(ownerCell.toLowerCase()) && ownerCell.length <= 24) {
+      const o = canonOwner(ownerCell);
+      current.owners.set(o, (current.owners.get(o) || 0) + 1);
     }
 
-    if (!current) { current = { label: pendingLabel, players: [] }; pendingLabel = ''; }
     current.players.push({ pos: slot, player, position, nflTeam });
   }
-  if (current && current.players.length) blocks.push(current);
+  finish();
 
-  return blocks;
+  // Drop the placeholder rows that only existed to mark an empty QB slot.
+  for (const b of blocks) b.players = b.players.filter(p => !p.empty);
+  return blocks.filter(b => b.players.length);
 }
 
 /**
@@ -815,25 +887,32 @@ function readActivity(grid, teamKey) {
   }
   if (!lines.length) return [];
 
-  const isIcon = s => /^[-]+$/.test(s);
+  // Yahoo's icon glyphs — and what they turn into after a trip through a
+  // spreadsheet that didn't understand them ("?", "\uFFFD").
+  const isIcon = s => /^[\uE000-\uF8FF?\uFFFD\s]+$/.test(s);
   const isLogo = s => s.toLowerCase() === 'logo';
   const isDate = s => /^[A-Z][a-z]{2}\s+\d{1,2},/.test(s);
   const CAME_FROM = new Set(['free agent', 'waiver', 'waivers']);
   const WENT_TO = new Set(['to waivers', 'to free agent', 'to free agents']);
 
+  // One entry per chunk. Yahoo ends every entry with its date line, then a
+  // "logo" line, so the date is the boundary that counts — the "logo" line
+  // is only a backstop. Trusting "logo" alone fails the moment two pastes
+  // are joined without one, which quietly merges two owners' moves into one.
   const chunks = [];
   let cur = [];
   for (const line of lines) {
-    if (isLogo(line)) { if (cur.length) chunks.push(cur); cur = []; }
-    else cur.push(line);
+    if (isLogo(line)) { if (cur.length) chunks.push(cur); cur = []; continue; }
+    cur.push(line);
+    if (isDate(line)) { chunks.push(cur); cur = []; }
   }
   if (cur.length) chunks.push(cur);
 
   const out = [];
 
   for (const chunk of chunks) {
-    const teamLine = chunk.find(x => teamKey.has(x.toLowerCase()));
-    const owner = teamLine ? teamKey.get(teamLine.toLowerCase()) : '';
+    const teamLine = chunk.find(x => teamKey.has(teamNameKey(x)));
+    const owner = teamLine ? teamKey.get(teamNameKey(teamLine)) : '';
     const dateLine = chunk.find(isDate) || '';
     if (!owner) continue;
 
