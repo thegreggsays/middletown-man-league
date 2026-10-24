@@ -1141,38 +1141,28 @@ function computeKeeperCosts({ rosters, draft, inSeasonTrades, exhausted }) {
 function readDuesTracker(grid) {
   if (!grid || !grid.length) return null;
 
-  // ---- the "Week" header: row of week numbers, owners beneath ----
+  // ---- the "Week" header, then the first "1" to its right ----
   let hdr = null;
   for (let r = 0; r < Math.min(grid.length, 12) && !hdr; r++) {
     for (let c = 0; c < (grid[r] || []).length; c++) {
-      if (cell(grid, r, c).toLowerCase() === 'week' && cell(grid, r, c + 1) === '1') hdr = { row: r, col: c };
+      if (cell(grid, r, c).toLowerCase() !== 'week') continue;
+      for (let k = c + 1; k <= c + 4; k++) {
+        if (cell(grid, r, k) === '1') { hdr = { row: r, col: c, week1: k }; break; }
+      }
     }
   }
   if (!hdr) return null;
 
-  // week columns: consecutive 1, 2, 3 ... to the right of the anchor
+  // week columns: consecutive 1, 2, 3 ... from the first "1"
   const weekCols = [];
-  for (let c = hdr.col + 1; c < hdr.col + 24; c++) {
-    const v = Number(cell(grid, hdr.row, c));
-    if (v === weekCols.length + 1) weekCols.push(c); else break;
+  for (let c = hdr.week1; c < hdr.week1 + 24; c++) {
+    if (Number(cell(grid, hdr.row, c)) === weekCols.length + 1) weekCols.push(c); else break;
   }
   if (weekCols.length < 10) return null;
   const lastWeek = weekCols[weekCols.length - 1];
 
-  // columns after the weeks, by position; surviving headers override
-  const col = {
-    season: lastWeek + 1, second: lastWeek + 2, first: lastWeek + 3,
-    winner: lastWeek + 4, paid: lastWeek + 5, net: lastWeek + 6, third: null, dues: null
-  };
-  for (let c = lastWeek + 1; c < lastWeek + 12; c++) {
-    const h = cell(grid, hdr.row, c).toLowerCase();
-    if (h === 'season') col.season = c;
-    else if (h === '2nd') col.second = c;
-    else if (h === '1st') col.first = c;
-    else if (h === '3rd') col.third = c;
-    else if (h === 'paid') col.paid = c;
-    else if (h === 'dues' || h === 'buy-in' || h === 'buy in') col.dues = c;
-  }
+  // Anything between "Week" and week 1 is a per-owner dues column.
+  const duesCol = hdr.week1 > hdr.col + 1 ? hdr.col + 1 : null;
 
   // ---- column A: buy-in, team count, pot, then the payout lines ----
   const colA = [];
@@ -1198,26 +1188,60 @@ function readDuesTracker(grid) {
   lumpLines.forEach((x, i) => {
     const l = x.label.toLowerCase();
     const key = l === '1st' ? 'first' : l === '2nd' ? 'second' : l === '3rd' ? 'third'
-      : /league|fee/.test(l) ? 'league' : (order[i] || null);
+      : /league|fee|season|reg/.test(l) ? 'league' : (order[i] || null);
     if (key && payouts[key] === null) payouts[key] = Math.abs(x.value);
   });
 
-  // ---- owner rows ----
-  const owners = [];
+  // ---- owner rows: the names under "Week", down to the first blank ----
+  const ownerRows = [];
   for (let r = hdr.row + 1; r < grid.length; r++) {
     const name = cell(grid, r, hdr.col);
-    if (!name) { if (owners.length) break; continue; }
+    if (!name) { if (ownerRows.length) break; continue; }
     if (name.toLowerCase() === 'team') break;             // the schedule grid below
+    ownerRows.push(r);
+  }
+  if (!ownerRows.length) return null;
 
+  /* ---- the columns after the weeks ----
+     Their headers are numbers to Google and arrive blank, so the Paid
+     column is picked out by what's in it: the one where most owners show
+     the buy-in. The columns between the last week and Paid are Season,
+     2nd and 1st, in that order. Anything after Paid is a running total
+     the sheet works out for itself, which this ignores and recomputes.
+     Headers that did survive win over all of that. */
+  const buyIn = payouts.buyIn || 100;
+  const num = (r, c) => Number(cell(grid, r, c).replace(/[$,]/g, ''));
+  const looksPaid = c => ownerRows.filter(r => num(r, c) === buyIn).length > ownerRows.length / 2;
+
+  let paidCol = null;
+  for (let c = lastWeek + 1; c < lastWeek + 10 && paidCol === null; c++) if (looksPaid(c)) paidCol = c;
+  if (paidCol === null) paidCol = lastWeek + 5;                       // the tracker's usual spot
+
+  const between = [];
+  for (let c = lastWeek + 1; c < paidCol; c++) between.push(c);
+  const col = {
+    season: between[0] ?? null, second: between[1] ?? null, first: between[2] ?? null,
+    third: null, paid: paidCol, dues: duesCol
+  };
+  for (let c = lastWeek + 1; c < lastWeek + 12; c++) {
+    const h = cell(grid, hdr.row, c).toLowerCase();
+    if (h === 'season') col.season = c;
+    else if (h === '2nd') col.second = c;
+    else if (h === '1st') col.first = c;
+    else if (h === '3rd') col.third = c;
+    else if (h === 'paid') col.paid = c;
+    else if (h === 'dues' || h === 'buy-in' || h === 'buy in') col.dues = c;
+  }
+
+  const owners = ownerRows.map(r => {
     const weeks = [];
     weekCols.forEach((c, i) => {
       const raw = cell(grid, r, c).replace(/[$,]/g, '');
       if (!raw || raw === '0' || raw === '-') return;
-      const num = Number(raw);
+      const n = Number(raw);
       // a real fantasy score is two or three digits with a decimal somewhere
       // near; the prize amount or an X is just a marker
-      const score = Number.isFinite(num) && num >= 60 ? num : null;
-      weeks.push({ week: i + 1, score });
+      weeks.push({ week: i + 1, score: Number.isFinite(n) && n >= 60 ? n : null });
     });
 
     const flag = c => {
@@ -1228,19 +1252,19 @@ function readDuesTracker(grid) {
     const paidRaw = cell(grid, r, col.paid).replace(/[$,]/g, '').toLowerCase();
     const paidNum = Number(paidRaw);
     const paid = paidRaw === '' || paidRaw === '-' ? null
-      : Number.isFinite(paidNum) ? paidNum
+      : Number.isFinite(paidNum) ? Math.abs(paidNum)
       : /^(y|yes|x|paid|✓|✔)$/.test(paidRaw) ? 'full' : null;
     const duesRaw = col.dues === null ? '' : cell(grid, r, col.dues).replace(/[$,]/g, '');
 
-    owners.push({
-      owner: canonOwner(name),
+    return {
+      owner: canonOwner(cell(grid, r, hdr.col)),
       weeks,
       first: flag(col.first), second: flag(col.second), third: flag(col.third),
       season: flag(col.season),          // 1st place at the end of the regular season
       paid,
-      dues: duesRaw !== '' && !isNaN(Number(duesRaw)) ? Number(duesRaw) : null
-    });
-  }
+      dues: duesRaw !== '' && !isNaN(Number(duesRaw)) ? Math.abs(Number(duesRaw)) : null
+    };
+  });
 
   return { payouts, owners, weekCount: weekCols.length };
 }
