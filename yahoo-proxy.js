@@ -1552,7 +1552,14 @@ app.get('/marc-rankings', (_req, res) => {
 
   // A committed file is the deliberate copy, so where both exist for a
   // week the file wins and the upload is dropped rather than shown twice.
-  const files = rankingFiles();
+  // Two files for the same week — say week-5.jpg left behind next to
+  // "week-5 Something Funny.jpg" — show once. The captioned one wins.
+  const byWeek = new Map();
+  for (const f of rankingFiles()) {
+    const cur = byWeek.get(f.week);
+    if (!cur || (f.caption && !cur.caption) || (!!f.caption === !!cur.caption && f.id > cur.id)) byWeek.set(f.week, f);
+  }
+  const files = [...byWeek.values()];
   const claimed = new Set(files.map(f => f.week));
 
   const items = files

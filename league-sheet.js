@@ -159,6 +159,7 @@ function norm(name) {
 const OWNER_ALIASES = {
   rebeyo: 'Rebel',     // same owner, spelled both ways across tabs
   dan: 'Rogan',        // Team Key says Dan, the keeper tab says Rogan — same team
+  streeto: 'Jared',    // Jared's nickname, used on the old dues tracker
   mark: 'Marc',        // spelled both ways across tabs
   prender: 'Marc',     // Marc took over this franchise
   flynn: 'Palumberi'   // Palumberi took over this franchise
