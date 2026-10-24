@@ -707,6 +707,9 @@ function findPositionColumn(grid) {
   return best;
 }
 
+const GAME_LINE =
+  /^(sun|mon|tue|wed|thu|fri|sat)\b.*\b\d{1,2}:\d{2}\s*[ap]m|^final\b|^bye\b|no game this week/i;
+
 const SECTION_HEADERS = new Set([
   'offense', 'kickers', 'defense/special teams', 'defense', 'special teams',
   'bench', 'injured reserve', 'pos', 'owner', 'player', 'rosters', 'roster'
@@ -769,6 +772,13 @@ function readRosterBlocks(grid) {
 
     // Yahoo's own section headers: "Pos | Offense", "Pos | Kickers", ...
     if (SECTION_HEADERS.has(pos.toLowerCase()) || SECTION_HEADERS.has(raw.toLowerCase())) continue;
+
+    // The game line under each name — "Sun 1:00 pm @ Atl", "Final L 24-30
+    // @ Chi", "Bye - No game this week" — sometimes lands in its own row with
+    // nothing in the position column. It isn't a player, and neither is
+    // anything else that arrives without a slot.
+    if (!pos) continue;
+    if (GAME_LINE.test(raw)) continue;
 
     // A second QB slot is the next team.
     if (slot === 'QB' && current && current.players.some(p => p.pos === 'QB')) finish();
@@ -1103,6 +1113,139 @@ function computeKeeperCosts({ rosters, draft, inSeasonTrades, exhausted }) {
 }
 
 /* ---------------------------------------------------------------- */
+/* Schedule & Dues Tracker                                          */
+/* ---------------------------------------------------------------- */
+
+/**
+ * The tracker tab, as the league keeps it:
+ *
+ *   A         B            D      E..R        S       T     U     V       W     X
+ *   100       p/p          Week   1 .. 14     Season  2nd   1st   Winner  Paid  Net
+ *   12        Players      Gregg  ...
+ *   1200      Total        Fito   ...
+ *   -350      1st          (one row per owner)
+ *   -100      2nd
+ *   -50       League
+ *   -50       1  ... -50  14      (the weekly prize, one row per week)
+ *
+ * A mark in an owner's cell under a week means he had that week's high
+ * score — the score itself if it's there, anything at all if not. Season is
+ * marked for whoever finishes 1st in the regular season, 1st/2nd/3rd for the
+ * playoff finish at the end of the year, and Paid is what he's paid in.
+ *
+ * Google's feed blanks the text labels in column B and most of the headers
+ * past the weeks (those columns are numbers), so everything is located from
+ * the one cell that always survives — "Week" — and from the shape of column
+ * A. Headers that do come through are honoured when they disagree.
+ */
+function readDuesTracker(grid) {
+  if (!grid || !grid.length) return null;
+
+  // ---- the "Week" header: row of week numbers, owners beneath ----
+  let hdr = null;
+  for (let r = 0; r < Math.min(grid.length, 12) && !hdr; r++) {
+    for (let c = 0; c < (grid[r] || []).length; c++) {
+      if (cell(grid, r, c).toLowerCase() === 'week' && cell(grid, r, c + 1) === '1') hdr = { row: r, col: c };
+    }
+  }
+  if (!hdr) return null;
+
+  // week columns: consecutive 1, 2, 3 ... to the right of the anchor
+  const weekCols = [];
+  for (let c = hdr.col + 1; c < hdr.col + 24; c++) {
+    const v = Number(cell(grid, hdr.row, c));
+    if (v === weekCols.length + 1) weekCols.push(c); else break;
+  }
+  if (weekCols.length < 10) return null;
+  const lastWeek = weekCols[weekCols.length - 1];
+
+  // columns after the weeks, by position; surviving headers override
+  const col = {
+    season: lastWeek + 1, second: lastWeek + 2, first: lastWeek + 3,
+    winner: lastWeek + 4, paid: lastWeek + 5, net: lastWeek + 6, third: null, dues: null
+  };
+  for (let c = lastWeek + 1; c < lastWeek + 12; c++) {
+    const h = cell(grid, hdr.row, c).toLowerCase();
+    if (h === 'season') col.season = c;
+    else if (h === '2nd') col.second = c;
+    else if (h === '1st') col.first = c;
+    else if (h === '3rd') col.third = c;
+    else if (h === 'paid') col.paid = c;
+    else if (h === 'dues' || h === 'buy-in' || h === 'buy in') col.dues = c;
+  }
+
+  // ---- column A: buy-in, team count, pot, then the payout lines ----
+  const colA = [];
+  for (let r = 0; r < grid.length; r++) {
+    const a = cell(grid, r, 0).replace(/[$,]/g, '');
+    if (a !== '' && !isNaN(Number(a))) colA.push({ row: r, value: Number(a), label: cell(grid, r, 1) });
+  }
+  const positives = colA.filter(x => x.value > 0).map(x => x.value);
+  const negatives = colA.filter(x => x.value < 0);
+  const weeklyLines = negatives.filter(x => /^\d{1,2}$/.test(x.label));
+  const lumpLines = negatives.filter(x => !/^\d{1,2}$/.test(x.label));
+
+  const payouts = {
+    buyIn: positives[0] || null,
+    teams: positives[1] || null,
+    pot: positives[2] || null,
+    // first three lump sums in order: 1st, 2nd, regular-season 1st — unless labelled
+    first: null, second: null, third: null, league: null,
+    weeklyPrize: weeklyLines.length ? Math.abs(weeklyLines[0].value) : null,
+    weeklyWeeks: weeklyLines.length || weekCols.length
+  };
+  const order = ['first', 'second', 'league'];
+  lumpLines.forEach((x, i) => {
+    const l = x.label.toLowerCase();
+    const key = l === '1st' ? 'first' : l === '2nd' ? 'second' : l === '3rd' ? 'third'
+      : /league|fee/.test(l) ? 'league' : (order[i] || null);
+    if (key && payouts[key] === null) payouts[key] = Math.abs(x.value);
+  });
+
+  // ---- owner rows ----
+  const owners = [];
+  for (let r = hdr.row + 1; r < grid.length; r++) {
+    const name = cell(grid, r, hdr.col);
+    if (!name) { if (owners.length) break; continue; }
+    if (name.toLowerCase() === 'team') break;             // the schedule grid below
+
+    const weeks = [];
+    weekCols.forEach((c, i) => {
+      const raw = cell(grid, r, c).replace(/[$,]/g, '');
+      if (!raw || raw === '0' || raw === '-') return;
+      const num = Number(raw);
+      // a real fantasy score is two or three digits with a decimal somewhere
+      // near; the prize amount or an X is just a marker
+      const score = Number.isFinite(num) && num >= 60 ? num : null;
+      weeks.push({ week: i + 1, score });
+    });
+
+    const flag = c => {
+      if (c === null) return false;
+      const v = cell(grid, r, c).replace(/[$,]/g, '').toLowerCase();
+      return v !== '' && v !== '0' && v !== '-' && v !== 'no' && v !== 'n';
+    };
+    const paidRaw = cell(grid, r, col.paid).replace(/[$,]/g, '').toLowerCase();
+    const paidNum = Number(paidRaw);
+    const paid = paidRaw === '' || paidRaw === '-' ? null
+      : Number.isFinite(paidNum) ? paidNum
+      : /^(y|yes|x|paid|✓|✔)$/.test(paidRaw) ? 'full' : null;
+    const duesRaw = col.dues === null ? '' : cell(grid, r, col.dues).replace(/[$,]/g, '');
+
+    owners.push({
+      owner: canonOwner(name),
+      weeks,
+      first: flag(col.first), second: flag(col.second), third: flag(col.third),
+      season: flag(col.season),          // 1st place at the end of the regular season
+      paid,
+      dues: duesRaw !== '' && !isNaN(Number(duesRaw)) ? Number(duesRaw) : null
+    });
+  }
+
+  return { payouts, owners, weekCount: weekCols.length };
+}
+
+/* ---------------------------------------------------------------- */
 /* Main                                                             */
 /* ---------------------------------------------------------------- */
 
@@ -1116,13 +1259,15 @@ async function loadLeagueData(sheetId, opts = {}) {
   const localTeamKey = readLocalTab('team-key.csv');
   const localActivity = readLocalTab('activity.csv');
 
-  const [cur, prev, prev2, teamKeyTab, activityTab] = await Promise.all([
+  const [cur, prev, prev2, teamKeyTab, activityTab, duesTab] = await Promise.all([
     fetchTab(sheetId, '2026-2027'),
     fetchTab(sheetId, '2025-2026'),
     fetchTab(sheetId, '2024-2025').catch(() => []),
     localTeamKey || fetchTab(sheetId, 'Team Key').catch(() => []),
-    localActivity || fetchTab(sheetId, 'Activity').catch(() => [])
+    localActivity || fetchTab(sheetId, 'Activity').catch(() => []),
+    fetchTab(sheetId, 'Schedule & Dues Tracker').catch(() => [])
   ]);
+  const dues = readDuesTracker(duesTab);
 
   const teamKeySource = localTeamKey ? 'team-key.csv (repo)' : 'Team Key tab (sheet)';
   const activitySource = localActivity ? 'activity.csv (repo)' : 'Activity tab (sheet)';
@@ -1387,6 +1532,7 @@ async function loadLeagueData(sheetId, opts = {}) {
 
     // the league's own log, standing in for the Yahoo API
     standings,
+    dues,
     transactions,
     activity,
     pickTradesFromActivity,

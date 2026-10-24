@@ -1319,134 +1319,174 @@ const MARC_MAX_BYTES = Number(process.env.MARC_MAX_BYTES || 4 * 1024 * 1024);
 
 /* ----------------------------------------------------------------
    DUES
-   Who has paid, what the pot is worth, and where it goes.
 
-   The payout structure matches the league sheet: a flat buy-in per
-   owner, with the pot split between 1st, 2nd, a league fee, and a
-   weekly high-score prize across the regular season.
+   Read from the "Schedule & Dues Tracker" tab of the league sheet —
+   the same tracker the commissioner has always kept, so there is
+   nothing new to maintain (see readDuesTracker in league-sheet.js for
+   the layout). Buy-in, payout lines and the weekly prize all come off
+   that tab too; the environment variables below are only the fallback
+   when the tab doesn't carry them.
 
-   Reading is open to everyone. Recording a payment needs the code —
-   it's the commissioner's job, and everyone else just needs to see
-   whether they still owe.
+   dues.csv and high-scores.csv in the repo are a second fallback, used
+   only if the tab can't be read at all.
    ---------------------------------------------------------------- */
 
 const BUY_IN        = Number(process.env.BUY_IN || 100);
 const PAYOUT_FIRST  = Number(process.env.PAYOUT_FIRST || 350);
 const PAYOUT_SECOND = Number(process.env.PAYOUT_SECOND || 100);
-const LEAGUE_FEE    = Number(process.env.LEAGUE_FEE || 50);
+const PAYOUT_THIRD  = Number(process.env.PAYOUT_THIRD || 0);
+const PAYOUT_LEAGUE = Number(process.env.PAYOUT_LEAGUE || 50);   // 1st place at the end of the regular season
 const WEEKLY_PRIZE  = Number(process.env.WEEKLY_PRIZE || 50);
 const WEEKLY_WEEKS  = Number(process.env.WEEKLY_WEEKS || 14);
 
-function duesSeason(req) {
-  return Number((req.query && req.query.season) || (req.body && req.body.season))
-    || currentNflSeason();
+const { parseCSV: parseCsvRows } = require('./league-sheet');
+
+/** Read a CSV from the repo into objects keyed by its header row. */
+function readRepoCsv(file) {
+  const p = path.join(__dirname, file);
+  if (!fs.existsSync(p)) return null;
+  const rows = parseCsvRows(fs.readFileSync(p, 'utf8')).filter(r => r.some(c => String(c || '').trim()));
+  if (rows.length < 2) return [];
+  const head = rows[0].map(h => String(h || '').trim().toLowerCase());
+  return rows.slice(1).map(r => {
+    const o = {};
+    head.forEach((h, i) => { o[h] = String(r[i] || '').trim(); });
+    return o;
+  });
 }
 
-app.get('/dues', (req, res) => {
-  const season = duesSeason(req);
+app.get('/dues', async (_req, res) => {
+  const season = currentNflSeason();
 
-  const paidRows = db.prepare('SELECT owner, paid, note FROM dues WHERE season = ?')
-    .all(season);
-  const paidBy = new Map(paidRows.map(r => [r.owner, r]));
+  // The tracker tab is the source. The CSVs only step in if the tab can't
+  // be read, so the page is never blank.
+  let tracker = null;
+  let standings = [];
+  try {
+    if (process.env.SHEET_ID) {
+      const league = await loadLeagueData(process.env.SHEET_ID);
+      tracker = league.dues || null;
+      standings = league.standings || [];
+    }
+  } catch (e) { /* fall through to the CSVs */ }
+
+  const pay = (tracker && tracker.payouts) || {};
+  const payouts = {
+    buyIn:       pay.buyIn       || BUY_IN,
+    first:       pay.first       ?? PAYOUT_FIRST,
+    second:      pay.second      ?? PAYOUT_SECOND,
+    third:       pay.third       ?? PAYOUT_THIRD,
+    league:      pay.league      ?? PAYOUT_LEAGUE,
+    weeklyPrize: pay.weeklyPrize || WEEKLY_PRIZE,
+    weeklyWeeks: pay.weeklyWeeks || WEEKLY_WEEKS
+  };
+  payouts.weeklyTotal = payouts.weeklyPrize * payouts.weeklyWeeks;
+  payouts.allocated = payouts.first + payouts.second + payouts.third + payouts.league + payouts.weeklyTotal;
+
+  // ---- per-owner facts, from the tracker or the CSVs ----
+  const facts = new Map();   // owner -> { dues, paid, weeks:[{week,score}], first, second, third, note }
+  let source;
+
+  if (tracker && tracker.owners.length) {
+    source = 'Schedule & Dues Tracker tab';
+    for (const o of tracker.owners) {
+      const owner = canonOwnerName(o.owner);
+      if (!LEAGUE_OWNERS.includes(owner)) continue;      // a name from a past season
+      const dues = o.dues ?? payouts.buyIn;
+      facts.set(owner, {
+        dues,
+        paid: o.paid === 'full' ? dues : (o.paid ?? 0),
+        paidTracked: o.paid !== null,
+        weeks: o.weeks,
+        first: o.first, second: o.second, third: o.third, regSeason: o.season,
+        note: null
+      });
+    }
+  } else {
+    source = 'tracker tab could not be read — nothing logged';
+    for (const r of readRepoCsv('dues.csv') || []) {
+      const owner = canonOwnerName(r.owner);
+      if (!LEAGUE_OWNERS.includes(owner)) continue;
+      const dues = r.dues === '' ? payouts.buyIn : Number(r.dues) || 0;
+      const fin = Number(r.finish) || 0;
+      facts.set(owner, { dues, paid: Number(r.paid) || 0, paidTracked: true, weeks: [],
+        first: fin === 1, second: fin === 2, third: fin === 3, regSeason: false, note: r.note || null });
+    }
+    for (const r of readRepoCsv('high-scores.csv') || []) {
+      const owner = canonOwnerName(r.owner); const w = Number(r.week);
+      if (!facts.has(owner) || !w) continue;
+      facts.get(owner).weeks.push({ week: w, score: Number(r.score) || null });
+    }
+  }
+
+  // every current owner gets a row, even with nothing logged yet
+  for (const o of LEAGUE_OWNERS) {
+    if (!facts.has(o)) facts.set(o, { dues: payouts.buyIn, paid: 0, paidTracked: false, weeks: [],
+      first: false, second: false, third: false, regSeason: false, note: null });
+  }
+
+  // ---- weekly strip ----
+  const weekly = [];
+  for (let w = 1; w <= payouts.weeklyWeeks; w++) {
+    const winners = [...facts.entries()].filter(([, f]) => f.weeks.some(x => x.week === w));
+    const hit = winners[0];
+    weekly.push({
+      week: w,
+      owner: hit ? hit[0] : null,
+      score: hit ? (hit[1].weeks.find(x => x.week === w).score) : null,
+      tie: winners.length > 1 ? winners.map(x => x[0]) : null
+    });
+  }
 
   const owners = LEAGUE_OWNERS.map(o => {
-    const row = paidBy.get(o);
-    const paid = row ? Number(row.paid) : 0;
+    const f = facts.get(o);
+    const weeks = f.weeks.map(x => x.week).sort((a, b) => a - b);
+    const highScore = weeks.length * payouts.weeklyPrize;
+    const finishPrize = (f.first ? payouts.first : 0) + (f.second ? payouts.second : 0) + (f.third ? payouts.third : 0);
+    const finish = f.first ? 1 : f.second ? 2 : f.third ? 3 : null;
+    const seasonPrize = f.regSeason ? payouts.league : 0;
+    const won = highScore + finishPrize + seasonPrize;
     return {
       owner: o,
-      paid,
-      owes: Math.max(0, BUY_IN - paid),
-      status: paid >= BUY_IN ? 'paid' : paid > 0 ? 'partial' : 'unpaid',
-      note: row ? row.note : null
+      dues: f.dues,
+      paid: f.paid,
+      paidTracked: f.paidTracked,
+      owed: Math.max(0, f.dues - f.paid),
+      status: !f.paidTracked ? 'untracked' : f.paid >= f.dues ? 'paid' : f.paid > 0 ? 'partial' : 'unpaid',
+      note: f.note,
+      highScoreWeeks: weeks,
+      highScore,            // weekly high-score winnings
+      regSeason: !!f.regSeason,
+      season: seasonPrize,  // 1st place at the end of the regular season
+      finish,
+      finishPrize,
+      won,
+      net: won - f.dues
     };
   });
 
+  const expected = owners.reduce((n, o) => n + o.dues, 0);
   const collected = owners.reduce((n, o) => n + o.paid, 0);
-  const expected = BUY_IN * LEAGUE_OWNERS.length;
-
-  const winners = db.prepare(
-    'SELECT week, owner FROM weekly_winners WHERE season = ? ORDER BY week'
-  ).all(season);
-
-  const weeklyPaidOut = winners.length * WEEKLY_PRIZE;
+  const weeklyLogged = weekly.filter(w => w.owner).length;
 
   res.json({
-    season,
-    buyIn: BUY_IN,
-    expected,
-    collected,
+    season, source,
+    buyIn: payouts.buyIn,
+    expected, collected,
     outstanding: expected - collected,
-    owners,
-    payouts: {
-      first: PAYOUT_FIRST,
-      second: PAYOUT_SECOND,
-      leagueFee: LEAGUE_FEE,
-      weeklyPrize: WEEKLY_PRIZE,
-      weeklyWeeks: WEEKLY_WEEKS,
-      weeklyTotal: WEEKLY_PRIZE * WEEKLY_WEEKS,
-      allocated: PAYOUT_FIRST + PAYOUT_SECOND + LEAGUE_FEE + WEEKLY_PRIZE * WEEKLY_WEEKS
-    },
-    weekly: {
-      winners,
-      paidOut: weeklyPaidOut,
-      remaining: WEEKLY_PRIZE * WEEKLY_WEEKS - weeklyPaidOut
-    }
+    owners, weekly, weeklyLogged,
+    weeklyPaidOut: weeklyLogged * payouts.weeklyPrize,
+    payouts
   });
 });
 
-app.post('/dues', (req, res) => {
-  const { owner, paid, note, code } = req.body || {};
-  if (String(code || '') !== ANNOUNCE_CODE) {
-    return res.status(401).json({ error: 'Wrong code.' });
-  }
-  if (!LEAGUE_OWNERS.includes(owner)) {
-    return res.status(400).json({ error: 'Unknown owner.' });
-  }
-  const amount = Number(paid);
-  if (!Number.isFinite(amount) || amount < 0) {
-    return res.status(400).json({ error: 'Amount must be a number.' });
-  }
-
-  db.prepare(`
-    INSERT INTO dues (season, owner, paid, note, updated_at)
-    VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT(season, owner) DO UPDATE SET paid = excluded.paid,
-                                             note = excluded.note,
-                                             updated_at = excluded.updated_at
-  `).run(duesSeason(req), owner, amount,
-         String(note || '').trim().slice(0, 120) || null,
-         Math.floor(Date.now() / 1000));
-
-  res.json({ ok: true });
-});
-
-app.post('/dues/weekly', (req, res) => {
-  const { week, owner, code } = req.body || {};
-  if (String(code || '') !== ANNOUNCE_CODE) {
-    return res.status(401).json({ error: 'Wrong code.' });
-  }
-  const w = Number(week);
-  if (!Number.isFinite(w) || w < 1 || w > WEEKLY_WEEKS) {
-    return res.status(400).json({ error: `Week must be 1-${WEEKLY_WEEKS}.` });
-  }
-  const season = duesSeason(req);
-
-  if (!owner) {
-    db.prepare('DELETE FROM weekly_winners WHERE season = ? AND week = ?').run(season, w);
-    return res.json({ ok: true, cleared: true });
-  }
-  if (!LEAGUE_OWNERS.includes(owner)) {
-    return res.status(400).json({ error: 'Unknown owner.' });
-  }
-
-  db.prepare(`
-    INSERT INTO weekly_winners (season, week, owner, updated_at)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(season, week) DO UPDATE SET owner = excluded.owner,
-                                            updated_at = excluded.updated_at
-  `).run(season, w, owner, Math.floor(Date.now() / 1000));
-
-  res.json({ ok: true });
+// Payments used to be recorded through the site into the database. They
+// live in dues.csv now, so these say so instead of silently writing to a
+// table nothing reads.
+app.post(['/dues', '/dues/weekly'], (_req, res) => {
+  res.status(410).json({
+    error: 'Dues are kept in dues.csv and high-scores.csv in the repo now. Edit the file and push.'
+  });
 });
 
 /* ----------------------------------------------------------------

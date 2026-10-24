@@ -1523,6 +1523,46 @@
   .du-amount { max-width: 130px; }
   .du-admin { margin-top: 4px; }
 
+  .du-stat-val small { font-size: 11px; color: var(--text-dim); font-weight: 500; margin-left: 2px; }
+  .du-table-wrap { overflow-x: auto; margin-bottom: 26px; border: 1px solid var(--border); border-radius: 12px; background: var(--glass); }
+  .du-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+  .du-table th {
+    text-align: right; padding: 11px 12px;
+    font-family: 'Roboto Mono', monospace; font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--text-dim); border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  .du-table th.l, .du-table td.l { text-align: left; }
+  .du-table td {
+    text-align: right; padding: 11px 12px; border-bottom: 1px solid var(--border);
+    font-family: 'Roboto Mono', monospace; font-size: 13px; font-weight: 700; white-space: nowrap;
+  }
+  .du-table tr:last-child td { border-bottom: none; }
+  .du-table tr.unpaid td.l, .du-table tr.partial td.l { box-shadow: inset 3px 0 0 var(--loss); }
+  .du-table td small { display: block; font-size: 9.5px; font-weight: 500; color: var(--text-dim); margin-top: 2px; }
+  .du-table td.good { color: var(--win); }
+  .du-table td.owed { color: var(--loss); }
+  .du-table td.win { color: var(--gold-1); }
+  .du-table td.dim { color: var(--text-dim); opacity: 0.55; font-weight: 500; }
+  .du-table td.net { font-size: 14px; }
+  .du-table .du-name { display: block; }
+  .du-table .du-note { display: block; }
+  .du-h3 {
+    font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1.8px;
+    text-transform: uppercase; color: var(--text-dim); margin: 0 0 10px;
+  }
+  .du-h3 span { font-family: 'Roboto Mono', monospace; font-size: 10px; letter-spacing: 0.5px; text-transform: none; }
+  .du-weeks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 26px; }
+  .du-week {
+    display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 6px;
+    border: 1px solid var(--border); border-radius: 9px; background: rgba(255,255,255,0.02);
+  }
+  .du-week.won { border-color: rgba(255,226,155,0.35); background: rgba(227,168,60,0.07); }
+  .du-week-n { font-family: 'Roboto Mono', monospace; font-size: 9.5px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+  .du-week-who { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: .4px; }
+  .du-week:not(.won) .du-week-who { color: var(--text-dim); opacity: .45; }
+  .du-week-pts { font-family: 'Roboto Mono', monospace; font-size: 10.5px; color: var(--gold-1); }
+  @media (max-width: 700px) { .du-weeks { grid-template-columns: repeat(4, 1fr); } }
+
   /* ---- MARC'S RANKINGS ---- */
   .marc-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -3000,32 +3040,14 @@
 
   <section class="panel" id="dues">
     <h2 class="panel-title">Dues</h2>
-    <p class="panel-sub">Who's square, who owes, and where the pot goes</p>
+    <p class="panel-sub">Who's square, who's winning money, and where the pot goes</p>
 
+    <div class="sheet-badge du-badge"><span class="dot"></span> <span id="du-source">From the league Google Sheet &middot; Schedule &amp; Dues Tracker tab</span></div>
     <div id="dues-summary" class="du-summary"></div>
-    <div id="dues-list" class="du-list"></div>
+    <div id="dues-table" class="du-table-wrap"></div>
+    <h3 class="du-h3">Weekly high score &middot; <span id="du-weekly-sub"></span></h3>
+    <div id="dues-weekly" class="du-weeks"></div>
     <div id="dues-payouts" class="du-payouts"></div>
-
-    <div class="du-admin">
-      <button id="du-toggle" class="vt-toggle">+ Record a payment</button>
-      <div id="du-form" class="vt-form" hidden>
-        <div class="ann-form-row">
-          <select id="du-owner" class="vt-select">
-            <option value="">Who paid&hellip;</option>
-          </select>
-          <input id="du-amount" class="bd-input du-amount" type="number" min="0" step="5" placeholder="Amount">
-        </div>
-        <input id="du-note" class="bd-input" type="text" maxlength="120" placeholder="Note (Venmo, cash, partial&hellip;)">
-        <div class="ann-form-row">
-          <input id="du-code" class="bd-input ann-code" type="password" inputmode="numeric" maxlength="12" placeholder="Code">
-        </div>
-        <div class="ann-actions">
-          <span id="du-msg" class="bd-msg"></span>
-          <button id="du-cancel" class="ann-cancel">Cancel</button>
-          <button id="du-save" class="bd-post">Save</button>
-        </div>
-      </div>
-    </div>
   </section>
 
   <section class="panel" id="picktrades">
@@ -3403,7 +3425,7 @@
       ? new Date(when).toLocaleString(undefined,
           { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
       : '';
-    document.querySelectorAll('.sheet-badge').forEach(b => {
+    document.querySelectorAll('.sheet-badge:not(.du-badge)').forEach(b => {
       b.innerHTML = '<span class="dot"></span> Live from the league Google Sheet'
         + (stamp ? ' \u00b7 updated ' + stamp : '');
     });
@@ -4179,135 +4201,91 @@
   });
 
   // ---- Dues ----
-  // Everyone can see who's square. Only the code lets you record a payment.
+  // Read-only here. The numbers live in dues.csv and high-scores.csv in the
+  // repo, so a deploy can't wipe them and fixing one is a file edit.
   const duSummary = document.getElementById('dues-summary');
-  const duList = document.getElementById('dues-list');
+  const duTable = document.getElementById('dues-table');
+  const duWeekly = document.getElementById('dues-weekly');
   const duPayouts = document.getElementById('dues-payouts');
-  const duOwner = document.getElementById('du-owner');
-  const duMsg = document.getElementById('du-msg');
   let duLoaded = false;
-  let duData = null;
-
-  DEFAULT_OWNERS.forEach(o => {
-    const opt = document.createElement('option');
-    opt.value = o; opt.textContent = o;
-    duOwner.appendChild(opt);
-  });
 
   const money = n => '$' + Number(n || 0).toLocaleString(undefined,
-    { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-
-  function duSay(t, kind) {
-    duMsg.textContent = t || '';
-    duMsg.className = 'bd-msg' + (kind ? ' ' + kind : '');
-    if (t) setTimeout(() => { if (duMsg.textContent === t) duSay(''); }, 4000);
-  }
+    { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const moneyOrDash = n => n ? money(n) : '—';
 
   function renderDues(d) {
-    duData = d;
-    const pct = d.expected ? Math.round((d.collected / d.expected) * 100) : 0;
-
+    const src = document.getElementById('du-source');
+    if (src && d.source) src.textContent = 'From the league Google Sheet · ' + d.source;
     duSummary.innerHTML =
-        '<div class="du-stat"><div class="du-stat-label">Collected</div>'
+        '<div class="du-stat"><div class="du-stat-label">Pot</div>'
+      + '<div class="du-stat-val">' + money(d.expected) + '</div></div>'
+      + '<div class="du-stat"><div class="du-stat-label">Collected</div>'
       + '<div class="du-stat-val good">' + money(d.collected) + '</div></div>'
       + '<div class="du-stat"><div class="du-stat-label">Outstanding</div>'
-      + '<div class="du-stat-val' + (d.outstanding ? ' owed' : ' good') + '">'
-      + money(d.outstanding) + '</div></div>'
-      + '<div class="du-stat"><div class="du-stat-label">Pot</div>'
-      + '<div class="du-stat-val">' + money(d.expected) + '</div></div>'
-      + '<div class="du-stat"><div class="du-stat-label">Buy-in</div>'
-      + '<div class="du-stat-val">' + money(d.buyIn) + '</div></div>';
+      + '<div class="du-stat-val' + (d.outstanding ? ' owed' : ' good') + '">' + money(d.outstanding) + '</div></div>'
+      + '<div class="du-stat"><div class="du-stat-label">Weekly prizes paid</div>'
+      + '<div class="du-stat-val">' + money(d.weeklyPaidOut) + '<small> / ' + money(d.payouts.weeklyTotal) + '</small></div></div>';
 
-    duSummary.insertAdjacentHTML('afterend',
-      document.getElementById('du-bar') ? '' :
-      '<div class="du-bar-wrap" id="du-bar"><div class="du-bar" style="width:' + pct + '%"></div></div>');
-    const bar = document.querySelector('#du-bar .du-bar');
-    if (bar) bar.style.width = pct + '%';
-
-    const order = { unpaid: 0, partial: 1, paid: 2 };
+    // Owners: anyone who owes first, then by money won, then name.
+    const owes = o => o.status === 'unpaid' || o.status === 'partial';
     const owners = d.owners.slice().sort((a, b) =>
-      order[a.status] - order[b.status] || a.owner.localeCompare(b.owner));
+      owes(b) - owes(a) || b.won - a.won || a.owner.localeCompare(b.owner));
 
-    duList.innerHTML = owners.map(o => {
-      const label = o.status === 'paid' ? 'Paid'
-        : o.status === 'partial' ? 'Owes ' + money(o.owes) : 'Unpaid';
-      return '<div class="du-row ' + o.status + '">'
-        + '<div><div class="du-name">' + esc(o.owner) + '</div>'
-        + (o.note ? '<div class="du-note">' + esc(o.note) + '</div>' : '')
-        + '</div>'
-        + '<span class="du-amt">' + money(o.paid) + '</span>'
-        + '<span class="du-pill ' + o.status + '">' + label + '</span>'
-        + '</div>';
-    }).join('');
+    const finishLabel = o => o.finish ? ord(o.finish) + ' · ' + money(o.finishPrize) : '—';
+    const paidCell = o => o.status === 'untracked'
+      ? '<span class="dim">not logged</span>'
+      : money(o.paid);
+
+    duTable.innerHTML =
+        '<table class="du-table"><thead><tr>'
+      + '<th class="l">Owner</th><th>Dues</th><th>Paid</th><th>Owed</th>'
+      + '<th>High Score</th><th title="1st place at the end of the regular season">Season</th><th>1st–3rd</th><th>Net</th>'
+      + '</tr></thead><tbody>'
+      + owners.map(o =>
+          '<tr class="' + o.status + '">'
+        + '<td class="l"><span class="du-name">' + esc(o.owner) + '</span>'
+        +   (o.note ? '<span class="du-note">' + esc(o.note) + '</span>' : '') + '</td>'
+        + '<td>' + money(o.dues) + '</td>'
+        + '<td class="' + (o.status === 'paid' ? 'good' : o.status === 'untracked' ? 'dim' : '') + '">' + paidCell(o) + '</td>'
+        + '<td class="' + (o.owed && o.status !== 'untracked' ? 'owed' : 'dim') + '">'
+        +   (o.status === 'untracked' ? '—' : o.owed ? money(o.owed) : '—') + '</td>'
+        + '<td class="' + (o.highScore ? 'win' : 'dim') + '">' + moneyOrDash(o.highScore)
+        +   (o.highScoreWeeks.length ? '<small>wk ' + o.highScoreWeeks.join(', ') + '</small>' : '') + '</td>'
+        + '<td class="' + (o.season ? 'win' : 'dim') + '">' + moneyOrDash(o.season) + '</td>'
+        + '<td class="' + (o.finish ? 'win' : 'dim') + '">' + finishLabel(o) + '</td>'
+        + '<td class="net ' + (o.net > 0 ? 'win' : o.net < 0 ? 'owed' : '') + '">'
+        +   (o.net > 0 ? '+' : o.net < 0 ? '−' : '') + money(Math.abs(o.net)) + '</td>'
+        + '</tr>').join('')
+      + '</tbody></table>';
+
+    document.getElementById('du-weekly-sub').textContent =
+      money(d.payouts.weeklyPrize) + ' a week · ' + d.weeklyLogged + ' of ' + d.payouts.weeklyWeeks + ' logged';
+    duWeekly.innerHTML = d.weekly.map(w =>
+        '<div class="du-week' + (w.owner ? ' won' : '') + '">'
+      + '<span class="du-week-n">Wk ' + w.week + '</span>'
+      + '<span class="du-week-who">' + (w.tie ? w.tie.map(esc).join(' / ') : w.owner ? esc(w.owner) : '—') + '</span>'
+      + (w.score ? '<span class="du-week-pts">' + w.score + '</span>' : '')
+      + '</div>').join('');
 
     const p = d.payouts;
+    const rows = [
+      ['1st place', p.first], ['2nd place', p.second], ['3rd place', p.third],
+      ['1st place, end of regular season', p.league],
+      ['Weekly high score · ' + money(p.weeklyPrize) + ' × ' + p.weeklyWeeks + ' weeks', p.weeklyTotal]
+    ].filter(r => r[1] > 0);
     duPayouts.innerHTML = '<h3>Where the pot goes</h3>'
-      + '<div class="du-pay-row"><span>1st place</span><span>' + money(p.first) + '</span></div>'
-      + '<div class="du-pay-row"><span>2nd place</span><span>' + money(p.second) + '</span></div>'
-      + '<div class="du-pay-row"><span>League fee</span><span>' + money(p.leagueFee) + '</span></div>'
-      + '<div class="du-pay-row"><span>Weekly high score \u00b7 ' + money(p.weeklyPrize)
-      + ' \u00d7 ' + p.weeklyWeeks + ' weeks</span><span>' + money(p.weeklyTotal) + '</span></div>'
+      + rows.map(r => '<div class="du-pay-row"><span>' + r[0] + '</span><span>' + money(r[1]) + '</span></div>').join('')
       + '<div class="du-pay-row total"><span>Allocated</span><span>' + money(p.allocated) + '</span></div>'
       + (p.allocated !== d.expected
-          ? '<div class="du-pay-row"><span style="color:var(--loss)">Doesn\'t match the pot ('
-            + money(d.expected) + ')</span><span style="color:var(--loss)">'
-            + money(p.allocated - d.expected) + '</span></div>'
-          : '')
-      + (d.weekly && d.weekly.winners.length
-          ? '<div class="du-pay-row"><span>Weekly prizes paid so far</span><span>'
-            + money(d.weekly.paidOut) + '</span></div>'
+          ? '<div class="du-pay-row"><span style="color:var(--loss)">Doesn\'t match the pot (' + money(d.expected) + ')</span>'
+            + '<span style="color:var(--loss)">' + (p.allocated > d.expected ? '+' : '') + money(p.allocated - d.expected) + '</span></div>'
           : '');
-  }
-
-  // Preview mode: no server, so dues are held in memory for the session just
-  // so the tab can be tried out. The real thing saves to the database.
-  const DU_CONFIG = {
-    buyIn: 100, first: 350, second: 100, leagueFee: 50,
-    weeklyPrize: 50, weeklyWeeks: 14
-  };
-
-  function duBuildPreview(paidMap) {
-    const owners = DEFAULT_OWNERS.map(o => {
-      const row = paidMap[o] || { paid: 0, note: null };
-      const paid = Number(row.paid) || 0;
-      return {
-        owner: o, paid,
-        owes: Math.max(0, DU_CONFIG.buyIn - paid),
-        status: paid >= DU_CONFIG.buyIn ? 'paid' : paid > 0 ? 'partial' : 'unpaid',
-        note: row.note || null
-      };
-    });
-    const collected = owners.reduce((n, o) => n + o.paid, 0);
-    const expected = DU_CONFIG.buyIn * DEFAULT_OWNERS.length;
-    const weeklyTotal = DU_CONFIG.weeklyPrize * DU_CONFIG.weeklyWeeks;
-    return {
-      season: new Date().getFullYear(),
-      buyIn: DU_CONFIG.buyIn,
-      expected, collected, outstanding: expected - collected,
-      owners,
-      payouts: {
-        first: DU_CONFIG.first, second: DU_CONFIG.second,
-        leagueFee: DU_CONFIG.leagueFee, weeklyPrize: DU_CONFIG.weeklyPrize,
-        weeklyWeeks: DU_CONFIG.weeklyWeeks, weeklyTotal,
-        allocated: DU_CONFIG.first + DU_CONFIG.second + DU_CONFIG.leagueFee + weeklyTotal
-      },
-      weekly: { winners: [], paidOut: 0, remaining: weeklyTotal },
-      preview: true
-    };
   }
 
   async function loadDues() {
     await serverReady;
-
     if (API_BASE === null) {
-      const paidMap = (await pvStore.get('dues:paid')) || {};
-      renderDues(duBuildPreview(paidMap));
-      if (!document.getElementById('du-preview-note')) {
-        duList.insertAdjacentHTML('beforebegin',
-          '<div class="bd-note" id="du-preview-note"><strong>Preview mode.</strong> '
-          + 'No server here, so payments are session-only and clear on refresh. '
-          + 'The code is 6699. On the live site this saves for the whole league.</div>');
-      }
+      duTable.innerHTML = '<div class="vt-empty">Dues live on the league server.</div>';
       return;
     }
     try {
@@ -4315,64 +4293,9 @@
       if (!res.ok) throw new Error('server ' + res.status);
       renderDues(await res.json());
     } catch (e) {
-      duList.innerHTML = '<div class="vt-empty">Could not load dues ('
-        + esc(e.message) + ').</div>';
+      duTable.innerHTML = '<div class="vt-empty">Could not load dues (' + esc(e.message) + ').</div>';
     }
   }
-
-  document.getElementById('du-toggle').addEventListener('click', () => {
-    const f = document.getElementById('du-form');
-    f.hidden = !f.hidden;
-  });
-  document.getElementById('du-cancel').addEventListener('click', () => {
-    document.getElementById('du-form').hidden = true;
-  });
-
-  // pre-fill with what they've already paid, so it's an edit not a guess
-  duOwner.addEventListener('change', () => {
-    if (!duData) return;
-    const row = duData.owners.find(o => o.owner === duOwner.value);
-    document.getElementById('du-amount').value = row ? row.paid : '';
-    document.getElementById('du-note').value = (row && row.note) || '';
-  });
-
-  document.getElementById('du-save').addEventListener('click', async () => {
-    const owner = duOwner.value;
-    const paid = document.getElementById('du-amount').value;
-    const note = document.getElementById('du-note').value;
-    const code = document.getElementById('du-code').value.trim();
-
-    if (!owner) { duSay('Pick who paid.', 'err'); return; }
-    if (paid === '') { duSay('Enter an amount.', 'err'); return; }
-    if (!code) { duSay('Enter the code.', 'err'); return; }
-
-    if (API_BASE === null) {
-      if (code !== PREVIEW_ANN_CODE) { duSay('Wrong code.', 'err'); return; }
-      const paidMap = (await pvStore.get('dues:paid')) || {};
-      paidMap[owner] = { paid: Number(paid), note: note.trim() || null };
-      await pvStore.set('dues:paid', paidMap);
-      document.getElementById('du-code').value = '';
-      document.getElementById('du-form').hidden = true;
-      duSay('Saved.', 'ok');
-      return loadDues();
-    }
-
-    try {
-      const res = await fetch(API_BASE.replace(/\/$/, '') + '/dues', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ owner, paid, note, code })
-      });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || 'server ' + res.status);
-      document.getElementById('du-code').value = '';
-      document.getElementById('du-form').hidden = true;
-      duSay('Saved.', 'ok');
-      loadDues();
-    } catch (e) {
-      duSay(e.message || 'Could not save.', 'err');
-    }
-  });
 
   document.querySelector('nav.tabs button[data-tab="dues"]').addEventListener('click', () => {
     if (!duLoaded) { duLoaded = true; loadDues(); }
