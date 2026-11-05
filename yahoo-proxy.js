@@ -887,7 +887,8 @@ async function rostersForProjections() {
     byOwner.get(r.owner).push({ name: r.player, position, slot, nflTeam: r.nflTeam || null });
   }
   return {
-    basis: league.rosterBasis === 'pasted Yahoo rosters'
+    basis: league.rosterBasis === 'rosters.csv' ? 'current rosters from rosters.csv'
+      : league.rosterBasis === 'pasted Yahoo rosters'
       ? 'current rosters from the league sheet'
       : (league.rosterSeason || '') + ' rosters from the league sheet',
     teams: [...byOwner.entries()].map(([owner, players]) => ({ owner, players }))
@@ -1860,6 +1861,7 @@ app.get('/rosters', async (_req, res) => {
     const season = league.rosterSeason || 'the sheet';
     const basisText = {
       'draft board': `${season} rosters, from the draft board`,
+      'rosters.csv': 'current rosters from rosters.csv',
       'ending rosters': `${season} ending rosters (this season's draft not entered yet)`
     }[league.rosterBasis] || `${season} rosters from the Google Sheet`;
 

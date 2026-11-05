@@ -1,0 +1,178 @@
+Pos,Player,Owner,Position
+QB,Jared Goff,Palumberi,QB
+RB,D'Andre Swift,Palumberi,RB
+RB,Jahmyr Gibbs,Palumberi,RB
+WR,Jaxon Smith-Njigba,Palumberi,WR
+WR,Christian Watson,Palumberi,WR
+W/R/T,Javonte Williams,Palumberi,RB
+BN,George Kittle,Palumberi,TE
+BN,Ladd McConkey,Palumberi,WR
+BN,J.K. Dobbins,Palumberi,RB
+BN,Emmett Johnson,Palumberi,RB
+BN,Seth McGowan,Palumberi,RB
+IR,De'Zhaun Stribling,Palumberi,WR
+K,Jason Myers,Palumberi,K
+DEF,Patriots,Palumberi,DEF
+BN,Kyler Murray,Palumberi,QB
+QB,Joe Burrow,Garett,QB
+RB,Kyren Williams,Garett,RB
+RB,Chuba Hubbard,Garett,RB
+WR,Germie Bernard,Garett,WR
+WR,Amon-Ra St. Brown,Garett,WR
+TE,Trey McBride,Garett,TE
+W/R/T,Bucky Irving,Garett,RB
+BN,Khalil Shakir,Garett,WR
+BN,Aaron Rodgers,Garett,QB
+BN,Courtland Sutton,Garett,WR
+BN,Jordan Addison,Garett,WR
+BN,Mark Andrews,Garett,TE
+K,Brandon Aubrey,Garett,K
+DEF,Commanders,Garett,DEF
+QB,Jayden Daniels,Fito,QB
+RB,Jonathan Taylor,Fito,RB
+RB,Bijan Robinson,Fito,RB
+WR,A.J. Brown,Fito,WR
+WR,Makai Lemon,Fito,WR
+TE,Kyle Pitts Sr.,Fito,TE
+W/R/T,Breece Hall,Fito,RB
+BN,Quinshon Judkins,Fito,RB
+BN,Nico Collins,Fito,WR
+BN,Harold Fannin Jr.,Fito,TE
+BN,KC Concepcion Jr.,Fito,WR
+IR,Davante Adams,Fito,WR
+K,Ka'imi Fairbairn,Fito,K
+DEF,Texans,Fito,DEF
+BN,Adonai Mitchell,Fito,WR
+QB,Jacoby Brissett,Rogan,QB
+RB,Ashton Jeanty,Rogan,RB
+RB,Chase Brown,Rogan,RB
+WR,CeeDee Lamb,Rogan,WR
+WR,Jameson Williams,Rogan,WR
+TE,Tucker Kraft,Rogan,TE
+W/R/T,Rashee Rice,Rogan,WR
+BN,C.J. Stroud,Rogan,QB
+BN,Woody Marks,Rogan,RB
+BN,Isaiah Likely,Rogan,TE
+BN,Brian Thomas Jr.,Rogan,WR
+BN,Deebo Samuel Sr.,Rogan,WR
+IR,Jadarian Price,Rogan,RB
+K,Will Reichard,Rogan,K
+DEF,Steelers,Rogan,DEF
+QB,Trevor Lawrence,Post,QB
+RB,Jaylen Warren,Post,RB
+RB,Saquon Barkley,Post,RB
+WR,Omar Cooper Jr.,Post,WR
+WR,Parker Washington,Post,WR
+TE,Brock Bowers,Post,TE
+W/R/T,George Pickens,Post,WR
+BN,RJ Harvey,Post,RB
+BN,Tyler Shough,Post,QB
+BN,Tyler Allgeier,Post,RB
+BN,Rome Odunze,Post,WR
+BN,Jeremiyah Love,Post,RB
+IR,DeVonta Smith,Post,WR
+DEF,Panthers,Post,DEF
+K,Cairo Santos,Post,K
+QB,Patrick Mahomes,Jared,QB
+RB,Rhamondre Stevenson,Jared,RB
+RB,Kimani Vidal,Jared,RB
+WR,Drake London,Jared,WR
+WR,Tetairoa McMillan,Jared,WR
+TE,Travis Kelce,Jared,TE
+W/R/T,Ja'Marr Chase,Jared,WR
+BN,Dallas Goedert,Jared,TE
+BN,DK Metcalf,Jared,WR
+BN,David Montgomery,Jared,RB
+BN,Tyrone Tracy Jr.,Jared,RB
+IR,Dameon Pierce,Jared,RB
+K,Chase McLaughlin,Jared,K
+DEF,Bengals,Jared,DEF
+BN,Josh Downs,Jared,WR
+QB,Lamar Jackson,Marc,QB
+RB,Derrick Henry,Marc,RB
+WR,Michael Wilson,Marc,WR
+WR,Luther Burden III,Marc,WR
+TE,Sam LaPorta,Marc,TE
+W/R/T,DJ Moore,Marc,WR
+BN,Jordan Love,Marc,QB
+BN,Aaron Jones Sr.,Marc,RB
+BN,Malik Nabers,Marc,WR
+BN,Devaughn Vele,Marc,WR
+BN,Dylan Sampson,Marc,RB
+IR,Travis Etienne Jr.,Marc,RB
+K,Spencer Shrader,Marc,K
+DEF,Bears,Marc,DEF
+BN,Devin Singletary,Marc,RB
+QB,Kirk Cousins,Derek,QB
+RB,Josh Jacobs,Derek,RB
+RB,Bhayshul Tuten,Derek,RB
+WR,Matthew Golden,Derek,WR
+WR,Puka Nacua,Derek,WR
+TE,Dalton Kincaid,Derek,TE
+W/R/T,Stefon Diggs,Derek,WR
+BN,Jalen Coker,Derek,WR
+BN,Michael Mayer,Derek,TE
+BN,Braelon Allen,Derek,RB
+BN,Matthew Stafford,Derek,QB
+BN,Keenan Allen,Derek,WR
+K,Brandon McManus,Derek,K
+DEF,Seahawks,Derek,DEF
+QB,Drake Maye,Gregg,QB
+RB,Tony Pollard,Gregg,RB
+RB,James Cook III,Gregg,RB
+WR,Zay Flowers,Gregg,WR
+WR,Denzel Boston,Gregg,WR
+TE,Brenton Strange,Gregg,TE
+W/R/T,Rico Dowdle,Gregg,RB
+BN,Zach Charbonnet,Gregg,RB
+BN,Jaylen Waddle,Gregg,WR
+BN,Chris Olave,Gregg,WR
+BN,Brock Purdy,Gregg,QB
+BN,Kyle Monangai,Gregg,RB
+IR,Romeo Doubs,Gregg,WR
+K,Matt Gay,Gregg,K
+DEF,Jaguars,Gregg,DEF
+QB,Caleb Williams,Opie,QB
+RB,Jordan Mason,Opie,RB
+RB,Rachaad White,Opie,RB
+WR,Garrett Wilson,Opie,WR
+WR,Tee Higgins,Opie,WR
+TE,Colston Loveland,Opie,TE
+W/R/T,Ryan Flournoy,Opie,WR
+BN,Christian McCaffrey,Opie,RB
+BN,Bam Knight,Opie,RB
+BN,Omarion Hampton,Opie,RB
+BN,J. Croskey-Merritt,Opie,RB
+BN,Caleb Douglas,Opie,WR
+IR,Jordyn Tyson,Opie,WR
+DEF,Vikings,Opie,DEF
+K,Evan McPherson,Opie,K
+QB,Josh Allen,Hexx,QB
+RB,Kenny Gainwell,Hexx,RB
+RB,Kenneth Walker III,Hexx,RB
+WR,Xavier Worthy,Hexx,WR
+WR,Jakobi Meyers,Hexx,WR
+TE,T.J. Hockenson,Hexx,TE
+W/R/T,Blake Corum,Hexx,RB
+BN,Marvin Harrison Jr.,Hexx,WR
+BN,Jake Ferguson,Hexx,TE
+BN,Mike Evans,Hexx,WR
+BN,Mike Washington Jr.,Hexx,RB
+K,Harrison Butker,Hexx,K
+BN,Jake Bates,Hexx,K
+DEF,Broncos,Hexx,DEF
+QB,Dak Prescott,Rebel,QB
+RB,Ollie Gordon II,Rebel,RB
+RB,Jonah Coleman,Rebel,RB
+WR,Justin Jefferson,Rebel,WR
+WR,Tre Tucker,Rebel,WR
+TE,Tyler Warren,Rebel,TE
+W/R/T,Hunter Henry,Rebel,TE
+BN,Emeka Egbuka,Rebel,WR
+BN,Bryce Young,Rebel,QB
+BN,Alvin Kamara,Rebel,RB
+BN,Cam Skattebo,Rebel,RB
+IR,Carnell Tate,Rebel,WR
+K,Chad Ryland,Rebel,K
+DEF,Buccaneers,Rebel,DEF
+BN,DeMario Douglas,Rebel,WR

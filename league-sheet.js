@@ -717,6 +717,45 @@ const SECTION_HEADERS = new Set([
 ]);
 
 /**
+ * standings.csv: Yahoo's standings table, pasted into a spreadsheet and
+ * saved. Comes with everything Excel does to it — "logo " glued to the
+ * front of each team name, records turned into dates ("7/1/2000" for
+ * 7-1-0), curly quotes and emoji mangled. All handled here.
+ */
+function standingsFromCsv(rows, teamKey) {
+  const head = (rows[0] || []).map(h => String(h || '').trim().toLowerCase());
+  const find = (...names) => head.findIndex(h => names.includes(h));
+  const col = {
+    rank: find('rank'), team: find('team'), record: find('w-l-t', 'record', 'w-l'),
+    pf: find('pf', 'points for'), pa: find('pa', 'points against'),
+    streak: find('streak'), waiver: find('waiver'), moves: find('moves')
+  };
+  if (col.team < 0 || col.record < 0) return [];
+
+  const get = (row, c) => c < 0 ? '' : String(row[c] || '').trim();
+  const out = [];
+  for (const row of rows.slice(1)) {
+    const parsed = parseRecord(get(row, col.record));
+    const teamName = get(row, col.team).replace(/^logo\s*/i, '').trim();
+    if (!parsed || !teamName) continue;
+    const { w, l, t } = parsed;
+    out.push({
+      rank: Number(get(row, col.rank)) || out.length + 1,
+      teamName,
+      owner: teamKey.get(teamNameKey(teamName)) || teamName,
+      record: w + '-' + l + '-' + t,
+      wins: w, losses: l, ties: t,
+      pointsFor: Number(get(row, col.pf).replace(/,/g, '')) || 0,
+      pointsAgainst: Number(get(row, col.pa).replace(/,/g, '')) || 0,
+      streak: get(row, col.streak),
+      waiverPriority: Number(get(row, col.waiver)) || null,
+      moves: Number(get(row, col.moves)) || null
+    });
+  }
+  return out.sort((a, b) => a.rank - b.rank);
+}
+
+/**
  * Rosters, pasted from Yahoo. Two layouts have shown up and both work:
  *   - twelve blocks separated by blank rows
  *   - Yahoo's full page, with "Pos | Offense / Kickers / Defense" section
@@ -816,6 +855,33 @@ function readRosterBlocks(grid) {
   // Drop the placeholder rows that only existed to mark an empty QB slot.
   for (const b of blocks) b.players = b.players.filter(p => !p.empty);
   return blocks.filter(b => b.players.length);
+}
+
+/**
+ * rosters.csv from the repo: one row per player, Pos | Player | Owner |
+ * Position. Pos is the roster slot (QB, BN, IR...), Position the player's
+ * real position, which can be left blank for anyone in a real slot. Rows
+ * keep the file's order, grouped into one block per owner.
+ */
+function rosterBlocksFromCsv(rows) {
+  const head = (rows[0] || []).map(h => String(h || '').trim().toLowerCase());
+  const ci = name => head.indexOf(name);
+  const cPos = ci('pos'), cPlayer = ci('player'), cOwner = ci('owner');
+  const cPosition = ci('position');
+  if (cPos < 0 || cPlayer < 0 || cOwner < 0) return [];
+
+  const blocks = new Map();
+  for (const row of rows.slice(1)) {
+    const slot = String(row[cPos] || '').trim().toUpperCase();
+    const player = stripStatusSuffix(stripYahooChrome(String(row[cPlayer] || '')));
+    const owner = canonOwner(String(row[cOwner] || '').trim());
+    if (!slot || !player || !owner) continue;
+    let position = cPosition >= 0 ? String(row[cPosition] || '').trim().toUpperCase() : '';
+    if (!position && /^(QB|RB|WR|TE|K|DEF)$/.test(slot)) position = slot;
+    if (!blocks.has(owner)) blocks.set(owner, { label: owner, players: [] });
+    blocks.get(owner).players.push({ pos: slot, player, position: position || null, nflTeam: null });
+  }
+  return [...blocks.values()];
 }
 
 /**
@@ -1442,12 +1508,20 @@ async function loadLeagueData(sheetId, opts = {}) {
   // player moves only; traded draft picks are shown but don't change a roster
   const transactions = activity.filter(t => !t.isPick);
 
-  const standings = readStandings(cur, teamKey);
+  // standings.csv in the repo — Yahoo's standings table pasted as-is —
+  // wins over the sheet's standings columns when it's there.
+  const localStandings = readLocalTab('standings.csv');
+  const standings = localStandings ? standingsFromCsv(localStandings, teamKey) : readStandings(cur, teamKey);
+  const standingsSource = localStandings ? 'standings.csv (repo)' : 'Standings columns (sheet)';
   const pickTradesFromActivity = activity.filter(t => t.isPick);
 
   /* Rosters pasted from Yahoo carry no team name, so each block is attributed
      from the players in it, cross-checking keepers against the activity log. */
-  const rosterBlocks = readRosterBlocks(cur);
+  // rosters.csv in the repo — Pos, Player, Owner, Position — wins over the
+  // sheet's pasted roster columns when it's there, same as activity.csv.
+  const localRosters = readLocalTab('rosters.csv');
+  const rosterBlocks = localRosters ? rosterBlocksFromCsv(localRosters) : readRosterBlocks(cur);
+  const rosterSource = localRosters ? 'rosters.csv (repo)' : 'Rosters columns (sheet)';
   let attribution = { blocks: [], conflicts: [] };
   let sheetRosters = [];
 
@@ -1494,6 +1568,7 @@ async function loadLeagueData(sheetId, opts = {}) {
 
     displayRosterSeason = '2026-2027';
     rosterBasis = 'pasted Yahoo rosters';
+    if (localRosters) rosterBasis = 'rosters.csv';
   }
 
   const costRostersFinal = sheetRosters.length ? displayRosters : costRosters;
@@ -1534,6 +1609,8 @@ async function loadLeagueData(sheetId, opts = {}) {
       notFoundOnDraftBoard: unmatched,
       teamKeySource,
       activitySource,
+      rosterSource,
+      standingsSource,
       keeperNoCostBasis: keeperCosts.noCostBasis || [],
       keepersEligible: keeperCosts.filter(k => k.costRound > 0).length,
       keepersBackToPool: keeperCosts.filter(k => k.costRound === 0).length,
